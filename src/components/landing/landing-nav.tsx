@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { CircleHelp } from 'lucide-react';
+import { CircleHelp, BookOpen } from 'lucide-react';
 import { ThemeToggle } from '@/components/providers/theme-toggle';
 import { cn } from '@/lib/utils';
 
@@ -71,6 +71,15 @@ export function LandingNav() {
             aria-label="Help & Issues"
           >
             <CircleHelp className="h-4 w-4" strokeWidth={1.8} />
+          </a>
+          <a
+            href="https://deepwiki.com/muthub-ai/aac"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            aria-label="Documentation"
+          >
+            <BookOpen className="h-4 w-4" strokeWidth={1.8} />
           </a>
         </div>
       </nav>

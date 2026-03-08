@@ -95,7 +95,7 @@ export function HeroSection() {
           variants={item}
           className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground"
         >
-          Expressing our enterprise architecture as machine-readable,
+          Expressing enterprise architecture as machine-readable,
           version-controlled artifacts to enable faster delivery, lower risk,
           and reduced cost.
         </motion.p>
