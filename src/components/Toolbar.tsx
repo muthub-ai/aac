@@ -1,9 +1,26 @@
 import { useGraphStore } from '../store/useGraphStore';
+import { downloadDrawioXml } from '../export/drawioExport';
+
+const btnStyle: React.CSSProperties = {
+  background: '#2d5a8e',
+  color: '#fff',
+  border: 'none',
+  borderRadius: 4,
+  padding: '6px 14px',
+  fontSize: 12,
+  fontWeight: 600,
+  cursor: 'pointer',
+};
 
 export function Toolbar() {
   const runAutoLayout = useGraphStore((s) => s.runAutoLayout);
-  const nodeCount = useGraphStore((s) => s.nodes.length);
-  const edgeCount = useGraphStore((s) => s.edges.length);
+  const nodes = useGraphStore((s) => s.nodes);
+  const edges = useGraphStore((s) => s.edges);
+
+  const handleExportDrawio = () => {
+    if (nodes.length === 0) return;
+    downloadDrawioXml(nodes, edges);
+  };
 
   return (
     <div
@@ -27,24 +44,24 @@ export function Toolbar() {
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <span style={{ fontSize: 11, opacity: 0.6 }}>
-          {nodeCount} nodes, {edgeCount} edges
+          {nodes.length} nodes, {edges.length} edges
         </span>
         <button
           onClick={runAutoLayout}
-          style={{
-            background: '#2d5a8e',
-            color: '#fff',
-            border: 'none',
-            borderRadius: 4,
-            padding: '6px 14px',
-            fontSize: 12,
-            fontWeight: 600,
-            cursor: 'pointer',
-          }}
+          style={btnStyle}
           onMouseOver={(e) => (e.currentTarget.style.background = '#3a6da6')}
           onMouseOut={(e) => (e.currentTarget.style.background = '#2d5a8e')}
         >
           Auto Layout
+        </button>
+        <button
+          onClick={handleExportDrawio}
+          style={{ ...btnStyle, background: '#2e7d32' }}
+          onMouseOver={(e) => (e.currentTarget.style.background = '#388e3c')}
+          onMouseOut={(e) => (e.currentTarget.style.background = '#2e7d32')}
+          title="Export as Draw.io XML file"
+        >
+          Export Draw.io
         </button>
       </div>
     </div>
