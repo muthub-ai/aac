@@ -7,7 +7,7 @@ import type { C4NodeData, C4EdgeData } from '@/types/c4';
 import { yamlToGraph } from '@/lib/parser/yaml-to-graph';
 import { graphToYaml } from '@/lib/parser/graph-to-yaml';
 import { applyDagreLayout } from '@/lib/layout/dagre-layout';
-import { SAMPLE_YAML } from '@/lib/constants/sample-yaml';
+import { validateYamlContent } from '@/lib/validation/validate-new-system';
 
 type SyncSource = 'yaml' | 'canvas' | null;
 
@@ -32,11 +32,11 @@ interface GraphState {
   updateFromYaml: (yamlText: string) => void;
   updateFromCanvas: () => void;
   runAutoLayout: () => void;
-  initialize: () => void;
+  initialize: (yaml?: string) => void;
 }
 
 export const useGraphStore = create<GraphState>((set, get) => ({
-  yamlText: SAMPLE_YAML,
+  yamlText: '',
   nodes: [],
   edges: [],
   syncSource: null,
@@ -81,6 +81,15 @@ export const useGraphStore = create<GraphState>((set, get) => ({
 
     set({ syncSource: 'yaml', yamlText: text });
 
+    // Run schema validation
+    if (text.trim().length > 0) {
+      const validation = validateYamlContent(text);
+      if (!validation.success) {
+        set({ parseError: validation.errors.join('; '), syncSource: null });
+        return;
+      }
+    }
+
     const result = yamlToGraph(text);
     if (result.nodes.length === 0 && text.trim().length > 0) {
       set({ parseError: 'Invalid YAML', syncSource: null });
@@ -111,7 +120,9 @@ export const useGraphStore = create<GraphState>((set, get) => ({
     set({ nodes: layouted });
   },
 
-  initialize: () => {
-    get().updateFromYaml(SAMPLE_YAML);
+  initialize: (yaml?: string) => {
+    const content = yaml ?? '';
+    set({ yamlText: content });
+    get().updateFromYaml(content);
   },
 }));

@@ -1,5 +1,5 @@
-import { DiagramWorkspace } from '@/components/diagram-workspace';
+import { LandingPage } from '@/components/landing/landing-page';
 
 export default function Home() {
-  return <DiagramWorkspace />;
+  return <LandingPage />;
 }

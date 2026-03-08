@@ -20,10 +20,10 @@ export function SystemNode({ data, width, height }: NodeProps<SystemNodeType>) {
           : 'min-w-[220px] max-w-[300px] border-2 border-solid px-5 py-4 text-center',
         isInternal
           ? isGroup
-            ? 'border-[#0E5AA7] bg-[#1168BD]/10 text-white'
+            ? 'border-[#0E5AA7] bg-[#1168BD]/15 text-[#0E5AA7] dark:text-white'
             : 'border-[#0E5AA7] bg-[#1168BD] text-white'
           : isGroup
-            ? 'border-[#8A8A8A] bg-[#999999]/10 text-white'
+            ? 'border-[#8A8A8A] bg-[#999999]/15 text-[#656d76] dark:text-white'
             : 'border-[#8A8A8A] bg-[#999999] text-white',
       )}
       role="group"

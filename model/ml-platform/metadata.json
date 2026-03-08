@@ -1,0 +1,12 @@
+{
+  "id": "ml-platform",
+  "name": "ML Platform",
+  "repoCount": 3,
+  "linesOfCode": 22100,
+  "deployableUnits": 2,
+  "domainModules": 6,
+  "domainObjects": 15,
+  "domainBehaviors": 32,
+  "lastScan": "2026-03-07T13:28:00Z",
+  "branchName": "develop"
+}

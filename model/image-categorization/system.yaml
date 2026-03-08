@@ -1,0 +1,137 @@
+actors:
+  Customer:
+    type: Person
+    label: Customer
+    description: Person wanting to sell second hand clothes
+    boundary: External
+  DataScientist:
+    type: Person
+    label: Data Scientist
+    description: Person involved in developing the machine learning model
+    boundary: External
+
+softwareSystems:
+  ImageCategorization:
+    label: Image Categorization
+    description: ML model predicting product category for images uploaded by customers
+    boundary: Internal
+    containers:
+      ModelApi:
+        label: Model API
+        technology: FastAPI
+        description: Web application serving predictions
+      ModelTrainingPipeline:
+        label: Model Training Pipeline
+        technology: Python, DAG
+        description: Loads and preprocesses data, and trains a model
+      CiCdPipeline:
+        label: CI/CD Pipeline
+        technology: GitHub Actions
+        description: Runs automated tests and controls model version deployment
+
+  LogAggregator:
+    label: Log Aggregator
+    description: Receives, aggregates, and allows browsing of logs
+    boundary: External
+
+  MonitoringService:
+    label: Monitoring Service
+    description: Prometheus metric collector with Grafana dashboards
+    boundary: External
+
+  ModelRegistry:
+    label: Model Registry
+    description: Tracks experiments and stores versioned model artifacts
+    boundary: External
+
+  BrowserApp:
+    label: Browser Application
+    description: Client browser web application
+    boundary: External
+
+  MobileApp:
+    label: Mobile Application
+    description: Client mobile application
+    boundary: External
+
+  BackendSystem:
+    label: Backend System
+    description: Backend application for uploading images
+    boundary: External
+    containers:
+      ImageDatabase:
+        label: Image Database
+        technology: PostgreSQL
+        description: Database containing images with product category labels
+
+  DataWarehouse:
+    label: Data Warehouse
+    description: Company-wide data warehouse for analytical purposes
+    boundary: External
+
+  DataExploration:
+    label: Data Exploration Service
+    description: Jupyter notebook environment for exploratory analysis
+    boundary: External
+
+relationships:
+  - from: Customer
+    to: BrowserApp
+    label: Uses
+  - from: Customer
+    to: MobileApp
+    label: Uses
+  - from: DataScientist
+    to: ImageCategorization
+    label: Develops
+  - from: DataScientist
+    to: LogAggregator
+    label: Browses logs
+  - from: DataScientist
+    to: MonitoringService
+    label: Views dashboard
+  - from: DataScientist
+    to: DataExploration
+    label: Uses
+  - from: ImageCategorization.CiCdPipeline
+    to: ImageCategorization.ModelApi
+    label: Deploys
+  - from: ImageCategorization.ModelApi
+    to: LogAggregator
+    label: Sends logs
+    protocol: Kafka
+  - from: ImageCategorization.ModelTrainingPipeline
+    to: LogAggregator
+    label: Sends logs
+    protocol: Kafka
+  - from: MonitoringService
+    to: ImageCategorization.ModelApi
+    label: Scrapes metrics
+    protocol: HTTP
+  - from: ImageCategorization.ModelTrainingPipeline
+    to: ModelRegistry
+    label: Stores trained model and metadata
+  - from: ImageCategorization.CiCdPipeline
+    to: ModelRegistry
+    label: Downloads model artifact
+  - from: BrowserApp
+    to: BackendSystem
+    label: Uploads image
+    protocol: HTTP
+  - from: MobileApp
+    to: BackendSystem
+    label: Uploads image
+    protocol: HTTP
+  - from: BackendSystem
+    to: ImageCategorization.ModelApi
+    label: Sends image data
+    protocol: HTTP
+  - from: BackendSystem.ImageDatabase
+    to: DataWarehouse
+    label: Stores images and labels
+  - from: ImageCategorization.ModelTrainingPipeline
+    to: DataWarehouse
+    label: Loads images and labels
+  - from: DataExploration
+    to: DataWarehouse
+    label: Loads data from

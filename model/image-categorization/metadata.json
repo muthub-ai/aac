@@ -1,0 +1,12 @@
+{
+  "id": "image-categorization",
+  "name": "Image Categorization",
+  "repoCount": 2,
+  "linesOfCode": 31400,
+  "deployableUnits": 3,
+  "domainModules": 4,
+  "domainObjects": 28,
+  "domainBehaviors": 56,
+  "lastScan": "2026-03-07T10:05:00Z",
+  "branchName": "main"
+}

@@ -17,13 +17,17 @@ import { cn } from '@/lib/utils';
 
 type MobileTab = 'editor' | 'canvas';
 
-export function DiagramWorkspace() {
+interface DiagramWorkspaceProps {
+  initialYaml?: string;
+}
+
+export function DiagramWorkspace({ initialYaml }: DiagramWorkspaceProps) {
   const initialize = useGraphStore((s) => s.initialize);
   const [mobileTab, setMobileTab] = useState<MobileTab>('canvas');
 
   useEffect(() => {
-    initialize();
-  }, [initialize]);
+    initialize(initialYaml);
+  }, [initialize, initialYaml]);
 
   return (
     <div className="flex h-dvh flex-col overflow-hidden bg-background">
@@ -34,9 +38,9 @@ export function DiagramWorkspace() {
         <Group
           orientation="horizontal"
           id="aac-panels"
-          defaultLayout={{ editor: 40, canvas: 60 }}
+          defaultLayout={{ editor: 15, canvas: 85 }}
         >
-          <Panel id="editor" defaultSize={40} minSize={20}>
+          <Panel id="editor" defaultSize={15} minSize={10}>
             <EditorPane />
           </Panel>
           <Separator
@@ -47,7 +51,7 @@ export function DiagramWorkspace() {
             )}
             aria-label="Resize editor and canvas panels"
           />
-          <Panel id="canvas" defaultSize={60} minSize={30}>
+          <Panel id="canvas" defaultSize={85} minSize={50}>
             <CanvasPane />
           </Panel>
         </Group>

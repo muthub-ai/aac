@@ -1,0 +1,12 @@
+{
+  "id": "demand-forecasting",
+  "name": "Demand Forecasting",
+  "repoCount": 1,
+  "linesOfCode": 18600,
+  "deployableUnits": 7,
+  "domainModules": 5,
+  "domainObjects": 42,
+  "domainBehaviors": 85,
+  "lastScan": "2026-03-08T16:40:00Z",
+  "branchName": "feature/monthly-retrain"
+}

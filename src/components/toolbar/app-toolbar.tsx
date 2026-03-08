@@ -1,9 +1,10 @@
 'use client';
 
+import Link from 'next/link';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
-import { LayoutGrid, Download } from 'lucide-react';
+import { ArrowLeft, LayoutGrid, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import {
   Tooltip,
@@ -27,13 +28,31 @@ export function AppToolbar() {
       className="flex items-center justify-between border-b border-border bg-card px-4 py-2.5 sm:px-6"
       role="banner"
     >
-      <div className="flex items-center gap-3">
-        <h1 className="text-sm font-bold tracking-tight sm:text-base">
+      <div className="flex items-center gap-2.5">
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <Link
+                href="/dashboard"
+                className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                aria-label="Back to Application Systems"
+              />
+            }
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </TooltipTrigger>
+          <TooltipContent>Back to Application Systems</TooltipContent>
+        </Tooltip>
+        <Image
+          src="/logo.svg"
+          alt="Architecture as Code logo"
+          width={26}
+          height={26}
+          className="rounded-md"
+        />
+        <h1 className="text-sm font-semibold tracking-tight sm:text-base">
           Architecture as Code
         </h1>
-        <Badge variant="secondary" className="hidden text-[10px] sm:inline-flex">
-          aac
-        </Badge>
       </div>
 
       <nav className="flex items-center gap-2" aria-label="Toolbar actions">

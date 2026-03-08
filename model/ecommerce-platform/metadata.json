@@ -1,0 +1,12 @@
+{
+  "id": "ecommerce-platform",
+  "name": "E-Commerce Platform",
+  "repoCount": 5,
+  "linesOfCode": 187300,
+  "deployableUnits": 10,
+  "domainModules": 12,
+  "domainObjects": 134,
+  "domainBehaviors": 295,
+  "lastScan": "2026-03-09T18:45:00Z",
+  "branchName": "release/v2.4"
+}

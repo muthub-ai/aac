@@ -19,8 +19,8 @@ const defaultEdgeOptions = {
   type: 'smoothstep' as const,
   animated: false,
   style: { stroke: C4_COLORS.edge.stroke, strokeWidth: 1.5 },
-  labelStyle: { fill: C4_COLORS.edge.label, fontSize: 11 },
-  labelBgStyle: { fill: '#f8f8f8', fillOpacity: 0.9 },
+  labelStyle: { fill: 'var(--muted-foreground)', fontSize: 11 },
+  labelBgStyle: { fill: 'var(--card)', fillOpacity: 0.9 },
   labelBgPadding: [6, 3] as [number, number],
   labelBgBorderRadius: 3,
 };
@@ -65,7 +65,7 @@ export function CanvasPane() {
           variant={BackgroundVariant.Dots}
           gap={16}
           size={1}
-          color={isDark ? 'hsl(0 0% 25%)' : 'hsl(0 0% 80%)'}
+          color={isDark ? '#30363d' : 'hsl(0 0% 80%)'}
         />
         <Controls
           className="!rounded-xl !border !border-border !bg-card !shadow-md"
@@ -77,7 +77,7 @@ export function CanvasPane() {
             return boundary === 'external' ? '#999' : '#1168BD';
           }}
           className="!rounded-xl !border !border-border !bg-card !shadow-md"
-          maskColor={isDark ? 'rgba(0,0,0,0.6)' : 'rgba(200,200,200,0.6)'}
+          maskColor={isDark ? 'rgba(13,17,23,0.6)' : 'rgba(200,200,200,0.6)'}
           aria-label="Diagram minimap"
         />
       </ReactFlow>

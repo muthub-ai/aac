@@ -1,0 +1,206 @@
+actors:
+  Customer:
+    type: Person
+    label: Customer
+    description: A registered customer of the e-commerce platform
+    boundary: External
+  Administrator:
+    type: Person
+    label: Administrator
+    description: System administrator with full access rights
+    boundary: Internal
+  ContentManager:
+    type: Person
+    label: Content Manager
+    description: Manages product listings and content
+    boundary: Internal
+
+softwareSystems:
+  ECommerce:
+    label: E-Commerce System
+    description: Allows customers to browse products and place orders
+    boundary: Internal
+    containers:
+      WebApp:
+        label: Web Application
+        technology: React, TypeScript
+        description: Provides e-commerce functionality to customers
+        components:
+          ProductCatalog:
+            label: Product Catalog
+            technology: React Component
+            description: Displays products and allows filtering/search
+          ShoppingCart:
+            label: Shopping Cart
+            technology: React Component
+            description: Manages items in the user's cart
+          Checkout:
+            label: Checkout
+            technology: React Component
+            description: Handles the checkout process
+          AccountMgmt:
+            label: Account Management
+            technology: React Component
+            description: Allows users to manage their profile
+      MobileApp:
+        label: Mobile Application
+        technology: React Native
+        description: Provides e-commerce functionality to mobile users
+      ApiGateway:
+        label: API Gateway
+        technology: Node.js, Express
+        description: Provides an API for web and mobile clients
+        components:
+          AuthController:
+            label: Auth Controller
+            technology: Express Controller
+            description: Handles authentication and authorization
+          ProductController:
+            label: Product Controller
+            technology: Express Controller
+            description: Provides product data
+          OrderController:
+            label: Order Controller
+            technology: Express Controller
+            description: Manages order creation and retrieval
+          PaymentController:
+            label: Payment Controller
+            technology: Express Controller
+            description: Handles payment processing
+      ProductDB:
+        label: Product Database
+        technology: PostgreSQL
+        description: Stores product catalog information
+      CustomerDB:
+        label: Customer Database
+        technology: MongoDB
+        description: Stores customer information
+      OrderDB:
+        label: Order Database
+        technology: MongoDB
+        description: Stores order information
+      SearchService:
+        label: Search Service
+        technology: Elasticsearch, Node.js
+        description: Provides product search functionality
+
+  Inventory:
+    label: Inventory Management System
+    description: Manages product inventory and stock levels
+    boundary: Internal
+    containers:
+      InventoryApp:
+        label: Inventory Application
+        technology: Angular
+        description: Used by staff to manage inventory
+      InventoryApi:
+        label: Inventory API
+        technology: Java, Spring Boot
+        description: Provides inventory management functionality
+      InventoryDB:
+        label: Inventory Database
+        technology: PostgreSQL
+        description: Stores inventory information
+
+  CMS:
+    label: Content Management System
+    description: Manages product content and descriptions
+    boundary: Internal
+    containers:
+      CMSApp:
+        label: CMS Application
+        technology: WordPress
+        description: Used by content managers
+      CMSDB:
+        label: CMS Database
+        technology: MySQL
+        description: Stores content
+
+  PaymentGateway:
+    label: Payment Gateway
+    description: Processes credit card payments
+    boundary: External
+
+  EmailService:
+    label: Email Service
+    description: Sends emails to customers
+    boundary: External
+
+  ShippingProvider:
+    label: Shipping Provider
+    description: Handles order fulfillment and shipping
+    boundary: External
+
+relationships:
+  - from: Customer
+    to: ECommerce.WebApp
+    label: Browses products and places orders using
+    protocol: HTTPS
+  - from: Customer
+    to: ECommerce.MobileApp
+    label: Uses on mobile device
+  - from: Administrator
+    to: ECommerce
+    label: Administers
+  - from: Administrator
+    to: Inventory
+    label: Manages inventory using
+  - from: ContentManager
+    to: CMS
+    label: Manages product content using
+  - from: ECommerce.WebApp
+    to: ECommerce.ApiGateway
+    label: Makes API calls to
+    protocol: JSON/HTTPS
+  - from: ECommerce.MobileApp
+    to: ECommerce.ApiGateway
+    label: Makes API calls to
+    protocol: JSON/HTTPS
+  - from: ECommerce.ApiGateway
+    to: ECommerce.ProductDB
+    label: Reads from and writes to
+    protocol: PostgreSQL Driver
+  - from: ECommerce.ApiGateway
+    to: ECommerce.CustomerDB
+    label: Reads from and writes to
+    protocol: MongoDB Driver
+  - from: ECommerce.ApiGateway
+    to: ECommerce.OrderDB
+    label: Reads from and writes to
+    protocol: MongoDB Driver
+  - from: ECommerce.ApiGateway
+    to: ECommerce.SearchService
+    label: Searches products using
+    protocol: REST API
+  - from: Inventory.InventoryApp
+    to: Inventory.InventoryApi
+    label: Makes API calls to
+    protocol: JSON/HTTPS
+  - from: Inventory.InventoryApi
+    to: Inventory.InventoryDB
+    label: Reads from and writes to
+    protocol: JDBC
+  - from: CMS.CMSApp
+    to: CMS.CMSDB
+    label: Reads from and writes to
+    protocol: SQL
+  - from: ECommerce
+    to: PaymentGateway
+    label: Processes payments via
+    protocol: HTTPS/REST
+  - from: ECommerce
+    to: EmailService
+    label: Sends emails using
+    protocol: SMTP
+  - from: ECommerce
+    to: Inventory
+    label: Checks inventory in
+    protocol: HTTPS/REST
+  - from: ECommerce
+    to: ShippingProvider
+    label: Creates shipments with
+    protocol: HTTPS/REST
+  - from: ECommerce
+    to: CMS
+    label: Retrieves content from
+    protocol: HTTPS/REST
