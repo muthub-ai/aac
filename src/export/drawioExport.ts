@@ -1,4 +1,3 @@
-import { create } from 'xmlbuilder2';
 import type { Node, Edge } from '@xyflow/react';
 import type { C4NodeData, C4EdgeData } from '../types/c4';
 
@@ -114,7 +113,8 @@ function buildEdgeLabel(data?: C4EdgeData): string {
 }
 
 /**
- * Convert the current graph state into an uncompressed Draw.io XML string.
+ * Convert the current graph state into an uncompressed Draw.io XML string
+ * using native browser DOM APIs (no Node.js dependencies).
  */
 export function exportToDrawioXml(
   nodes: Node<C4NodeData>[],
@@ -131,30 +131,31 @@ export function exportToDrawioXml(
     idMap.set(edge.id, nextId++);
   }
 
-  const doc = create({ version: '1.0', encoding: 'UTF-8' })
-    .ele('mxGraphModel', {
-      dx: '1422',
-      dy: '762',
-      grid: '1',
-      gridSize: '10',
-      guides: '1',
-      tooltips: '1',
-      connect: '1',
-      arrows: '1',
-      fold: '1',
-      page: '1',
-      pageScale: '1',
-      pageWidth: '1169',
-      pageHeight: '827',
-      math: '0',
-      shadow: '0',
-    })
-    .ele('root');
+  const doc = document.implementation.createDocument(null, 'mxGraphModel', null);
+  const model = doc.documentElement;
+  const attrs: Record<string, string> = {
+    dx: '1422', dy: '762', grid: '1', gridSize: '10',
+    guides: '1', tooltips: '1', connect: '1', arrows: '1',
+    fold: '1', page: '1', pageScale: '1', pageWidth: '1169',
+    pageHeight: '827', math: '0', shadow: '0',
+  };
+  for (const [k, v] of Object.entries(attrs)) {
+    model.setAttribute(k, v);
+  }
+
+  const root = doc.createElement('root');
+  model.appendChild(root);
 
   // Cell 0: the root
-  doc.ele('mxCell', { id: '0' }).up();
+  const cell0 = doc.createElement('mxCell');
+  cell0.setAttribute('id', '0');
+  root.appendChild(cell0);
+
   // Cell 1: default parent layer
-  doc.ele('mxCell', { id: '1', parent: '0' }).up();
+  const cell1 = doc.createElement('mxCell');
+  cell1.setAttribute('id', '1');
+  cell1.setAttribute('parent', '0');
+  root.appendChild(cell1);
 
   // Emit vertex cells for each node
   for (const node of nodes) {
@@ -164,33 +165,29 @@ export function exportToDrawioXml(
     const size = NODE_SIZES[kind] ?? NODE_SIZES.softwareSystem;
     const label = buildLabel(node.data);
 
-    // Use the node's canvas position, with an offset so they aren't at 0,0
     const x = Math.round((node.position?.x ?? 0) + 100);
     const y = Math.round((node.position?.y ?? 0) + 60);
 
-    // Determine Draw.io parent: if the React Flow node has a parentId,
-    // nest it under that parent cell. Otherwise use layer 1.
     const parentCellId = node.parentId && idMap.has(node.parentId)
       ? idMap.get(node.parentId)!
       : 1;
 
-    doc
-      .ele('mxCell', {
-        id: String(cellId),
-        value: label,
-        style,
-        vertex: '1',
-        parent: String(parentCellId),
-      })
-      .ele('mxGeometry', {
-        x: String(x),
-        y: String(y),
-        width: String(size.w),
-        height: String(size.h),
-        as: 'geometry',
-      })
-      .up()
-      .up();
+    const cell = doc.createElement('mxCell');
+    cell.setAttribute('id', String(cellId));
+    cell.setAttribute('value', label);
+    cell.setAttribute('style', style);
+    cell.setAttribute('vertex', '1');
+    cell.setAttribute('parent', String(parentCellId));
+
+    const geom = doc.createElement('mxGeometry');
+    geom.setAttribute('x', String(x));
+    geom.setAttribute('y', String(y));
+    geom.setAttribute('width', String(size.w));
+    geom.setAttribute('height', String(size.h));
+    geom.setAttribute('as', 'geometry');
+    cell.appendChild(geom);
+
+    root.appendChild(cell);
   }
 
   // Emit edge cells for each relationship
@@ -203,23 +200,27 @@ export function exportToDrawioXml(
 
     const label = buildEdgeLabel(edge.data);
 
-    doc
-      .ele('mxCell', {
-        id: String(cellId),
-        value: label,
-        style: STYLES.edge,
-        edge: '1',
-        parent: '1',
-        source: String(sourceId),
-        target: String(targetId),
-      })
-      .ele('mxGeometry', { relative: '1', as: 'geometry' })
-      .up()
-      .up();
+    const cell = doc.createElement('mxCell');
+    cell.setAttribute('id', String(cellId));
+    cell.setAttribute('value', label);
+    cell.setAttribute('style', STYLES.edge);
+    cell.setAttribute('edge', '1');
+    cell.setAttribute('parent', '1');
+    cell.setAttribute('source', String(sourceId));
+    cell.setAttribute('target', String(targetId));
+
+    const geom = doc.createElement('mxGeometry');
+    geom.setAttribute('relative', '1');
+    geom.setAttribute('as', 'geometry');
+    cell.appendChild(geom);
+
+    root.appendChild(cell);
   }
 
-  // Close root and mxGraphModel, serialize
-  return doc.up().up().end({ prettyPrint: true });
+  // Serialize to string
+  const serializer = new XMLSerializer();
+  const xmlStr = serializer.serializeToString(doc);
+  return '<?xml version="1.0" encoding="UTF-8"?>\n' + xmlStr;
 }
 
 /**

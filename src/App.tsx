@@ -14,9 +14,9 @@ function App() {
   }, [initialize]);
 
   return (
-    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: '#1e1e1e' }}>
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <Toolbar />
-      <div style={{ flex: 1, overflow: 'hidden' }}>
+      <div style={{ flex: 1, minHeight: 0 }}>
         <Allotment defaultSizes={[40, 60]}>
           <Allotment.Pane minSize={300}>
             <EditorPane />

@@ -25,6 +25,15 @@ const NODE_DIMENSIONS: Record<string, { width: number; height: number }> = {
   componentNode: { width: 240, height: 110 },
 };
 
+// Child layout constants
+const CHILD_W = 260;
+const CHILD_H = 130;
+const GAP_X = 30;
+const GAP_Y = 30;
+const PAD_X = 20;
+const PAD_TOP = 60; // extra top padding for parent label
+const PAD_BOTTOM = 20;
+
 export function applyDagreLayout<T extends Node>(
   nodes: T[],
   edges: Edge[],
@@ -34,6 +43,29 @@ export function applyDagreLayout<T extends Node>(
 
   const opts = { ...DEFAULT_OPTIONS, ...options };
 
+  // Split into top-level and child nodes
+  const topLevelNodes = nodes.filter((n): n is T => !n.parentId);
+  const childNodes = nodes.filter((n): n is T => !!n.parentId);
+
+  // Group children by parent
+  const childrenByParent = new Map<string, T[]>();
+  for (const child of childNodes) {
+    const siblings = childrenByParent.get(child.parentId!) || [];
+    siblings.push(child);
+    childrenByParent.set(child.parentId!, siblings);
+  }
+
+  // Pre-compute parent sizes based on the number of children
+  const parentSizes = new Map<string, { width: number; height: number }>();
+  for (const [parentId, children] of childrenByParent) {
+    const cols = Math.ceil(Math.sqrt(children.length));
+    const rows = Math.ceil(children.length / cols);
+    const totalW = PAD_X * 2 + cols * CHILD_W + (cols - 1) * GAP_X;
+    const totalH = PAD_TOP + PAD_BOTTOM + rows * CHILD_H + (rows - 1) * GAP_Y;
+    parentSizes.set(parentId, { width: totalW, height: totalH });
+  }
+
+  // Create Dagre graph with correct dimensions (using parent sizes where applicable)
   const g = new dagre.graphlib.Graph({ multigraph: true, compound: false });
   g.setDefaultEdgeLabel(() => ({}));
   g.setGraph({
@@ -42,13 +74,10 @@ export function applyDagreLayout<T extends Node>(
     nodesep: opts.nodeSep,
   });
 
-  // We layout only top-level nodes (no parentId) for the main graph.
-  // Child nodes (containers inside systems) are positioned relative to parent.
-  const topLevelNodes = nodes.filter((n): n is T => !n.parentId);
-  const childNodes = nodes.filter((n): n is T => !!n.parentId);
-
   for (const node of topLevelNodes) {
-    const dims = NODE_DIMENSIONS[node.type || ''] || {
+    // Use pre-computed parent size if this node has children
+    const parentSize = parentSizes.get(node.id);
+    const dims = parentSize || NODE_DIMENSIONS[node.type || ''] || {
       width: opts.nodeWidth,
       height: opts.nodeHeight,
     };
@@ -68,26 +97,29 @@ export function applyDagreLayout<T extends Node>(
 
   dagre.layout(g);
 
+  // Position top-level nodes using Dagre output
   const positionedNodes = topLevelNodes.map((node) => {
     const pos = g.node(node.id);
     if (!pos) return node;
-    return {
+
+    const result = {
       ...node,
       position: {
         x: pos.x - (pos.width ?? 0) / 2,
         y: pos.y - (pos.height ?? 0) / 2,
       },
     };
+
+    // Apply explicit size for parent nodes
+    const size = parentSizes.get(node.id);
+    if (size) {
+      result.style = { ...((node as any).style || {}), width: size.width, height: size.height };
+    }
+
+    return result;
   });
 
-  // Position child nodes in a simple grid inside their parent
-  const childrenByParent = new Map<string, T[]>();
-  for (const child of childNodes) {
-    const siblings = childrenByParent.get(child.parentId!) || [];
-    siblings.push(child);
-    childrenByParent.set(child.parentId!, siblings);
-  }
-
+  // Position child nodes in a grid inside their parent
   const positionedChildren: T[] = [];
   for (const [, children] of childrenByParent) {
     const cols = Math.ceil(Math.sqrt(children.length));
@@ -97,8 +129,8 @@ export function applyDagreLayout<T extends Node>(
       positionedChildren.push({
         ...child,
         position: {
-          x: 20 + col * 220,
-          y: 40 + row * 140,
+          x: PAD_X + col * (CHILD_W + GAP_X),
+          y: PAD_TOP + row * (CHILD_H + GAP_Y),
         },
       });
     });
