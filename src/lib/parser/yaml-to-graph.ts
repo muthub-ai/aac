@@ -2,6 +2,7 @@ import yaml from 'js-yaml';
 import type { Node, Edge } from '@xyflow/react';
 import type { C4NodeData, C4EdgeData } from '@/types/c4';
 import type { YamlArchitecture } from '@/types/yaml-schema';
+import { isNewFormat, transformNewToOld } from './new-to-old-transform';
 
 export interface ParseResult {
   nodes: Node<C4NodeData>[];
@@ -21,6 +22,11 @@ export function yamlToGraph(yamlText: string): ParseResult {
 
   if (!doc || typeof doc !== 'object') {
     return { nodes: [], edges: [] };
+  }
+
+  // Detect new schema format and transform to old format for parsing
+  if (isNewFormat(doc)) {
+    doc = transformNewToOld(doc);
   }
 
   if (doc.actors) {

@@ -660,3 +660,279 @@ relationships:
     expect(kinds.get('shop.web.cart')).toBe('component');
   });
 });
+
+// ---------------------------------------------------------------------------
+// 11. New schema format support (auto-detected and transformed)
+// ---------------------------------------------------------------------------
+describe('yamlToGraph – new schema format', () => {
+  it('parses a minimal new-format document with one person', () => {
+    const yaml = `
+name: test
+model:
+  people:
+    - id: user1
+      name: End User
+      description: A user of the system
+`;
+    const { nodes, edges } = yamlToGraph(yaml);
+    expect(nodes).toHaveLength(1);
+    expect(edges).toHaveLength(0);
+    expect(nodes[0].id).toBe('user1');
+    expect(nodes[0].type).toBe('personNode');
+    expect(nodes[0].data.kind).toBe('person');
+    expect(nodes[0].data.label).toBe('End User');
+    expect(nodes[0].data.description).toBe('A user of the system');
+    expect(nodes[0].data.boundary).toBe('external');
+  });
+
+  it('parses a new-format system with containers', () => {
+    const yaml = `
+name: test
+model:
+  softwareSystems:
+    - id: MyApp
+      name: My Application
+      description: Main app
+      tags: core, internal
+      containers:
+        - id: WebUI
+          name: Web Application
+          technology: React
+          description: Frontend
+        - id: API
+          name: API Server
+          technology: Node.js
+`;
+    const { nodes } = yamlToGraph(yaml);
+    // 1 system + 2 containers = 3
+    expect(nodes).toHaveLength(3);
+
+    const sys = nodes.find((n) => n.id === 'MyApp');
+    expect(sys).toBeDefined();
+    expect(sys!.type).toBe('systemNode');
+    expect(sys!.data.label).toBe('My Application');
+    expect(sys!.data.boundary).toBe('internal');
+
+    const web = nodes.find((n) => n.id === 'MyApp.WebUI');
+    expect(web).toBeDefined();
+    expect(web!.type).toBe('containerNode');
+    expect(web!.parentId).toBe('MyApp');
+    expect(web!.data.label).toBe('Web Application');
+    expect(web!.data.technology).toBe('React');
+
+    const api = nodes.find((n) => n.id === 'MyApp.API');
+    expect(api).toBeDefined();
+    expect(api!.data.label).toBe('API Server');
+  });
+
+  it('parses inline relationships from people', () => {
+    const yaml = `
+name: test
+model:
+  people:
+    - id: user
+      name: User
+      relationships:
+        - destinationId: App
+          description: Uses
+          technology: HTTPS
+  softwareSystems:
+    - id: App
+      name: Application
+      tags: internal
+`;
+    const { nodes, edges } = yamlToGraph(yaml);
+    expect(nodes).toHaveLength(2);
+    expect(edges).toHaveLength(1);
+    expect(edges[0].source).toBe('user');
+    expect(edges[0].target).toBe('App');
+    expect(edges[0].data!.label).toBe('Uses');
+    expect(edges[0].data!.protocol).toBe('HTTPS');
+  });
+
+  it('parses inline relationships from containers', () => {
+    const yaml = `
+name: test
+model:
+  softwareSystems:
+    - id: App
+      name: Application
+      tags: internal
+      containers:
+        - id: Web
+          name: Web App
+          technology: React
+          relationships:
+            - destinationId: App.API
+              description: Calls
+              technology: JSON/HTTPS
+        - id: API
+          name: API Server
+          technology: Node.js
+`;
+    const { edges } = yamlToGraph(yaml);
+    expect(edges).toHaveLength(1);
+    expect(edges[0].source).toBe('App.Web');
+    expect(edges[0].target).toBe('App.API');
+    expect(edges[0].data!.label).toBe('Calls');
+  });
+
+  it('parses system-level relationships', () => {
+    const yaml = `
+name: test
+model:
+  softwareSystems:
+    - id: App
+      name: Application
+      tags: internal
+      relationships:
+        - destinationId: ExtSys
+          description: Sends data
+          technology: REST
+    - id: ExtSys
+      name: External System
+      tags: external
+`;
+    const { edges } = yamlToGraph(yaml);
+    expect(edges).toHaveLength(1);
+    expect(edges[0].source).toBe('App');
+    expect(edges[0].target).toBe('ExtSys');
+  });
+
+  it('derives boundary "External" for systems with external tag', () => {
+    const yaml = `
+name: test
+model:
+  softwareSystems:
+    - id: ExtSys
+      name: External Service
+      tags: external, payments
+`;
+    const { nodes } = yamlToGraph(yaml);
+    expect(nodes[0].data.boundary).toBe('external');
+  });
+
+  it('derives boundary "Internal" for systems with containers (no tags)', () => {
+    const yaml = `
+name: test
+model:
+  softwareSystems:
+    - id: App
+      name: Application
+      containers:
+        - id: DB
+          name: Database
+          technology: PostgreSQL
+`;
+    const { nodes } = yamlToGraph(yaml);
+    const sys = nodes.find((n) => n.id === 'App');
+    expect(sys!.data.boundary).toBe('internal');
+  });
+
+  it('derives boundary "External" for systems without containers and no tags', () => {
+    const yaml = `
+name: test
+model:
+  softwareSystems:
+    - id: ExtSys
+      name: External
+`;
+    const { nodes } = yamlToGraph(yaml);
+    expect(nodes[0].data.boundary).toBe('external');
+  });
+
+  it('handles a full new-format document with mixed elements', () => {
+    const yaml = `
+name: ecommerce
+description: E-commerce platform
+model:
+  people:
+    - id: Customer
+      name: Customer
+      description: Buys products
+      relationships:
+        - destinationId: Shop.WebApp
+          description: Browses
+          technology: HTTPS
+    - id: Admin
+      name: Administrator
+      relationships:
+        - destinationId: Shop
+          description: Administers
+  softwareSystems:
+    - id: Shop
+      name: Online Shop
+      description: E-commerce platform
+      tags: core, internal
+      containers:
+        - id: WebApp
+          name: Web Application
+          technology: React
+          relationships:
+            - destinationId: Shop.API
+              description: Calls
+              technology: JSON/HTTPS
+        - id: API
+          name: API Server
+          technology: Node.js
+      relationships:
+        - destinationId: PayGW
+          description: Processes payments
+          technology: HTTPS
+    - id: PayGW
+      name: Payment Gateway
+      tags: external, payments
+views:
+  systemContextViews:
+    - key: shop-ctx
+      softwareSystemId: Shop
+      title: Shop Context
+  containerViews:
+    - key: shop-cont
+      softwareSystemId: Shop
+`;
+    const { nodes, edges } = yamlToGraph(yaml);
+
+    // 2 people + 1 system (Shop) + 2 containers + 1 external system (PayGW) = 6
+    expect(nodes).toHaveLength(6);
+
+    // Customer->Shop.WebApp, Admin->Shop, Shop.WebApp->Shop.API, Shop->PayGW = 4
+    expect(edges).toHaveLength(4);
+
+    // Verify node types
+    const customer = nodes.find((n) => n.id === 'Customer');
+    expect(customer!.type).toBe('personNode');
+    expect(customer!.data.label).toBe('Customer');
+
+    const shop = nodes.find((n) => n.id === 'Shop');
+    expect(shop!.type).toBe('systemNode');
+    expect(shop!.data.boundary).toBe('internal');
+
+    const payGW = nodes.find((n) => n.id === 'PayGW');
+    expect(payGW!.data.boundary).toBe('external');
+
+    // Verify edges
+    const browseEdge = edges.find((e) => e.data!.label === 'Browses');
+    expect(browseEdge!.source).toBe('Customer');
+    expect(browseEdge!.target).toBe('Shop.WebApp');
+  });
+
+  it('still parses old format correctly (backward compatibility)', () => {
+    const yaml = `
+actors:
+  user:
+    type: Person
+    label: User
+softwareSystems:
+  app:
+    label: App
+relationships:
+  - from: user
+    to: app
+    label: Uses
+`;
+    const { nodes, edges } = yamlToGraph(yaml);
+    expect(nodes).toHaveLength(2);
+    expect(edges).toHaveLength(1);
+  });
+});

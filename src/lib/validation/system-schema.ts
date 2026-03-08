@@ -42,6 +42,104 @@ export const YamlRelationshipSchema = z.object({
   protocol: z.string().optional(),
 });
 
+// ── New Format Schemas ──────────────────────────────────────────────
+
+const NewYamlRelationshipSchema = z.object({
+  destinationId: z.string().min(1),
+  description: z.string().optional(),
+  technology: z.string().optional(),
+});
+
+const NewYamlContainerSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  description: z.string().optional(),
+  technology: z.string().optional(),
+  tags: z.string().optional(),
+  properties: z.record(z.string(), z.string()).optional(),
+  relationships: z.array(NewYamlRelationshipSchema).optional(),
+});
+
+const NewYamlSoftwareSystemSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  description: z.string().optional(),
+  group: z.string().optional(),
+  tags: z.string().optional(),
+  disposition: z.string().optional(),
+  dataClassification: z.string().optional(),
+  properties: z.record(z.string(), z.string()).optional(),
+  containers: z.array(NewYamlContainerSchema).optional(),
+  relationships: z.array(NewYamlRelationshipSchema).optional(),
+});
+
+const NewYamlPersonSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  description: z.string().optional(),
+  relationships: z.array(NewYamlRelationshipSchema).optional(),
+});
+
+const NewYamlContainerInstanceSchema = z.object({
+  containerId: z.string().min(1),
+  instanceId: z.number(),
+});
+
+const NewYamlDeploymentChildSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  technology: z.string().optional(),
+  tags: z.string().optional(),
+  containerInstances: z.array(NewYamlContainerInstanceSchema).optional(),
+});
+
+const NewYamlInfrastructureNodeSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  technology: z.string().optional(),
+  tags: z.string().optional(),
+  properties: z.record(z.string(), z.string()).optional(),
+  relationships: z.array(NewYamlRelationshipSchema).optional(),
+});
+
+const NewYamlDeploymentNodeSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  environment: z.string().optional(),
+  technology: z.string().optional(),
+  tags: z.string().optional(),
+  infrastructureNodes: z.array(NewYamlInfrastructureNodeSchema).optional(),
+  children: z.array(NewYamlDeploymentChildSchema).optional(),
+  containerInstances: z.array(NewYamlContainerInstanceSchema).optional(),
+});
+
+const NewYamlViewDefinitionSchema = z.object({
+  key: z.string().min(1),
+  softwareSystemId: z.string().min(1),
+  title: z.string().optional(),
+  description: z.string().optional(),
+  environment: z.string().optional(),
+});
+
+const NewYamlViewsSchema = z.object({
+  systemContextViews: z.array(NewYamlViewDefinitionSchema).optional(),
+  containerViews: z.array(NewYamlViewDefinitionSchema).optional(),
+  deploymentViews: z.array(NewYamlViewDefinitionSchema).optional(),
+});
+
+const NewYamlModelSchema = z.object({
+  people: z.array(NewYamlPersonSchema).optional(),
+  softwareSystems: z.array(NewYamlSoftwareSystemSchema).optional(),
+  deploymentNodes: z.array(NewYamlDeploymentNodeSchema).optional(),
+});
+
+export const NewYamlArchitectureSchema = z.object({
+  name: z.string().min(1),
+  description: z.string().optional(),
+  model: NewYamlModelSchema,
+  views: NewYamlViewsSchema.optional(),
+});
+
 // ── Full Architecture YAML ──────────────────────────────────────────
 export const YamlArchitectureSchema = z.object({
   actors: z.record(z.string(), YamlActorSchema).optional(),
@@ -68,6 +166,7 @@ export const SystemMetadataSchema = z.object({
 
 // ── Inferred types ──────────────────────────────────────────────────
 export type ValidatedArchitecture = z.infer<typeof YamlArchitectureSchema>;
+export type ValidatedNewArchitecture = z.infer<typeof NewYamlArchitectureSchema>;
 export type ValidatedMetadata = z.infer<typeof SystemMetadataSchema>;
 
 // ── Validation helpers ──────────────────────────────────────────────
@@ -77,12 +176,20 @@ export interface ValidationResult {
   errors: string[];
 }
 
-/**
- * Validate a parsed YAML architecture object against the schema.
- * Returns a result with success flag and human-readable error messages.
- */
+/** Detect whether data looks like the new schema format */
+export function isNewSchemaFormat(data: unknown): boolean {
+  return (
+    data !== null &&
+    typeof data === 'object' &&
+    'model' in data &&
+    typeof (data as Record<string, unknown>).model === 'object'
+  );
+}
+
 export function validateArchitecture(data: unknown): ValidationResult {
-  const result = YamlArchitectureSchema.safeParse(data);
+  // Detect format and validate with the appropriate schema
+  const schema = isNewSchemaFormat(data) ? NewYamlArchitectureSchema : YamlArchitectureSchema;
+  const result = schema.safeParse(data);
   if (result.success) {
     return { success: true, errors: [] };
   }
@@ -128,6 +235,74 @@ export function validateRelationshipRefs(data: ValidatedArchitecture): Validatio
       }
       if (!resolveRef(rel.to, knownIds)) {
         errors.push(`relationships[${i}].to: "${rel.to}" does not match any declared element`);
+      }
+    }
+  }
+
+  return { success: errors.length === 0, errors };
+}
+
+/**
+ * Validate relationship references for the new schema format.
+ */
+export function validateNewFormatRelationshipRefs(data: unknown): ValidationResult {
+  if (!isNewSchemaFormat(data)) return { success: true, errors: [] };
+
+  const doc = data as { model: { people?: Array<{ id: string; relationships?: Array<{ destinationId: string }> }>; softwareSystems?: Array<{ id: string; containers?: Array<{ id: string; relationships?: Array<{ destinationId: string }> }>; relationships?: Array<{ destinationId: string }> }> } };
+  const errors: string[] = [];
+  const knownIds = new Set<string>();
+
+  // Collect all known IDs
+  if (doc.model.people) {
+    for (const person of doc.model.people) {
+      knownIds.add(person.id);
+    }
+  }
+
+  if (doc.model.softwareSystems) {
+    for (const sys of doc.model.softwareSystems) {
+      knownIds.add(sys.id);
+      if (sys.containers) {
+        for (const cont of sys.containers) {
+          knownIds.add(cont.id);
+          knownIds.add(`${sys.id}.${cont.id}`);
+        }
+      }
+    }
+  }
+
+  // Validate all relationships
+  if (doc.model.people) {
+    for (const person of doc.model.people) {
+      if (person.relationships) {
+        for (const rel of person.relationships) {
+          if (!resolveRef(rel.destinationId, knownIds)) {
+            errors.push(`${person.id}: destinationId "${rel.destinationId}" does not match any declared element`);
+          }
+        }
+      }
+    }
+  }
+
+  if (doc.model.softwareSystems) {
+    for (const sys of doc.model.softwareSystems) {
+      if (sys.relationships) {
+        for (const rel of sys.relationships) {
+          if (!resolveRef(rel.destinationId, knownIds)) {
+            errors.push(`${sys.id}: destinationId "${rel.destinationId}" does not match any declared element`);
+          }
+        }
+      }
+      if (sys.containers) {
+        for (const cont of sys.containers) {
+          if (cont.relationships) {
+            for (const rel of cont.relationships) {
+              if (!resolveRef(rel.destinationId, knownIds)) {
+                errors.push(`${sys.id}.${cont.id}: destinationId "${rel.destinationId}" does not match any declared element`);
+              }
+            }
+          }
+        }
       }
     }
   }

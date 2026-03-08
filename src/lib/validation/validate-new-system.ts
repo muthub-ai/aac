@@ -3,6 +3,8 @@ import {
   validateArchitecture,
   validateMetadata,
   validateRelationshipRefs,
+  validateNewFormatRelationshipRefs,
+  isNewSchemaFormat,
   type ValidationResult,
   type ValidatedArchitecture,
 } from './system-schema';
@@ -49,7 +51,9 @@ export function validateNewSystem(
 
   // Validate relationship references (only if architecture is structurally valid)
   if (archResult.success && parsed) {
-    const refResult = validateRelationshipRefs(parsed as ValidatedArchitecture);
+    const refResult = isNewSchemaFormat(parsed)
+      ? validateNewFormatRelationshipRefs(parsed)
+      : validateRelationshipRefs(parsed as ValidatedArchitecture);
     if (!refResult.success) {
       result.referenceErrors.push(...refResult.errors);
       result.valid = false;
@@ -88,6 +92,9 @@ export function validateYamlContent(yamlContent: string): ValidationResult {
     return archResult;
   }
 
+  if (isNewSchemaFormat(parsed)) {
+    return validateNewFormatRelationshipRefs(parsed);
+  }
   const refResult = validateRelationshipRefs(parsed as ValidatedArchitecture);
   return refResult;
 }

@@ -297,3 +297,163 @@ describe('validateMetadata', () => {
     expect(result.errors.some((e) => e.includes('repoCount'))).toBe(true);
   });
 });
+
+// ---------------------------------------------------------------------------
+// validateArchitecture – new schema format
+// ---------------------------------------------------------------------------
+describe('validateArchitecture – new schema format', () => {
+  it('16 - accepts a valid new-format architecture', () => {
+    const data = {
+      name: 'test-system',
+      description: 'A test system',
+      model: {
+        people: [
+          { id: 'user', name: 'User', description: 'An end user' },
+        ],
+        softwareSystems: [
+          {
+            id: 'App',
+            name: 'Application',
+            description: 'Main app',
+            containers: [
+              { id: 'Web', name: 'Web App', technology: 'React' },
+            ],
+          },
+        ],
+      },
+      views: {
+        systemContextViews: [
+          { key: 'ctx', softwareSystemId: 'App', title: 'Context View' },
+        ],
+      },
+    };
+    const result = validateArchitecture(data);
+    expect(result.success).toBe(true);
+    expect(result.errors).toEqual([]);
+  });
+
+  it('17 - accepts a new-format with no views', () => {
+    const data = {
+      name: 'minimal',
+      model: {
+        softwareSystems: [
+          { id: 'Sys', name: 'System' },
+        ],
+      },
+    };
+    const result = validateArchitecture(data);
+    expect(result.success).toBe(true);
+  });
+
+  it('18 - rejects new-format with missing name', () => {
+    const data = {
+      model: {
+        softwareSystems: [
+          { id: 'Sys', name: 'System' },
+        ],
+      },
+    };
+    const result = validateArchitecture(data);
+    expect(result.success).toBe(false);
+    expect(result.errors.some((e: string) => e.includes('name'))).toBe(true);
+  });
+
+  it('19 - rejects new-format with missing system name', () => {
+    const data = {
+      name: 'test',
+      model: {
+        softwareSystems: [
+          { id: 'Sys' }, // missing name
+        ],
+      },
+    };
+    const result = validateArchitecture(data);
+    expect(result.success).toBe(false);
+  });
+
+  it('20 - rejects new-format with missing person id', () => {
+    const data = {
+      name: 'test',
+      model: {
+        people: [
+          { name: 'User' }, // missing id
+        ],
+      },
+    };
+    const result = validateArchitecture(data);
+    expect(result.success).toBe(false);
+  });
+
+  it('21 - accepts new-format with relationships', () => {
+    const data = {
+      name: 'test',
+      model: {
+        people: [
+          {
+            id: 'user',
+            name: 'User',
+            relationships: [
+              { destinationId: 'App', description: 'Uses', technology: 'HTTPS' },
+            ],
+          },
+        ],
+        softwareSystems: [
+          { id: 'App', name: 'Application' },
+        ],
+      },
+    };
+    const result = validateArchitecture(data);
+    expect(result.success).toBe(true);
+  });
+
+  it('22 - accepts new-format with deployment nodes', () => {
+    const data = {
+      name: 'test',
+      model: {
+        softwareSystems: [
+          {
+            id: 'App',
+            name: 'Application',
+            containers: [
+              { id: 'Web', name: 'Web App', technology: 'React' },
+            ],
+          },
+        ],
+        deploymentNodes: [
+          {
+            id: 'prod',
+            name: 'Production',
+            environment: 'Production',
+            children: [
+              {
+                id: 'k8s',
+                name: 'Kubernetes',
+                containerInstances: [
+                  { containerId: 'App.Web', instanceId: 1 },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    };
+    const result = validateArchitecture(data);
+    expect(result.success).toBe(true);
+  });
+
+  it('23 - still accepts old-format (backward compatibility)', () => {
+    const data = {
+      actors: {
+        user: { type: 'Person', label: 'User' },
+      },
+      softwareSystems: {
+        app: { label: 'App' },
+      },
+      relationships: [
+        { from: 'user', to: 'app', label: 'Uses' },
+      ],
+    };
+    const result = validateArchitecture(data);
+    expect(result.success).toBe(true);
+  });
+});
