@@ -1,0 +1,86 @@
+'use client';
+
+import {
+  ReactFlow,
+  Background,
+  Controls,
+  MiniMap,
+  BackgroundVariant,
+  ConnectionLineType,
+} from '@xyflow/react';
+import '@xyflow/react/dist/style.css';
+import { useTheme } from 'next-themes';
+import { useGraphStore } from '@/store/use-graph-store';
+import { nodeTypes } from '@/components/nodes/node-types';
+import { C4_COLORS } from '@/lib/constants/colors';
+import { useMounted } from '@/hooks/use-mounted';
+
+const defaultEdgeOptions = {
+  type: 'smoothstep' as const,
+  animated: false,
+  style: { stroke: C4_COLORS.edge.stroke, strokeWidth: 1.5 },
+  labelStyle: { fill: C4_COLORS.edge.label, fontSize: 11 },
+  labelBgStyle: { fill: '#f8f8f8', fillOpacity: 0.9 },
+  labelBgPadding: [6, 3] as [number, number],
+  labelBgBorderRadius: 3,
+};
+
+export function CanvasPane() {
+  const nodes = useGraphStore((s) => s.nodes);
+  const edges = useGraphStore((s) => s.edges);
+  const onNodesChange = useGraphStore((s) => s.onNodesChange);
+  const onEdgesChange = useGraphStore((s) => s.onEdgesChange);
+  const onConnect = useGraphStore((s) => s.onConnect);
+  const updateFromCanvas = useGraphStore((s) => s.updateFromCanvas);
+  const { resolvedTheme } = useTheme();
+  const mounted = useMounted();
+
+  const isDark = mounted ? resolvedTheme === 'dark' : true;
+
+  return (
+    <div
+      className="h-full w-full"
+      role="region"
+      aria-label="Architecture Diagram Canvas"
+    >
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        nodeTypes={nodeTypes}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onConnect={onConnect}
+        onNodeDragStop={() => updateFromCanvas()}
+        defaultEdgeOptions={defaultEdgeOptions}
+        connectionLineType={ConnectionLineType.SmoothStep}
+        fitView
+        fitViewOptions={{ padding: 0.2 }}
+        snapToGrid
+        snapGrid={[16, 16]}
+        proOptions={{ hideAttribution: true }}
+        minZoom={0.1}
+        maxZoom={2}
+      >
+        <Background
+          variant={BackgroundVariant.Dots}
+          gap={16}
+          size={1}
+          color={isDark ? 'hsl(0 0% 25%)' : 'hsl(0 0% 80%)'}
+        />
+        <Controls
+          className="!rounded-xl !border !border-border !bg-card !shadow-md"
+          aria-label="Zoom controls"
+        />
+        <MiniMap
+          nodeColor={(n) => {
+            const boundary = (n.data as Record<string, unknown>)?.boundary;
+            return boundary === 'external' ? '#999' : '#1168BD';
+          }}
+          className="!rounded-xl !border !border-border !bg-card !shadow-md"
+          maskColor={isDark ? 'rgba(0,0,0,0.6)' : 'rgba(200,200,200,0.6)'}
+          aria-label="Diagram minimap"
+        />
+      </ReactFlow>
+    </div>
+  );
+}

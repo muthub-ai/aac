@@ -1,51 +1,36 @@
-# Architecture as Code (aac)
-
-An interactive, browser-based C4 architecture diagram designer with bi-directional YAML editing.
-
-## Features
-
-- **Split-pane layout** — Monaco YAML editor on the left, React Flow canvas on the right
-- **Bi-directional sync** — Edit YAML to update the diagram, or drag nodes and draw connections to update the YAML
-- **C4 Model node types** — Person, Software System, Container, and Component with standard C4 color coding
-- **Auto layout** — Dagre-powered automatic graph layout
-- **Live parsing** — Instant YAML parsing with error feedback
-
-## Tech Stack
-
-- **React** + **TypeScript** + **Vite**
-- **@xyflow/react** — Node canvas for the visual diagram
-- **@monaco-editor/react** — VS Code editor for the YAML pane
-- **Zustand** — State management across both panes
-- **js-yaml** — YAML parsing and serialization
-- **@dagrejs/dagre** — Automatic directed-graph layout
-- **Allotment** — Resizable split panes
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
 
+First, run the development server:
+
 ```bash
-npm install
 npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173) in your browser.
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-## Project Structure
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-```
-src/
-  types/          # C4 domain types and YAML schema types
-  store/          # Zustand state store
-  parser/         # YAML <-> Graph conversion
-  layout/         # Dagre auto-layout engine
-  constants/      # C4 color palette
-  utils/          # Debounce, sample YAML
-  components/
-    nodes/        # Custom React Flow node components
-    EditorPane    # Monaco editor wrapper
-    CanvasPane    # React Flow canvas wrapper
-    Toolbar       # Top toolbar
-```
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-## License
+## Learn More
 
-MIT
+To learn more about Next.js, take a look at the following resources:
+
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+
+## Deploy on Vercel
+
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.

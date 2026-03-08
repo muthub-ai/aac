@@ -1,5 +1,4 @@
 export type C4Boundary = 'internal' | 'external';
-
 export type C4NodeKind = 'person' | 'softwareSystem' | 'container' | 'component';
 
 export interface C4NodeData extends Record<string, unknown> {
