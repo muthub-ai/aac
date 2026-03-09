@@ -1,0 +1,71 @@
+exceptionId: EXC-SEC-001
+title: Legacy AES-128 Encryption in E-Commerce Payment Module
+targetAppId: ecommerce-platform
+targetAppName: E-Commerce Platform
+violatedStandardId: STD-SEC-001
+violatedStandardName: Cryptography & Key Management
+violatedRequirementIds:
+  - REQ-CRYPTO-001
+  - REQ-CRYPTO-003
+status: APPROVED
+rationale: >-
+  The payment processing module uses a third-party SDK that is hardcoded to AES-128.
+  The vendor has committed to releasing an AES-256 compatible version in Q3 2025.
+  Upgrading now would require replacing the entire payment integration, risking a
+  4-week delay to the holiday season launch.
+financialImpact:
+  complianceCost: "$340,000"
+  delayCost: "$1,200,000"
+  riskExposureCost: "$2,800,000"
+  summary: >-
+    Immediate compliance would delay the holiday launch by 4 weeks, costing $1.2M
+    in lost revenue. The vendor upgrade path reduces compliance cost to $340K in Q3.
+    Risk exposure if a breach occurs during the waiver period is estimated at $2.8M.
+riskSeverity: CRITICAL
+riskDescription: >-
+  AES-128 provides 128-bit key strength, which is below the enterprise minimum of
+  256-bit for payment data. While no practical attacks exist against AES-128, this
+  creates a compliance gap with PCI-DSS 4.0 requirements for encryption at rest.
+compensatingControls:
+  - control: Network-level encryption using TLS 1.3 for all data in transit
+    effectiveness: HIGH
+    verificationMethod: Quarterly TLS configuration audit via automated scanner
+  - control: Enhanced monitoring with real-time alerting on the payment database
+    effectiveness: MEDIUM
+    verificationMethod: Weekly review of SIEM alerts and access logs
+  - control: Data tokenization layer reducing exposure of raw card data
+    effectiveness: HIGH
+    verificationMethod: Monthly penetration testing of tokenization boundaries
+requestedBy: Platform Engineering Team
+requestedDate: "2024-11-15"
+approvedBy: CISO
+approvalDate: "2024-12-01"
+expirationDate: "2025-09-30"
+remediationPlan:
+  description: >-
+    Migrate to vendor SDK v4.0 with AES-256 support. Phase 1: staging environment
+    validation (complete). Phase 2: production canary deployment. Phase 3: full rollout.
+  targetDate: "2025-09-15"
+  backlogItemUrl: https://github.com/muthub-ai/aac/issues/101
+  assignedTeam: Payment Platform Squad
+  progressPercent: 45
+domain: Security
+tags:
+  - encryption
+  - PCI-DSS
+  - payment
+  - vendor-dependency
+reviewNotes: >-
+  Approved with condition that compensating controls remain active and monthly
+  progress reports are submitted to the Architecture Review Board. Re-review
+  scheduled for June 2025.
+revisionHistory:
+  - date: "2024-11-15"
+    author: Platform Engineering Team
+    change: Initial waiver request submitted
+  - date: "2024-11-28"
+    author: Security Architecture Team
+    change: Risk assessment completed, compensating controls validated
+  - date: "2024-12-01"
+    author: CISO
+    change: Waiver approved with conditions

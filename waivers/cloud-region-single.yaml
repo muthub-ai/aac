@@ -1,0 +1,70 @@
+exceptionId: EXC-INFRA-001
+title: Single-Region Deployment for Image Categorization Service
+targetAppId: image-categorization
+targetAppName: Image Categorization
+violatedStandardId: STD-INFRA-001
+violatedStandardName: Multi-Region Resiliency
+violatedRequirementIds:
+  - REQ-RESIL-001
+  - REQ-RESIL-004
+status: APPROVED
+rationale: >-
+  The image categorization service processes batch workloads with a 4-hour SLA.
+  Multi-region deployment would double infrastructure costs for a service that
+  does not require real-time availability. The batch queue provides natural
+  retry capability across regional failures.
+financialImpact:
+  complianceCost: "$95,000"
+  delayCost: "$45,000"
+  riskExposureCost: "$30,000"
+  summary: >-
+    Multi-region deployment adds $95K/year in infrastructure costs. The service
+    has a relaxed SLA and batch retry semantics that naturally handle regional
+    outages. Risk exposure during a full regional failure is minimal.
+riskSeverity: HIGH
+riskDescription: >-
+  A full regional outage would halt image processing for the duration of the
+  outage. Given the 4-hour SLA, most regional failures (typically under 2 hours)
+  would not breach the SLA.
+compensatingControls:
+  - control: Automated batch queue with configurable retry and dead-letter handling
+    effectiveness: HIGH
+    verificationMethod: Quarterly chaos engineering tests simulating regional failure
+  - control: Cross-region backup of model artifacts and training data
+    effectiveness: HIGH
+    verificationMethod: Monthly backup restore verification
+  - control: Monitoring with automated escalation if processing SLA is at risk
+    effectiveness: MEDIUM
+    verificationMethod: Real-time dashboard review and alert testing
+requestedBy: Computer Vision Team
+requestedDate: "2024-09-10"
+approvedBy: VP Engineering
+approvalDate: "2024-09-25"
+expirationDate: "2025-10-15"
+remediationPlan:
+  description: >-
+    Implement active-passive multi-region failover with automated failover
+    triggered by health check failures. Phase 1: cross-region data replication
+    (complete). Phase 2: failover automation.
+  targetDate: "2025-10-01"
+  backlogItemUrl: https://github.com/muthub-ai/aac/issues/103
+  assignedTeam: Computer Vision Team
+  progressPercent: 60
+domain: Infrastructure
+tags:
+  - single-region
+  - batch-processing
+  - resiliency
+reviewNotes: >-
+  Accepted given the batch nature of the workload and 4-hour SLA. Must demonstrate
+  chaos engineering results showing queue retry handles 95% of regional failures.
+revisionHistory:
+  - date: "2024-09-10"
+    author: Computer Vision Team
+    change: Waiver request submitted
+  - date: "2024-09-25"
+    author: VP Engineering
+    change: Approved with chaos engineering requirement
+  - date: "2025-03-01"
+    author: Computer Vision Team
+    change: Phase 1 cross-region replication completed

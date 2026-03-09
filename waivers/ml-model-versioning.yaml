@@ -1,0 +1,57 @@
+exceptionId: EXC-AIML-001
+title: Missing Model Lineage Tracking in Demand Forecasting
+targetAppId: demand-forecasting
+targetAppName: Demand Forecasting
+violatedStandardId: STD-AIML-001
+violatedStandardName: ML Model Governance
+violatedRequirementIds:
+  - REQ-MLG-002
+  - REQ-MLG-004
+status: PENDING_REVIEW
+rationale: >-
+  The demand forecasting pipeline was built before the ML governance standard
+  was enacted. Retrofitting model lineage tracking requires significant
+  refactoring of the training pipeline, estimated at 6 weeks of engineering
+  effort. The team is requesting a waiver to align with the next planned
+  refactoring cycle in Q2 2025.
+financialImpact:
+  complianceCost: "$120,000"
+  delayCost: "$280,000"
+  riskExposureCost: "$75,000"
+  summary: >-
+    Immediate compliance costs $120K in engineering effort. Deferring to the
+    planned refactoring cycle saves $160K by combining with other pipeline
+    improvements. Risk exposure from missing lineage is regulatory audit finding.
+riskSeverity: MEDIUM
+riskDescription: >-
+  Without model lineage tracking, the team cannot reproduce historical predictions
+  or audit model decisions. This creates regulatory risk for financial forecasting
+  applications subject to model risk management requirements.
+compensatingControls:
+  - control: Manual model versioning log maintained in Confluence with training data checksums
+    effectiveness: LOW
+    verificationMethod: Monthly review of versioning log completeness
+  - control: Git-based tracking of training configuration and hyperparameters
+    effectiveness: MEDIUM
+    verificationMethod: Automated CI check that training configs are committed before deployment
+requestedBy: Data Science Team
+requestedDate: "2025-01-20"
+remediationPlan:
+  description: >-
+    Integrate MLflow or equivalent model registry during the Q2 2025 pipeline
+    refactoring sprint. This will provide automated lineage tracking, experiment
+    tracking, and model artifact versioning.
+  targetDate: "2025-06-30"
+  backlogItemUrl: https://github.com/muthub-ai/aac/issues/104
+  assignedTeam: Data Science Team
+  progressPercent: 5
+domain: AI / ML
+tags:
+  - model-governance
+  - lineage
+  - mlops
+  - regulatory
+revisionHistory:
+  - date: "2025-01-20"
+    author: Data Science Team
+    change: Initial waiver request submitted for ARB review

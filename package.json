@@ -16,7 +16,9 @@
     "build:diagrams": "tsx scripts/build-diagrams.ts",
     "build:docs": "tsx scripts/build-docs.ts",
     "build:patterns": "tsx scripts/build-pattern-pages.ts",
-    "build:standards": "tsx scripts/build-standard-pages.ts"
+    "build:standards": "tsx scripts/build-standard-pages.ts",
+    "validate:waivers": "tsx scripts/validate-waivers.ts",
+    "build:waivers": "tsx scripts/build-waiver-pages.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.2.0",

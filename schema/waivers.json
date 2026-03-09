@@ -1,0 +1,216 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aac.muthub.org/schema/waivers.json",
+  "title": "Architecture Waiver",
+  "description": "Schema for architecture exception/waiver requests that document temporary deviations from enterprise standards or patterns with risk assessment, compensating controls, and remediation plans.",
+  "type": "object",
+  "required": [
+    "exceptionId",
+    "title",
+    "targetAppId",
+    "targetAppName",
+    "violatedStandardId",
+    "violatedStandardName",
+    "status",
+    "rationale",
+    "riskSeverity",
+    "compensatingControls",
+    "requestedBy",
+    "requestedDate",
+    "remediationPlan"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "exceptionId": {
+      "type": "string",
+      "pattern": "^EXC-[A-Z]+-[0-9]{3}$",
+      "description": "Unique identifier for traceability (e.g., EXC-SEC-001)."
+    },
+    "title": {
+      "type": "string",
+      "minLength": 5,
+      "maxLength": 200,
+      "description": "Human-readable title summarizing the waiver."
+    },
+    "targetAppId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The specific application or component requesting the deviation."
+    },
+    "targetAppName": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Display name of the target application."
+    },
+    "violatedStandardId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The exact ID from standards.json or pattern catalog being bypassed (e.g., STD-SEC-001)."
+    },
+    "violatedStandardName": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Display name of the violated standard or pattern."
+    },
+    "violatedRequirementIds": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Specific requirement IDs within the standard that are being waived."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["PENDING_REVIEW", "APPROVED", "REJECTED", "EXPIRED", "REMEDIATED"],
+      "description": "Current status of the waiver in its lifecycle."
+    },
+    "rationale": {
+      "type": "string",
+      "minLength": 10,
+      "description": "The technical or business reason for the exception."
+    },
+    "financialImpact": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "complianceCost": {
+          "type": "string",
+          "description": "Estimated cost to achieve full compliance now."
+        },
+        "delayCost": {
+          "type": "string",
+          "description": "Cost of delaying the project to achieve compliance."
+        },
+        "riskExposureCost": {
+          "type": "string",
+          "description": "Estimated cost if the risk materializes during the waiver period."
+        },
+        "summary": {
+          "type": "string",
+          "description": "Executive summary of the financial trade-off."
+        }
+      },
+      "required": ["complianceCost", "delayCost", "summary"]
+    },
+    "riskSeverity": {
+      "type": "string",
+      "enum": ["CRITICAL", "HIGH", "MEDIUM", "LOW"],
+      "description": "Categorization of the exposed risk."
+    },
+    "riskDescription": {
+      "type": "string",
+      "description": "Detailed description of the risk exposure during the waiver period."
+    },
+    "compensatingControls": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["control", "effectiveness"],
+        "properties": {
+          "control": {
+            "type": "string",
+            "description": "Description of the compensating control."
+          },
+          "effectiveness": {
+            "type": "string",
+            "enum": ["HIGH", "MEDIUM", "LOW"],
+            "description": "How effective this control is at mitigating the risk."
+          },
+          "verificationMethod": {
+            "type": "string",
+            "description": "How compliance with this control is verified."
+          }
+        }
+      },
+      "minItems": 1,
+      "description": "Specific security or operational measures implemented to mitigate the risk of non-compliance."
+    },
+    "requestedBy": {
+      "type": "string",
+      "description": "Name or team that requested the waiver."
+    },
+    "requestedDate": {
+      "type": "string",
+      "format": "date",
+      "description": "When the waiver was initially requested."
+    },
+    "approvedBy": {
+      "type": "string",
+      "description": "Name or role of the approver (e.g., Chief Architect, CISO)."
+    },
+    "approvalDate": {
+      "type": "string",
+      "format": "date",
+      "description": "When the exception was authorized."
+    },
+    "expirationDate": {
+      "type": "string",
+      "format": "date",
+      "description": "Hard deadline for remediation. Exceptions must be temporary."
+    },
+    "remediationPlan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["description", "targetDate"],
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "Brief outline of the remediation plan."
+        },
+        "targetDate": {
+          "type": "string",
+          "format": "date",
+          "description": "Target date for completing remediation."
+        },
+        "backlogItemUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "Link to the engineering backlog item for fixing the deviation."
+        },
+        "assignedTeam": {
+          "type": "string",
+          "description": "Team responsible for executing the remediation."
+        },
+        "progressPercent": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Current remediation progress (0-100)."
+        }
+      }
+    },
+    "domain": {
+      "type": "string",
+      "description": "Architecture domain (e.g., Security, Data, Infrastructure)."
+    },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Free-form tags for categorization."
+    },
+    "reviewNotes": {
+      "type": "string",
+      "description": "Notes from the Architecture Review Board."
+    },
+    "revisionHistory": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["date", "author", "change"],
+        "properties": {
+          "date": { "type": "string", "format": "date" },
+          "author": { "type": "string" },
+          "change": { "type": "string" }
+        }
+      }
+    }
+  },
+  "if": {
+    "properties": {
+      "status": { "const": "APPROVED" }
+    }
+  },
+  "then": {
+    "required": ["approvedBy", "approvalDate", "expirationDate"]
+  }
+}

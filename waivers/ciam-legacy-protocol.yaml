@@ -1,0 +1,74 @@
+exceptionId: EXC-IAM-001
+title: Partner Portal Using SAML 1.1 Instead of OIDC
+targetAppId: ecommerce-platform
+targetAppName: E-Commerce Platform
+violatedStandardId: STD-IAM-001
+violatedStandardName: Customer IAM (CIAM)
+violatedRequirementIds:
+  - REQ-IAM-001
+status: REMEDIATED
+rationale: >-
+  The partner portal integrated with three legacy B2B partners using SAML 1.1
+  federation. These partners could not support OIDC without significant changes
+  to their identity infrastructure. A phased migration was agreed upon.
+financialImpact:
+  complianceCost: "$85,000"
+  delayCost: "$150,000"
+  summary: >-
+    Compliance required coordinating with three external partners at $85K total
+    integration cost. Forcing immediate migration would have disrupted $150K/month
+    in partner revenue during the transition period.
+riskSeverity: MEDIUM
+riskDescription: >-
+  SAML 1.1 lacks modern security features present in OIDC, including PKCE,
+  token rotation, and standardized session management. This increases the
+  risk of session hijacking and replay attacks.
+compensatingControls:
+  - control: Mutual TLS enforcement on all SAML assertion endpoints
+    effectiveness: HIGH
+    verificationMethod: Automated certificate validation and TLS version monitoring
+  - control: IP allowlisting restricting SAML federation to known partner IP ranges
+    effectiveness: HIGH
+    verificationMethod: Monthly review of firewall rules and connection logs
+  - control: Session duration limited to 15 minutes with forced re-authentication
+    effectiveness: MEDIUM
+    verificationMethod: Session audit log review
+requestedBy: Identity Platform Team
+requestedDate: "2024-03-10"
+approvedBy: CISO
+approvalDate: "2024-03-25"
+expirationDate: "2025-03-31"
+remediationPlan:
+  description: >-
+    Migrate all three partner integrations from SAML 1.1 to OIDC. All three
+    partners have completed migration. The SAML 1.1 endpoint has been
+    decommissioned.
+  targetDate: "2025-03-15"
+  backlogItemUrl: https://github.com/muthub-ai/aac/issues/108
+  assignedTeam: Identity Platform Team
+  progressPercent: 100
+domain: Identity
+tags:
+  - SAML
+  - OIDC
+  - partner-integration
+  - identity
+reviewNotes: >-
+  REMEDIATED. All three partner integrations successfully migrated to OIDC.
+  SAML 1.1 endpoint decommissioned on March 10, 2025. Waiver closed.
+revisionHistory:
+  - date: "2024-03-10"
+    author: Identity Platform Team
+    change: Waiver request submitted
+  - date: "2024-03-25"
+    author: CISO
+    change: Approved with mTLS compensating control
+  - date: "2024-09-15"
+    author: Identity Platform Team
+    change: Partner 1 migrated to OIDC
+  - date: "2025-01-20"
+    author: Identity Platform Team
+    change: Partners 2 and 3 migrated to OIDC
+  - date: "2025-03-10"
+    author: Identity Platform Team
+    change: SAML 1.1 endpoint decommissioned, waiver remediated

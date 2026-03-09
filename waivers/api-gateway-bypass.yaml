@@ -1,0 +1,67 @@
+exceptionId: EXC-INT-001
+title: Direct Database Access Bypassing API Gateway in ML Platform
+targetAppId: ml-platform
+targetAppName: ML Platform
+violatedStandardId: STD-INT-001
+violatedStandardName: API & Microservices Integration
+violatedRequirementIds:
+  - REQ-API-002
+  - REQ-API-005
+status: APPROVED
+rationale: >-
+  The ML training pipeline requires sub-millisecond access to the feature store
+  for real-time feature serving. Routing through the API gateway adds 8-12ms
+  latency per request, which degrades model training throughput by 40%.
+financialImpact:
+  complianceCost: "$180,000"
+  delayCost: "$520,000"
+  riskExposureCost: "$150,000"
+  summary: >-
+    Full API gateway compliance would require custom low-latency gateway middleware
+    costing $180K. Training throughput degradation costs $520K in delayed model
+    deployments per quarter. Direct access risk exposure is limited to internal
+    network boundaries.
+riskSeverity: HIGH
+riskDescription: >-
+  Direct database access bypasses API rate limiting, authentication middleware,
+  and request logging. This creates an unaudited access path to the feature store
+  that could be exploited if the ML Platform network segment is compromised.
+compensatingControls:
+  - control: Database-level authentication with per-service credentials rotated every 30 days
+    effectiveness: HIGH
+    verificationMethod: Automated credential rotation verification via Vault audit logs
+  - control: Network segmentation restricting access to ML Platform VLAN only
+    effectiveness: HIGH
+    verificationMethod: Monthly firewall rule review and network scan
+  - control: Query-level audit logging directly at the database layer
+    effectiveness: MEDIUM
+    verificationMethod: Weekly audit log review by Security Operations
+requestedBy: ML Infrastructure Team
+requestedDate: "2024-10-01"
+approvedBy: Chief Architect
+approvalDate: "2024-10-15"
+expirationDate: "2025-12-31"
+remediationPlan:
+  description: >-
+    Implement a purpose-built low-latency sidecar proxy that provides authentication
+    and audit logging without the full API gateway overhead. Proof of concept complete.
+  targetDate: "2025-11-30"
+  backlogItemUrl: https://github.com/muthub-ai/aac/issues/102
+  assignedTeam: ML Infrastructure Team
+  progressPercent: 20
+domain: Integration
+tags:
+  - api-gateway
+  - latency
+  - ml-training
+  - feature-store
+reviewNotes: >-
+  Approved given strong network segmentation. The low-latency proxy solution is
+  preferred over full gateway integration. Monthly latency benchmarks required.
+revisionHistory:
+  - date: "2024-10-01"
+    author: ML Infrastructure Team
+    change: Initial request for direct DB access
+  - date: "2024-10-15"
+    author: Chief Architect
+    change: Approved with network segmentation requirement

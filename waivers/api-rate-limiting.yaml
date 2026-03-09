@@ -1,0 +1,63 @@
+exceptionId: EXC-INT-002
+title: Internal Analytics API Missing Rate Limiting
+targetAppId: demand-forecasting
+targetAppName: Demand Forecasting
+violatedStandardId: STD-INT-001
+violatedStandardName: API & Microservices Integration
+violatedRequirementIds:
+  - REQ-API-003
+  - REQ-API-006
+status: PENDING_REVIEW
+rationale: >-
+  The internal analytics API serving demand forecasting data to downstream consumers
+  was deployed without rate limiting. The API currently serves 4 internal consumers
+  with predictable traffic patterns. Adding rate limiting requires deploying a Redis
+  cluster for distributed rate tracking, which was deferred to reduce initial
+  deployment complexity.
+financialImpact:
+  complianceCost: "$35,000"
+  delayCost: "$60,000"
+  riskExposureCost: "$120,000"
+  summary: >-
+    Rate limiting implementation costs $35K including Redis cluster and middleware.
+    Deferral saved $60K in initial deployment timeline. Without rate limiting,
+    a runaway consumer could cause cascading failures costing $120K in downtime.
+riskSeverity: HIGH
+riskDescription: >-
+  Without rate limiting, a single misbehaving consumer can exhaust API capacity,
+  causing denial of service for all downstream systems. The analytics API backs
+  real-time inventory decisions, making availability critical during peak hours.
+compensatingControls:
+  - control: Network-level connection limits per source IP via cloud load balancer
+    effectiveness: MEDIUM
+    verificationMethod: Load testing with simulated traffic spikes
+  - control: Circuit breaker pattern in API handler rejecting requests above 500 RPS
+    effectiveness: LOW
+    verificationMethod: Synthetic load testing verifying circuit breaker activation
+  - control: Real-time monitoring with PagerDuty alerting on latency p99 exceeding 200ms
+    effectiveness: MEDIUM
+    verificationMethod: Weekly alert threshold validation
+requestedBy: Data Engineering Team
+requestedDate: "2025-02-10"
+remediationPlan:
+  description: >-
+    Deploy Redis-backed distributed rate limiter with per-consumer quotas and
+    configurable burst allowances. Implement token bucket algorithm with
+    graceful degradation.
+  targetDate: "2025-05-31"
+  backlogItemUrl: https://github.com/muthub-ai/aac/issues/110
+  assignedTeam: Data Engineering Team
+  progressPercent: 10
+domain: Integration
+tags:
+  - rate-limiting
+  - api-protection
+  - availability
+  - internal-api
+revisionHistory:
+  - date: "2025-02-10"
+    author: Data Engineering Team
+    change: Waiver request submitted for ARB review
+  - date: "2025-02-15"
+    author: Architecture Review Board
+    change: Under review, additional load testing data requested

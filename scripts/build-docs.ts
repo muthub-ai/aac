@@ -536,6 +536,7 @@ function nav(activePage: string, isSubpage = false): string {
       <a href="${prefix}index.html#systems" class="nav-link ${activePage === 'systems' ? 'active' : ''}">Systems</a>
       <a href="${prefix}patterns/index.html" class="nav-link ${activePage === 'patterns' ? 'active' : ''}">Patterns</a>
       <a href="${prefix}standards/index.html" class="nav-link ${activePage === 'standards' ? 'active' : ''}">Standards</a>
+      <a href="${prefix}waivers/index.html" class="nav-link ${activePage === 'waivers' ? 'active' : ''}">Waivers</a>
       <a href="${prefix}index.html#pipeline" class="nav-link">Pipeline</a>
       <a href="https://github.com/muthub-ai/aac" class="nav-link" target="_blank" rel="noopener">GitHub &nearr;</a>
     </div>
