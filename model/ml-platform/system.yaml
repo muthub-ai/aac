@@ -116,16 +116,149 @@ model:
       description: Requests information from
       technology: HTTP
   deploymentNodes:
-  - id: gcp-project
-    name: GCP Project
-    tags: gcp
+  # ── Global edge ─────────────────────────────────────────────
+  - id: gcp-global
+    name: Google Cloud Global
+    environment: Production
+    technology: GCP Global Infrastructure
+    tags: gcp,global,production
+    infrastructureNodes:
+    - id: cloud-dns
+      name: Cloud DNS
+      technology: Google Cloud DNS
+      tags: networking,dns,gcp
+      properties:
+        type: dns
+      relationships:
+      - destinationId: global-https-lb
+        description: Resolves client requests to
+        technology: DNS
+    - id: global-https-lb
+      name: Global HTTPS Load Balancer
+      technology: Google Cloud External Application Load Balancer
+      tags: networking,load-balancer,gcp
+      properties:
+        type: load-balancer
+      relationships:
+      - destinationId: MLPlatform.Sidecar
+        description: Routes API traffic to primary region with failover to standby
+        technology: HTTPS
+    - id: cloud-cdn
+      name: Cloud CDN
+      technology: Google Cloud CDN
+      tags: caching,cdn,gcp
+      properties:
+        type: cdn
+      relationships:
+      - destinationId: MLPlatform.Sidecar
+        description: Caches and serves API responses from
+        technology: HTTPS
+    - id: cloud-armor
+      name: Cloud Armor
+      technology: Google Cloud Armor
+      tags: security,waf,gcp
+      properties:
+        type: waf
+      relationships:
+      - destinationId: global-https-lb
+        description: Applies WAF and DDoS protection to
+        technology: Security Policy
+  # ── Region 1: us-central1 (Primary) ─────────────────────────
+  - id: gcp-us-central1-primary
+    name: Google Cloud us-central1 (Primary)
+    environment: Production
+    technology: GCP Region
+    tags: gcp,production,us-central1,primary,active
+    infrastructureNodes:
+    - id: us-internal-lb
+      name: Internal Load Balancer
+      technology: Google Cloud Internal TCP/UDP Load Balancer
+      tags: networking,load-balancer,gcp
+      properties:
+        type: load-balancer
+      relationships:
+      - destinationId: MLPlatform.Sidecar
+        description: Distributes prediction traffic to
+        technology: HTTP
+    - id: us-cloud-nat
+      name: Cloud NAT Gateway
+      technology: Google Cloud NAT
+      tags: networking,gcp
+      properties:
+        type: nat-gateway
+    - id: us-vpc-firewall
+      name: VPC Firewall
+      technology: Google Cloud VPC Firewall Rules
+      tags: networking,security,gcp
+      properties:
+        type: firewall
+    - id: us-cloud-interconnect
+      name: Cloud Interconnect
+      technology: Google Cloud Dedicated Interconnect
+      tags: networking,replication,gcp
+      properties:
+        type: interconnect
+      relationships:
+      - destinationId: eu-cloud-interconnect
+        description: Cross-region VPC peering to europe-west1 for replication
+        technology: Google Cloud VPC Network Peering
     children:
-    - id: us-central1
-      name: us-central1
-      tags: region
+    - id: us-gke-cluster
+      name: GKE Cluster (Primary)
+      technology: Google Kubernetes Engine
+      tags: compute,kubernetes,gcp,primary
       containerInstances:
       - containerId: MLPlatform.Sidecar
         instanceId: 1
+      - containerId: MLPlatform.ModelContainer
+        instanceId: 1
+  # ── Region 2: europe-west1 (Standby) ────────────────────────
+  - id: gcp-europe-west1-standby
+    name: Google Cloud europe-west1 (Standby)
+    environment: Production
+    technology: GCP Region
+    tags: gcp,production,europe-west1,standby,passive
+    infrastructureNodes:
+    - id: eu-internal-lb
+      name: Internal Load Balancer (Standby)
+      technology: Google Cloud Internal TCP/UDP Load Balancer
+      tags: networking,load-balancer,gcp,standby
+      properties:
+        type: load-balancer
+      relationships:
+      - destinationId: MLPlatform.Sidecar
+        description: Distributes prediction traffic to (on failover)
+        technology: HTTP
+    - id: eu-cloud-nat
+      name: Cloud NAT Gateway (Standby)
+      technology: Google Cloud NAT
+      tags: networking,gcp,standby
+      properties:
+        type: nat-gateway
+    - id: eu-vpc-firewall
+      name: VPC Firewall
+      technology: Google Cloud VPC Firewall Rules
+      tags: networking,security,gcp
+      properties:
+        type: firewall
+    - id: eu-cloud-interconnect
+      name: Cloud Interconnect
+      technology: Google Cloud Dedicated Interconnect
+      tags: networking,replication,gcp
+      properties:
+        type: interconnect
+      relationships:
+      - destinationId: us-cloud-interconnect
+        description: Cross-region VPC peering to us-central1 for replication
+        technology: Google Cloud VPC Network Peering
+    children:
+    - id: eu-gke-cluster
+      name: GKE Cluster (Standby)
+      technology: Google Kubernetes Engine
+      tags: compute,kubernetes,gcp,standby
+      containerInstances:
+      - containerId: MLPlatform.Sidecar
+        instanceId: 2
       - containerId: MLPlatform.ModelContainer
         instanceId: 2
 views:
@@ -138,7 +271,8 @@ views:
     softwareSystemId: MLPlatform
     description: Container view of the ML Platform showing internal containers and external dependencies
   deploymentViews:
-  - key: MLPlatform-Deployment-Prod
+  - key: MLPlatform-Deployment-ActivePassive
     softwareSystemId: MLPlatform
     environment: Production
-    description: GCP deployment view of the ML Platform on Google Kubernetes Engine
+    title: GCP Active-Passive Multi-Region Deployment
+    description: Active-passive deployment across us-central1 (Primary) and europe-west1 (Standby) with Global HTTPS Load Balancer providing failover routing, Cloud CDN, Cloud Armor WAF, cross-region VPC peering, and standby GKE cluster for disaster recovery.

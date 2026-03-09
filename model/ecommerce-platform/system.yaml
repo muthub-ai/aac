@@ -309,45 +309,94 @@ model:
     disposition: Tolerate
     dataClassification: Internal Use
   deploymentNodes:
-  - id: GCP-us-central1
-    name: GCP us-central1 Region
+  - id: gcp-global
+    name: Google Cloud Global
     environment: Production
-    technology: Google Cloud Platform
-    tags: gcp, production
+    technology: GCP Global Infrastructure
+    tags: gcp,global,production
     infrastructureNodes:
-    - id: CloudLoadBalancer
-      name: Cloud Load Balancer
+    - id: cloud-dns
+      name: Cloud DNS
+      technology: Google Cloud DNS
+      tags: networking,dns,gcp
+      properties:
+        type: dns
+      relationships:
+      - destinationId: global-https-lb
+        description: Resolves client requests to
+        technology: DNS
+    - id: global-https-lb
+      name: Global HTTPS Load Balancer
       technology: Google Cloud External Application Load Balancer
-      tags: networking, gcp-managed
-    - id: CloudCDN
+      tags: networking,load-balancer,gcp
+      properties:
+        type: load-balancer
+      relationships:
+      - destinationId: us-GKE-Cluster
+        description: Routes all traffic to primary region
+        technology: HTTPS
+      - destinationId: eu-GKE-Cluster-Standby
+        description: Fails over to standby region when primary is unhealthy
+        technology: HTTPS
+    - id: cloud-cdn
       name: Cloud CDN
       technology: Google Cloud CDN
-      tags: cdn, gcp-managed
-    - id: CloudArmor
+      tags: caching,cdn,gcp
+      properties:
+        type: cdn
+      relationships:
+      - destinationId: us-GKE-Cluster
+        description: Caches and serves static assets from primary region
+        technology: HTTPS
+    - id: cloud-armor
       name: Cloud Armor
-      technology: Google Cloud Armor WAF
-      tags: security, gcp-managed
-    - id: CloudIAM
+      technology: Google Cloud Armor
+      tags: security,waf,gcp
+      properties:
+        type: waf
+      relationships:
+      - destinationId: global-https-lb
+        description: Applies WAF and DDoS protection to
+        technology: Security Policy
+  - id: gcp-us-central1-primary
+    name: Google Cloud us-central1 (Primary)
+    environment: Production
+    technology: GCP Region
+    tags: gcp,production,us-central1,primary,active
+    infrastructureNodes:
+    - id: us-cloud-iam
       name: Cloud IAM
       technology: Google Cloud Identity and Access Management
-      tags: security, gcp-managed
-    - id: CloudMonitoring
+      tags: security,gcp-managed
+      properties:
+        type: iam
+    - id: us-cloud-monitoring
       name: Cloud Operations Suite
       technology: Google Cloud Monitoring and Logging
-      tags: observability, gcp-managed
-    - id: SecretManager
+      tags: observability,gcp-managed
+      properties:
+        type: monitoring
+    - id: us-secret-manager
       name: Secret Manager
       technology: Google Cloud Secret Manager
-      tags: security, gcp-managed
-    - id: VPCNetwork
+      tags: security,gcp-managed
+      properties:
+        type: secrets
+    - id: us-vpc-network
       name: VPC Network
       technology: Google Cloud VPC
-      tags: networking, gcp-managed
+      tags: networking,gcp-managed
+      properties:
+        type: network
+      relationships:
+      - destinationId: eu-vpc-network
+        description: Cross-region VPC peering to standby region
+        technology: VPC Network Peering
     children:
-    - id: GKE-Cluster
-      name: GKE Autopilot Cluster
+    - id: us-GKE-Cluster
+      name: GKE Autopilot Cluster (Primary)
       technology: Google Kubernetes Engine Autopilot
-      tags: kubernetes, gcp-managed, compute
+      tags: kubernetes,gcp-managed,compute,primary
       containerInstances:
       - containerId: ECommerce.WebApp
         instanceId: 1
@@ -359,45 +408,135 @@ model:
         instanceId: 1
       - containerId: Inventory.InventoryApi
         instanceId: 1
-    - id: CloudSQL-PostgreSQL
-      name: Cloud SQL PostgreSQL Instances
+    - id: us-CloudSQL-PostgreSQL
+      name: Cloud SQL PostgreSQL (Primary)
       technology: Cloud SQL for PostgreSQL 15
-      tags: database, gcp-managed, postgresql
+      tags: database,gcp-managed,postgresql,primary
       containerInstances:
       - containerId: ECommerce.ProductDB
         instanceId: 1
       - containerId: Inventory.InventoryDB
         instanceId: 1
-    - id: CloudFirestore-Cluster
-      name: Cloud Firestore
+    - id: us-CloudFirestore
+      name: Cloud Firestore (Primary)
       technology: Google Cloud Firestore (Native Mode)
-      tags: database, gcp-managed, nosql
+      tags: database,gcp-managed,nosql,primary
       containerInstances:
       - containerId: ECommerce.CustomerDB
         instanceId: 1
       - containerId: ECommerce.OrderDB
         instanceId: 1
-    - id: ElasticCloud-GCP
-      name: Elastic Cloud on GCP
+    - id: us-ElasticCloud
+      name: Elastic Cloud on GCP (Primary)
       technology: Elastic Cloud (Elasticsearch 8.x)
-      tags: search, gcp-marketplace
+      tags: search,gcp-marketplace,primary
       containerInstances:
       - containerId: ECommerce.SearchService
         instanceId: 1
-    - id: CloudRun-CMS
-      name: Cloud Run CMS Service
+    - id: us-CloudRun-CMS
+      name: Cloud Run CMS Service (Primary)
       technology: Google Cloud Run
-      tags: serverless, gcp-managed
+      tags: serverless,gcp-managed,primary
       containerInstances:
       - containerId: CMS.CMSApp
         instanceId: 1
-    - id: CloudSQL-MySQL
-      name: Cloud SQL MySQL Instance
+    - id: us-CloudSQL-MySQL
+      name: Cloud SQL MySQL (Primary)
       technology: Cloud SQL for MySQL 8.0
-      tags: database, gcp-managed, mysql
+      tags: database,gcp-managed,mysql,primary
       containerInstances:
       - containerId: CMS.CMSDB
         instanceId: 1
+  - id: gcp-europe-west1-standby
+    name: Google Cloud europe-west1 (Standby)
+    environment: Production
+    technology: GCP Region
+    tags: gcp,production,europe-west1,standby,passive
+    infrastructureNodes:
+    - id: eu-cloud-monitoring
+      name: Cloud Operations Suite (Standby)
+      technology: Google Cloud Monitoring and Logging
+      tags: observability,gcp-managed
+      properties:
+        type: monitoring
+    - id: eu-vpc-network
+      name: VPC Network (Standby)
+      technology: Google Cloud VPC
+      tags: networking,gcp-managed
+      properties:
+        type: network
+      relationships:
+      - destinationId: us-vpc-network
+        description: Cross-region VPC peering to primary region
+        technology: VPC Network Peering
+    - id: eu-cross-region-replication
+      name: Cross-Region Replication
+      technology: Google Cloud SQL Cross-Region Replication
+      tags: replication,gcp-managed,dr
+      properties:
+        type: replication
+      relationships:
+      - destinationId: us-CloudSQL-PostgreSQL
+        description: Replicates data from primary PostgreSQL instances
+        technology: Cloud SQL Replication
+      - destinationId: us-CloudSQL-MySQL
+        description: Replicates data from primary MySQL instance
+        technology: Cloud SQL Replication
+    children:
+    - id: eu-GKE-Cluster-Standby
+      name: GKE Autopilot Cluster (Standby)
+      technology: Google Kubernetes Engine Autopilot
+      tags: kubernetes,gcp-managed,compute,standby
+      containerInstances:
+      - containerId: ECommerce.WebApp
+        instanceId: 2
+      - containerId: ECommerce.MobileApp
+        instanceId: 2
+      - containerId: ECommerce.ApiGateway
+        instanceId: 2
+      - containerId: Inventory.InventoryApp
+        instanceId: 2
+      - containerId: Inventory.InventoryApi
+        instanceId: 2
+    - id: eu-CloudSQL-PostgreSQL-Replica
+      name: Cloud SQL PostgreSQL (Read Replica)
+      technology: Cloud SQL for PostgreSQL 15 (Read Replica)
+      tags: database,gcp-managed,postgresql,standby,replica
+      containerInstances:
+      - containerId: ECommerce.ProductDB
+        instanceId: 2
+      - containerId: Inventory.InventoryDB
+        instanceId: 2
+    - id: eu-CloudFirestore-Replica
+      name: Cloud Firestore (Multi-Region Replica)
+      technology: Google Cloud Firestore (Multi-Region)
+      tags: database,gcp-managed,nosql,standby
+      containerInstances:
+      - containerId: ECommerce.CustomerDB
+        instanceId: 2
+      - containerId: ECommerce.OrderDB
+        instanceId: 2
+    - id: eu-ElasticCloud-Replica
+      name: Elastic Cloud on GCP (Cross-Cluster Replica)
+      technology: Elastic Cloud (Elasticsearch 8.x CCR)
+      tags: search,gcp-marketplace,standby,replica
+      containerInstances:
+      - containerId: ECommerce.SearchService
+        instanceId: 2
+    - id: eu-CloudRun-CMS-Standby
+      name: Cloud Run CMS Service (Standby)
+      technology: Google Cloud Run
+      tags: serverless,gcp-managed,standby
+      containerInstances:
+      - containerId: CMS.CMSApp
+        instanceId: 2
+    - id: eu-CloudSQL-MySQL-Replica
+      name: Cloud SQL MySQL (Read Replica)
+      technology: Cloud SQL for MySQL 8.0 (Read Replica)
+      tags: database,gcp-managed,mysql,standby,replica
+      containerInstances:
+      - containerId: CMS.CMSDB
+        instanceId: 2
 views:
   systemContextViews:
   - key: ECommerce-SystemContext
@@ -457,3 +596,10 @@ views:
     description: Comprehensive view of the entire e-commerce platform deployment on Google Cloud Platform in us-central1,
       showing all systems including E-Commerce, Inventory, and CMS with their GKE, Cloud SQL, Cloud Firestore, Elastic Cloud,
       and Cloud Run infrastructure.
+  - key: ECommerce-Deployment-ActivePassive
+    softwareSystemId: ECommerce
+    environment: Production
+    title: E-Commerce Platform - GCP Active-Passive Multi-Region Deployment
+    description: Active-passive deployment across us-central1 (Primary) and europe-west1 (Standby) with Global HTTPS Load
+      Balancer with failover routing, Cloud CDN, Cloud Armor WAF, cross-region VPC peering, and database replication for
+      disaster recovery.

@@ -180,20 +180,191 @@ model:
     - destinationId: DataWarehouse
       description: Loads data from
   deploymentNodes:
-  - id: GCP
-    name: Google Cloud Platform
+  # ── Global edge ─────────────────────────────────────────────
+  - id: gcp-global
+    name: Google Cloud Global
+    environment: Production
+    technology: GCP Global Infrastructure
+    tags: gcp,global,production
+    infrastructureNodes:
+    - id: cloud-dns
+      name: Cloud DNS
+      technology: Google Cloud DNS
+      tags: networking,dns,gcp
+      properties:
+        type: dns
+      relationships:
+      - destinationId: global-https-lb
+        description: Resolves client requests to
+        technology: DNS
+    - id: global-https-lb
+      name: Global HTTPS Load Balancer
+      technology: Google Cloud External Application Load Balancer
+      tags: networking,load-balancer,gcp
+      properties:
+        type: load-balancer
+      relationships:
+      - destinationId: ImageCategorization.ModelApi
+        description: Routes API traffic to primary region with failover routing
+        technology: HTTPS
+    - id: cloud-cdn
+      name: Cloud CDN
+      technology: Google Cloud CDN
+      tags: caching,cdn,gcp
+      properties:
+        type: cdn
+      relationships:
+      - destinationId: ImageCategorization.ModelApi
+        description: Caches and serves static API responses from
+        technology: HTTPS
+    - id: cloud-armor
+      name: Cloud Armor
+      technology: Google Cloud Armor
+      tags: security,waf,gcp
+      properties:
+        type: waf
+      relationships:
+      - destinationId: global-https-lb
+        description: Applies WAF and DDoS protection to
+        technology: Security Policy
+
+  # ── Region 1: us-central1 (Iowa) — Primary ─────────────────
+  - id: gcp-us-central1-primary
+    name: Google Cloud us-central1 (Primary)
+    environment: Production
+    technology: GCP Region
+    tags: gcp,production,us-central1,primary
+    infrastructureNodes:
+    - id: us-internal-lb
+      name: Internal Load Balancer
+      technology: Google Cloud Internal TCP/UDP Load Balancer
+      tags: networking,load-balancer,gcp
+      properties:
+        type: load-balancer
+      relationships:
+      - destinationId: ImageCategorization.ModelApi
+        description: Distributes API traffic to
+        technology: HTTPS
+    - id: us-cloud-nat
+      name: Cloud NAT Gateway
+      technology: Google Cloud NAT
+      tags: networking,gcp
+      properties:
+        type: nat-gateway
+    - id: us-vpc-firewall
+      name: VPC Firewall
+      technology: Google Cloud VPC Firewall Rules
+      tags: networking,security,gcp
+      properties:
+        type: firewall
+    - id: us-cloud-interconnect
+      name: Cloud Interconnect
+      technology: Google Cloud Dedicated Interconnect
+      tags: networking,replication,gcp
+      properties:
+        type: interconnect
+      relationships:
+      - destinationId: eu-cloud-interconnect
+        description: Cross-region replication to europe-west1 standby
+        technology: Google Cloud VPC Network Peering
     children:
-    - id: GCP-us-central1
-      name: us-central1
+    - id: us-cloud-run
+      name: Cloud Run
+      technology: Google Cloud Run
+      tags: compute,serverless,gcp
       containerInstances:
       - containerId: ImageCategorization.ModelApi
         instanceId: 1
+    - id: us-vertex-ai
+      name: Vertex AI Platform
+      technology: Google Cloud Vertex AI
+      tags: ml,ai,gcp
+      containerInstances:
+      - containerId: ImageCategorization.ModelTrainingPipeline
+        instanceId: 1
+    - id: us-cloud-build
+      name: Cloud Build
+      technology: Google Cloud Build
+      tags: ci-cd,gcp
+      containerInstances:
+      - containerId: ImageCategorization.CiCdPipeline
+        instanceId: 1
+    - id: us-cloud-sql
+      name: Cloud SQL (Primary)
+      technology: Google Cloud SQL for PostgreSQL
+      tags: database,sql,gcp,primary
+      containerInstances:
+      - containerId: BackendSystem.ImageDatabase
+        instanceId: 1
+
+  # ── Region 2: europe-west1 (Belgium) — Standby ─────────────
+  - id: gcp-europe-west1-standby
+    name: Google Cloud europe-west1 (Standby)
+    environment: Production
+    technology: GCP Region
+    tags: gcp,production,europe-west1,standby
+    infrastructureNodes:
+    - id: eu-internal-lb
+      name: Internal Load Balancer (Standby)
+      technology: Google Cloud Internal TCP/UDP Load Balancer
+      tags: networking,load-balancer,gcp,standby
+      properties:
+        type: load-balancer
+      relationships:
+      - destinationId: ImageCategorization.ModelApi
+        description: Distributes API traffic to (on failover)
+        technology: HTTPS
+    - id: eu-cloud-nat
+      name: Cloud NAT Gateway
+      technology: Google Cloud NAT
+      tags: networking,gcp
+      properties:
+        type: nat-gateway
+    - id: eu-vpc-firewall
+      name: VPC Firewall
+      technology: Google Cloud VPC Firewall Rules
+      tags: networking,security,gcp
+      properties:
+        type: firewall
+    - id: eu-cloud-interconnect
+      name: Cloud Interconnect
+      technology: Google Cloud Dedicated Interconnect
+      tags: networking,replication,gcp
+      properties:
+        type: interconnect
+      relationships:
+      - destinationId: us-cloud-interconnect
+        description: Cross-region replication to us-central1 primary
+        technology: Google Cloud VPC Network Peering
+    children:
+    - id: eu-cloud-run
+      name: Cloud Run (Standby)
+      technology: Google Cloud Run
+      tags: compute,serverless,gcp,standby
+      containerInstances:
+      - containerId: ImageCategorization.ModelApi
+        instanceId: 2
+    - id: eu-vertex-ai
+      name: Vertex AI Platform (Standby)
+      technology: Google Cloud Vertex AI
+      tags: ml,ai,gcp,standby
+      containerInstances:
       - containerId: ImageCategorization.ModelTrainingPipeline
         instanceId: 2
+    - id: eu-cloud-build
+      name: Cloud Build (Standby)
+      technology: Google Cloud Build
+      tags: ci-cd,gcp,standby
+      containerInstances:
       - containerId: ImageCategorization.CiCdPipeline
-        instanceId: 3
+        instanceId: 2
+    - id: eu-cloud-sql
+      name: Cloud SQL (Standby Replica)
+      technology: Google Cloud SQL for PostgreSQL
+      tags: database,sql,gcp,standby
+      containerInstances:
       - containerId: BackendSystem.ImageDatabase
-        instanceId: 4
+        instanceId: 2
 views:
   systemContextViews:
   - key: ImageCategorization-SystemContext
@@ -204,7 +375,8 @@ views:
     softwareSystemId: ImageCategorization
     description: Container diagram for the Image Categorization system
   deploymentViews:
-  - key: ImageCategorization-Deployment-Prod
+  - key: ImageCategorization-Deployment-ActivePassive
     softwareSystemId: ImageCategorization
     environment: Production
-    description: GCP deployment diagram for the Image Categorization system
+    title: GCP Active-Passive Multi-Region Deployment
+    description: Active-passive deployment across us-central1 (Primary) and europe-west1 (Standby) with Global HTTPS Load Balancer, failover routing, Cloud CDN, Cloud Armor WAF, cross-region replication, and Cloud SQL standby replica.
