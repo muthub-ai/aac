@@ -110,7 +110,7 @@ jobs:
 
   # =========================================================================
   # STAGE 4 — Artifact Creation (Diagrams)
-  # STAGE 5 — Documentation Generation (docToolchain)
+  # STAGE 5 — Documentation Generation (Asciidoctor.js)
   # =========================================================================
   build-docs:
     name: "Build Diagrams & Documentation"
@@ -133,59 +133,20 @@ jobs:
         run: npm ci
 
       # ---------------------------------------------------------------------
-      # 1c. Set up Java 17 (required by docToolchain / Gradle / Groovy).
-      #     Uses Eclipse Temurin distribution with Gradle caching.
-      # ---------------------------------------------------------------------
-      - name: "Set up Java 17"
-        uses: actions/setup-java@v4
-        with:
-          distribution: "temurin"
-          java-version: "17"
-
-      # ---------------------------------------------------------------------
-      # Cache docToolchain / Gradle / Groovy Grape dependencies to avoid
-      # re-downloading ~200 MB on every run.
-      # ---------------------------------------------------------------------
-      - name: "Cache docToolchain dependencies"
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.doctoolchain
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-            ~/.groovy/grapes
-          key: ${{ runner.os }}-dtc-${{ hashFiles('docToolchainConfig.groovy') }}
-          restore-keys: |
-            ${{ runner.os }}-dtc-
-
-      # ---------------------------------------------------------------------
       # 4. Artifact Creation — Transpile YAML models into PlantUML (.puml)
       #    and Draw.io XML (.drawio.xml) diagram files. These are written
-      #    to src/docs/diagrams/<system-id>/ for docToolchain to pick up.
+      #    to src/docs/diagrams/ for the documentation build to pick up.
       # ---------------------------------------------------------------------
       - name: "Generate diagrams (PlantUML + Draw.io)"
         run: npx tsx scripts/build-diagrams.ts
 
       # ---------------------------------------------------------------------
-      # 5. Documentation Generation — run docToolchain in headless mode to
-      #    convert AsciiDoc sources + PlantUML diagrams into a static HTML
-      #    microsite. Output lands in build/microsite/output/.
+      # 5. Documentation Generation — convert AsciiDoc sources into a static
+      #    HTML microsite using Asciidoctor.js (pure Node.js, no Java).
+      #    Output lands in build/microsite/output/.
       # ---------------------------------------------------------------------
-      - name: "Install docToolchain"
-        continue-on-error: true
-        timeout-minutes: 3
-        env:
-          DTC_HEADLESS: "true"
-        run: |
-          chmod +x dtcw
-          ./dtcw local install doctoolchain
-
       - name: "Generate documentation site"
-        continue-on-error: true
-        timeout-minutes: 5
-        env:
-          DTC_HEADLESS: "true"
-        run: ./dtcw local generateSite
+        run: npx tsx scripts/build-docs.ts
 
       # ---------------------------------------------------------------------
       # Upload the generated site as a build artifact. This is used by both

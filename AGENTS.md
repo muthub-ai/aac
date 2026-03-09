@@ -36,7 +36,7 @@ npm run build:diagrams     # Generate PlantUML + Draw.io diagrams from models
 ```
 
 - Pipeline workflow: `.github/workflows/aac-pipeline.yml`
-- DocToolchain config: `docToolchainConfig.groovy` (run `./dtcw generateSite` with `DTC_HEADLESS=true`)
+- Documentation: Asciidoctor.js (`@asciidoctor/core`) — pure Node.js, no Java
 - AsciiDoc docs: `src/docs/` (generated diagrams go in `src/docs/diagrams/`)
 - Scripts use `tsx` for TypeScript execution and relative imports (not `@/*` alias)
 

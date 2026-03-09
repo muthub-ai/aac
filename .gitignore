@@ -40,9 +40,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# docToolchain
-/.gradle/
-/.doctoolchain/
+# documentation build output
 build/microsite/
 
 # generated diagrams (rebuilt by CI)
