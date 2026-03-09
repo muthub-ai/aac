@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Search, X, ChevronDown } from 'lucide-react';
+import { Plus, Search, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { SystemCard } from '@/components/dashboard/system-card';
 import type { SystemData } from '@/types/system';
 import { cn } from '@/lib/utils';
@@ -39,7 +39,9 @@ export function ApplicationCatalog({ systems }: ApplicationCatalogProps) {
   const [selectedDisposition, setSelectedDisposition] = useState<string | null>(null);
   const [showDispositionDropdown, setShowDispositionDropdown] = useState(false);
   const [tagsExpanded, setTagsExpanded] = useState(false);
+  const [showAllCards, setShowAllCards] = useState(false);
   const MAX_VISIBLE_TAGS = 8;
+  const INITIAL_CARD_COUNT = 3;
 
   const allTags = useMemo(() => collectAllTags(systems), [systems]);
   const allDispositions = useMemo(() => collectDispositions(systems), [systems]);
@@ -86,17 +88,13 @@ export function ApplicationCatalog({ systems }: ApplicationCatalogProps) {
     setSearchQuery('');
     setSelectedTags(new Set());
     setSelectedDisposition(null);
+    setShowAllCards(false);
   };
 
   const hasActiveFilters = searchQuery.trim() || selectedTags.size > 0 || selectedDisposition;
 
   return (
     <div>
-      {/* Pipeline Visualization */}
-      <div className="mb-6">
-        <PipelineVisualization />
-      </div>
-
       {/* Search + Filters Bar */}
       <div className="mb-6 space-y-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -241,15 +239,41 @@ export function ApplicationCatalog({ systems }: ApplicationCatalogProps) {
 
       {/* Cards Grid */}
       {filteredSystems.length > 0 ? (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {filteredSystems.map((system) => (
-            <SystemCard
-              key={system.id}
-              system={system}
-              onClick={() => router.push(`/systems/${system.id}`)}
-            />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {(showAllCards ? filteredSystems : filteredSystems.slice(0, INITIAL_CARD_COUNT)).map((system) => (
+              <SystemCard
+                key={system.id}
+                system={system}
+                onClick={() => router.push(`/systems/${system.id}`)}
+              />
+            ))}
+          </div>
+
+          {/* Show More / Show Less toggle */}
+          {filteredSystems.length > INITIAL_CARD_COUNT && (
+            <button
+              onClick={() => setShowAllCards((prev) => !prev)}
+              className={cn(
+                'mt-4 flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-border py-3 text-sm text-muted-foreground',
+                'transition-colors hover:border-ring/30 hover:bg-muted hover:text-foreground',
+              )}
+              aria-label={showAllCards ? 'Show fewer systems' : 'Show all systems'}
+            >
+              {showAllCards ? (
+                <>
+                  Show less
+                  <ChevronUp className="h-4 w-4" />
+                </>
+              ) : (
+                <>
+                  Show {filteredSystems.length - INITIAL_CARD_COUNT} more {filteredSystems.length - INITIAL_CARD_COUNT === 1 ? 'system' : 'systems'}
+                  <ChevronDown className="h-4 w-4" />
+                </>
+              )}
+            </button>
+          )}
+        </>
       ) : (
         <div className="flex flex-col items-center rounded-xl border border-dashed border-border py-16 text-center">
           <Search className="mb-3 h-8 w-8 text-muted-foreground/30" />
@@ -262,6 +286,11 @@ export function ApplicationCatalog({ systems }: ApplicationCatalogProps) {
           </button>
         </div>
       )}
+
+      {/* Pipeline Visualization */}
+      <div className="mt-8">
+        <PipelineVisualization />
+      </div>
     </div>
   );
 }
