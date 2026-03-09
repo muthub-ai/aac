@@ -534,6 +534,7 @@ function nav(activePage: string, isSubpage = false): string {
     <div class="nav-links">
       <a href="${prefix}index.html" class="nav-link ${activePage === 'home' ? 'active' : ''}">Overview</a>
       <a href="${prefix}index.html#systems" class="nav-link ${activePage === 'systems' ? 'active' : ''}">Systems</a>
+      <a href="${prefix}patterns/index.html" class="nav-link ${activePage === 'patterns' ? 'active' : ''}">Patterns</a>
       <a href="${prefix}index.html#pipeline" class="nav-link">Pipeline</a>
       <a href="https://github.com/muthub-ai/aac" class="nav-link" target="_blank" rel="noopener">GitHub &nearr;</a>
     </div>
@@ -713,6 +714,33 @@ ${nav('home')}
   </div>
   <div class="system-grid">
     ${systemCards}
+  </div>
+</section>
+
+<section class="container systems-section" id="patterns">
+  <div class="section-header">
+    <h2>Pattern Catalog</h2>
+    <p>Reusable enterprise architecture patterns &mdash; each with C4 diagrams, design considerations, NFRs, and cost profiles.</p>
+  </div>
+  <div class="system-grid">
+    <a href="patterns/index.html" class="system-card">
+      <div class="system-card-header">
+        <div>
+          <span class="group-badge">All Patterns</span>
+          <h3 style="margin-top:6px">Browse Pattern Catalog</h3>
+        </div>
+        <span class="badge" style="background:var(--accent-subtle);color:var(--accent);border-color:var(--accent)">6 patterns</span>
+      </div>
+      <p class="system-card-desc">Explore production-ready architecture patterns for APIs, data platforms, AI/ML, web applications, and managed file transfer. Each pattern includes full documentation with C4 architecture diagrams.</p>
+      <div class="system-card-tags">
+        <span class="tag">API</span><span class="tag">Data Platform</span><span class="tag">AI/ML</span><span class="tag">Web Apps</span><span class="tag">Networking</span>
+      </div>
+      <div class="system-card-footer">
+        <div class="system-card-stat"><div class="val">6</div><div class="lbl">Patterns</div></div>
+        <div class="system-card-stat"><div class="val">12</div><div class="lbl">Diagrams</div></div>
+        <div class="system-card-stat"><div class="val">5</div><div class="lbl">Categories</div></div>
+      </div>
+    </a>
   </div>
 </section>
 
