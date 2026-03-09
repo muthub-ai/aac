@@ -171,12 +171,17 @@ jobs:
       #    convert AsciiDoc sources + PlantUML diagrams into a static HTML
       #    microsite. Output lands in build/microsite/output/.
       # ---------------------------------------------------------------------
-      - name: "Generate documentation site"
+      - name: "Install docToolchain"
         env:
           DTC_HEADLESS: "true"
         run: |
           chmod +x dtcw
-          ./dtcw generateSite
+          ./dtcw local install doctoolchain
+
+      - name: "Generate documentation site"
+        env:
+          DTC_HEADLESS: "true"
+        run: ./dtcw local generateSite
 
       # ---------------------------------------------------------------------
       # Upload the generated site as a build artifact. This is used by both
