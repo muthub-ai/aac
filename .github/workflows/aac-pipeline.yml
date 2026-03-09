@@ -111,6 +111,7 @@ jobs:
   # =========================================================================
   # STAGE 4 — Artifact Creation (Diagrams)
   # STAGE 5 — Documentation Generation (Asciidoctor.js)
+  # STAGE 5b — Pattern Catalog Page Generation
   # =========================================================================
   build-docs:
     name: "Build Diagrams & Documentation"
@@ -147,6 +148,23 @@ jobs:
       # ---------------------------------------------------------------------
       - name: "Generate documentation site"
         run: npx tsx scripts/build-docs.ts
+
+      # ---------------------------------------------------------------------
+      # 5b. Pattern Catalog Pages — generate static HTML pages for each
+      #     architecture pattern with full documentation (architecture
+      #     overview, diagrams, NFRs, constraints, cost profile, etc.).
+      #     Output lands in build/patterns/.
+      # ---------------------------------------------------------------------
+      - name: "Generate pattern catalog pages"
+        run: npx tsx scripts/build-pattern-pages.ts
+
+      # ---------------------------------------------------------------------
+      # Copy pattern pages into the microsite output for unified deployment
+      # ---------------------------------------------------------------------
+      - name: "Merge pattern pages into microsite"
+        run: |
+          mkdir -p build/microsite/output/patterns
+          cp -r build/patterns/* build/microsite/output/patterns/
 
       # ---------------------------------------------------------------------
       # Upload the generated site as a build artifact. This is used by both

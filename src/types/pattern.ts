@@ -10,6 +10,21 @@ export interface PatternDiagram {
   plantumlSource: string;
 }
 
+export interface ProductUsed {
+  name: string;
+  role: string;
+}
+
+export interface NFR {
+  metric: string;
+  target: string;
+}
+
+export interface DesignConsideration {
+  title: string;
+  description: string;
+}
+
 export interface PatternData {
   id: string;
   version: string;
@@ -30,6 +45,13 @@ export interface PatternData {
   stars: number;
   diagrams: PatternDiagram[];
   yamlContent?: string;
+  // Rich content fields
+  architectureOverview: string;
+  designConsiderations: DesignConsideration[];
+  productsUsed: ProductUsed[];
+  nonFunctionalRequirements: NFR[];
+  constraints: string[];
+  costProfile: string;
 }
 
 export interface PatternCategory {
