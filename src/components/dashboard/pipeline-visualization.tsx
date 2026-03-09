@@ -174,10 +174,10 @@ export function PipelineVisualization() {
       <div className="flex items-center justify-between px-5 pt-3 pb-1">
         <div className="flex items-baseline gap-2">
           <h2 className="text-sm font-semibold text-foreground">
-            CI/CD Pipeline
+            CI/CD Pipeline Application Architecture Lifecycle
           </h2>
           <span className="hidden text-xs text-muted-foreground sm:inline">
-            Enterprise Architecture Lifecycle
+            Automated validation, compliance, and publishing
           </span>
         </div>
 
