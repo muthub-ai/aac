@@ -1,0 +1,47 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+LAYOUT_WITH_LEGEND()
+
+title Container Diagram — Internal API Multi-regional VMs
+
+Person(api_consumer, "Internal API Consumer", "Backend services consuming APIs")
+
+System_Boundary(api_platform, "Internal API Platform") {
+
+  Container(global_lb, "Internal HTTP(S) Load Balancer", "Cloud Load Balancing", "Global internal L7 LB with URL map, SSL termination, and global access enabled")
+
+  Container(backend_svc, "Backend Service", "Cloud Backend Service", "Routes traffic to healthy MIG backends with session affinity and connection draining")
+
+  Container(health_check, "Health Check", "Cloud Health Check", "HTTP health probe on /healthz:8080 every 10s with 3-strike threshold")
+
+  Boundary(region_a, "Region A — us-central1") {
+    Container(mig_a, "Managed Instance Group A", "Compute Engine MIG", "2–10 auto-scaled VM instances running API service containers")
+    ContainerDb(subnet_a, "Subnet A", "VPC Subnet 10.0.1.0/24", "Private subnet with Cloud NAT for egress")
+  }
+
+  Boundary(region_b, "Region B — us-east1") {
+    Container(mig_b, "Managed Instance Group B", "Compute Engine MIG", "2–10 auto-scaled VM instances running API service containers")
+    ContainerDb(subnet_b, "Subnet B", "VPC Subnet 10.0.2.0/24", "Private subnet with Cloud NAT for egress")
+  }
+
+  Container(autoscaler, "Autoscaler", "Compute Engine Autoscaler", "CPU-based scaling policy targeting 60% utilization")
+}
+
+System_Ext(cloud_iam, "Cloud IAM", "Service account auth")
+System_Ext(monitoring, "Cloud Monitoring", "Metrics & alerts")
+
+Rel(api_consumer, global_lb, "API requests", "gRPC / HTTPS")
+Rel(global_lb, backend_svc, "Forwards to", "L7 routing rules")
+Rel(backend_svc, mig_a, "Routes traffic", "Weighted round-robin")
+Rel(backend_svc, mig_b, "Routes traffic", "Weighted round-robin")
+Rel(health_check, mig_a, "Probes /healthz", "HTTP:8080")
+Rel(health_check, mig_b, "Probes /healthz", "HTTP:8080")
+Rel(autoscaler, mig_a, "Scales replicas", "CPU target 60%")
+Rel(autoscaler, mig_b, "Scales replicas", "CPU target 60%")
+Rel(mig_a, subnet_a, "Deployed in", "Private IP")
+Rel(mig_b, subnet_b, "Deployed in", "Private IP")
+Rel_L(mig_a, cloud_iam, "Authenticates", "Service Account")
+Rel_R(mig_b, monitoring, "Exports metrics", "OpenTelemetry")
+
+@enduml

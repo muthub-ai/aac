@@ -1,0 +1,29 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+LAYOUT_WITH_LEGEND()
+
+title System Context — Enterprise Data Warehouse with BigQuery
+
+Person(data_eng, "Data Engineer", "Builds and maintains data pipelines and transformations")
+Person(data_analyst, "Data Analyst", "Creates reports, dashboards, and ad-hoc queries")
+Person(ml_eng, "ML Engineer", "Trains models using BigQuery ML on warehouse data")
+Person(business_user, "Business User", "Consumes dashboards and KPI reports via Looker")
+
+System(data_warehouse, "Enterprise Data Warehouse", "Serverless analytics platform using BigQuery with decoupled storage/compute, ETL pipelines, and integrated ML")
+
+System_Ext(source_systems, "Source Systems", "Operational databases (PostgreSQL, MySQL), SaaS apps (Salesforce, SAP)")
+System_Ext(cloud_iam, "Cloud IAM", "Column-level security and data access governance")
+System_Ext(cloud_monitoring, "Cloud Monitoring", "Pipeline health metrics and alerting")
+System_Ext(data_catalog, "Data Catalog", "Metadata management, data lineage, and discovery")
+
+Rel(source_systems, data_warehouse, "Streams events & batch exports", "Pub/Sub, Cloud Storage")
+Rel(data_eng, data_warehouse, "Builds & monitors pipelines", "Dataflow, dbt, SQL")
+Rel(data_analyst, data_warehouse, "Queries data & builds reports", "BigQuery SQL, Looker")
+Rel(ml_eng, data_warehouse, "Trains ML models", "BigQuery ML, SQL")
+Rel(business_user, data_warehouse, "Views dashboards", "Looker, Data Studio")
+Rel(data_warehouse, cloud_iam, "Enforces access policies", "Policy Tags, IAM Conditions")
+Rel(data_warehouse, cloud_monitoring, "Exports pipeline metrics", "Cloud Monitoring API")
+Rel(data_warehouse, data_catalog, "Registers metadata", "Data Catalog API")
+
+@enduml

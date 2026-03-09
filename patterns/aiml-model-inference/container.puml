@@ -1,0 +1,52 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+LAYOUT_WITH_LEGEND()
+
+title Container Diagram — AI-ML Model Deployment & Inferencing
+
+Person(ml_eng, "ML Engineer", "Deploys and monitors")
+Person(api_consumer, "API Consumer", "Prediction requests")
+
+System_Boundary(ml_platform, "ML Model Serving Platform") {
+
+  Boundary(registry, "Model Management") {
+    Container(model_registry, "Model Registry", "Vertex AI", "Versioned model artifacts with lineage tracking and approval workflows")
+    Container(model_storage, "Model Artifact Storage", "Cloud Storage", "Trained model binaries, serving containers, and config files")
+  }
+
+  Boundary(serving, "Serving Infrastructure") {
+    Container(endpoint, "Vertex AI Endpoint", "Vertex AI", "Managed prediction endpoint with traffic splitting: 90% v2 / 10% v3-canary")
+    Container(prediction_v2, "Prediction Service v2", "TensorFlow Serving", "Primary model serving 90% traffic, n1-standard-4 + NVIDIA T4 GPU, 1–20 replicas")
+    Container(prediction_v3, "Prediction Service v3 (Canary)", "PyTorch Serve", "Canary model serving 10% traffic for A/B evaluation")
+  }
+
+  Boundary(ops, "Operations & Monitoring") {
+    Container(model_monitor, "Model Monitoring", "Vertex AI", "Continuous data drift detection, feature skew analysis, and prediction quality alerts")
+    Container(ml_pipeline, "ML CI/CD Pipeline", "Cloud Build + Vertex Pipelines", "Automated training, evaluation, validation, and blue-green deployment")
+  }
+
+  Boundary(features, "Feature Serving") {
+    ContainerDb(feature_store, "Feature Store", "Vertex AI Feature Store", "Low-latency online serving of pre-computed features for inference")
+  }
+}
+
+System_Ext(cloud_iam, "Cloud IAM", "Access control")
+System_Ext(monitoring, "Cloud Monitoring", "Metrics & alerts")
+
+Rel(ml_eng, model_registry, "Registers model versions", "Vertex AI SDK")
+Rel(ml_eng, ml_pipeline, "Triggers deployments", "Cloud Build API")
+Rel(model_registry, model_storage, "Stores artifacts", "GCS bucket")
+Rel(model_registry, endpoint, "Deploys to", "Model deployment config")
+Rel(api_consumer, endpoint, "Prediction requests", "REST / gRPC")
+Rel(endpoint, prediction_v2, "Routes 90% traffic", "Traffic split")
+Rel(endpoint, prediction_v3, "Routes 10% traffic", "Canary split")
+Rel(prediction_v2, feature_store, "Fetches features", "Online serving API")
+Rel(prediction_v3, feature_store, "Fetches features", "Online serving API")
+Rel(model_monitor, prediction_v2, "Monitors predictions", "Sampling pipeline")
+Rel(model_monitor, prediction_v3, "Monitors predictions", "Sampling pipeline")
+Rel(ml_pipeline, model_registry, "Publishes models", "After validation")
+Rel(endpoint, cloud_iam, "Authenticates", "Service Account")
+Rel(model_monitor, monitoring, "Sends drift alerts", "Cloud Monitoring API")
+
+@enduml

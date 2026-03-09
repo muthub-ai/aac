@@ -1,13 +1,19 @@
 'use client';
 
+import { useState, useMemo, useCallback } from 'react';
 import {
   CheckCircle2,
   AlertTriangle,
   Rocket,
   ExternalLink,
   Tag,
+  ZoomIn,
+  ZoomOut,
+  Maximize2,
+  Download,
 } from 'lucide-react';
-import type { PatternData } from '@/types/pattern';
+import plantumlEncoder from 'plantuml-encoder';
+import type { PatternData, PatternDiagram } from '@/types/pattern';
 import { CATEGORY_COLORS, PATTERN_CATEGORIES } from '@/lib/data/mock-patterns';
 import {
   Sheet,
@@ -37,6 +43,154 @@ function maturityStyle(maturity: string): { bg: string; text: string } {
     default:
       return { bg: 'bg-muted', text: 'text-muted-foreground' };
   }
+}
+
+function plantumlSvgUrl(source: string): string {
+  const encoded = plantumlEncoder.encode(source);
+  return `https://www.plantuml.com/plantuml/svg/${encoded}`;
+}
+
+// ── Diagram viewer with zoom + download ──────────────────────────────
+
+interface DiagramViewerProps {
+  diagrams: PatternDiagram[];
+  patternName: string;
+}
+
+const ZOOM_STEP = 25;
+const ZOOM_MIN = 25;
+const ZOOM_MAX = 300;
+const ZOOM_DEFAULT = 100;
+
+function DiagramViewer({ diagrams, patternName }: DiagramViewerProps) {
+  const [activeIdx, setActiveIdx] = useState(0);
+  const [zoom, setZoom] = useState(ZOOM_DEFAULT);
+
+  const activeDiagram = diagrams[activeIdx];
+
+  const svgUrl = useMemo(
+    () => (activeDiagram ? plantumlSvgUrl(activeDiagram.plantumlSource) : ''),
+    [activeDiagram],
+  );
+
+  const handleZoomIn = useCallback(
+    () => setZoom((z) => Math.min(z + ZOOM_STEP, ZOOM_MAX)),
+    [],
+  );
+  const handleZoomOut = useCallback(
+    () => setZoom((z) => Math.max(z - ZOOM_STEP, ZOOM_MIN)),
+    [],
+  );
+  const handleZoomReset = useCallback(() => setZoom(ZOOM_DEFAULT), []);
+
+  const handleDownload = useCallback(() => {
+    if (!svgUrl) return;
+    const a = document.createElement('a');
+    a.href = svgUrl;
+    a.download = `${patternName.replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase()}-${activeDiagram?.label.replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase()}.svg`;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }, [svgUrl, patternName, activeDiagram]);
+
+  if (diagrams.length === 0) return null;
+
+  return (
+    <div className="space-y-3">
+      <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        Architecture Diagrams
+      </h4>
+
+      {/* Tab selector */}
+      <div className="flex gap-1 rounded-lg bg-muted/60 p-1">
+        {diagrams.map((d, idx) => (
+          <button
+            key={d.label}
+            type="button"
+            onClick={() => {
+              setActiveIdx(idx);
+              setZoom(ZOOM_DEFAULT);
+            }}
+            className={cn(
+              'flex-1 rounded-md px-3 py-1.5 text-[11px] font-medium transition-all',
+              idx === activeIdx
+                ? 'bg-background text-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground',
+            )}
+            aria-label={`View ${d.label} diagram`}
+          >
+            {d.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Diagram viewport */}
+      <div className="relative overflow-hidden rounded-lg border border-border bg-white dark:bg-zinc-950">
+        {/* Zoom toolbar */}
+        <div className="absolute right-2 top-2 z-10 flex items-center gap-1 rounded-lg border border-border/60 bg-background/90 px-1.5 py-1 shadow-sm backdrop-blur-sm">
+          <button
+            type="button"
+            onClick={handleZoomOut}
+            disabled={zoom <= ZOOM_MIN}
+            className="rounded p-1 text-muted-foreground transition-colors hover:text-foreground disabled:opacity-30"
+            aria-label="Zoom out"
+          >
+            <ZoomOut className="h-3.5 w-3.5" strokeWidth={1.8} />
+          </button>
+          <span className="min-w-[3ch] text-center text-[10px] font-medium tabular-nums text-muted-foreground">
+            {zoom}%
+          </span>
+          <button
+            type="button"
+            onClick={handleZoomIn}
+            disabled={zoom >= ZOOM_MAX}
+            className="rounded p-1 text-muted-foreground transition-colors hover:text-foreground disabled:opacity-30"
+            aria-label="Zoom in"
+          >
+            <ZoomIn className="h-3.5 w-3.5" strokeWidth={1.8} />
+          </button>
+          <div className="mx-0.5 h-4 w-px bg-border" />
+          <button
+            type="button"
+            onClick={handleZoomReset}
+            className="rounded p-1 text-muted-foreground transition-colors hover:text-foreground"
+            aria-label="Fit to view"
+          >
+            <Maximize2 className="h-3.5 w-3.5" strokeWidth={1.8} />
+          </button>
+          <button
+            type="button"
+            onClick={handleDownload}
+            className="rounded p-1 text-muted-foreground transition-colors hover:text-foreground"
+            aria-label="Download diagram as SVG"
+          >
+            <Download className="h-3.5 w-3.5" strokeWidth={1.8} />
+          </button>
+        </div>
+
+        {/* Scrollable diagram container */}
+        <div className="overflow-auto p-4" style={{ maxHeight: '420px' }}>
+          <div
+            className="mx-auto transition-transform duration-150 ease-out"
+            style={{
+              transform: `scale(${zoom / 100})`,
+              transformOrigin: 'top center',
+            }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={svgUrl}
+              alt={`${activeDiagram?.label} diagram for ${patternName}`}
+              className="mx-auto max-w-none"
+              loading="lazy"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export function PatternDetailDrawer({
@@ -101,6 +255,14 @@ export function PatternDetailDrawer({
 
         {/* ── Body (scrollable) ──────────────────────────────────── */}
         <div className="space-y-6 p-4">
+          {/* Architecture diagrams */}
+          {pattern.diagrams.length > 0 && (
+            <DiagramViewer
+              diagrams={pattern.diagrams}
+              patternName={pattern.name}
+            />
+          )}
+
           {/* Advantages & Considerations — two columns */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {/* Advantages */}

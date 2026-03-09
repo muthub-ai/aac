@@ -13,6 +13,7 @@ import {
   Download,
   Star,
   Rocket,
+  FileCode2,
 } from 'lucide-react';
 import type { PatternData } from '@/types/pattern';
 import { CATEGORY_COLORS } from '@/lib/data/mock-patterns';
@@ -124,6 +125,12 @@ export function PatternCard({ pattern, isSelected, onClick }: PatternCardProps) 
             <Star className="h-3 w-3 shrink-0 text-warning" strokeWidth={1.8} fill="currentColor" />
             {pattern.stars.toFixed(1)}
           </span>
+          {pattern.diagrams.length > 0 && (
+            <span className="inline-flex items-center gap-1" title="Architecture diagrams">
+              <FileCode2 className="h-3 w-3 shrink-0" strokeWidth={1.8} />
+              {pattern.diagrams.length}
+            </span>
+          )}
           <span
             className={cn(
               'ml-auto inline-flex shrink-0 items-center gap-1 rounded-md px-2.5 py-1 text-[11px] font-semibold',

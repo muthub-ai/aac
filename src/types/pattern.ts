@@ -5,6 +5,11 @@ export interface GettingStartedStep {
   title: string;
 }
 
+export interface PatternDiagram {
+  label: string;
+  plantumlSource: string;
+}
+
 export interface PatternData {
   id: string;
   version: string;
@@ -23,6 +28,8 @@ export interface PatternData {
   docsUrl?: string;
   downloads: number;
   stars: number;
+  diagrams: PatternDiagram[];
+  yamlContent?: string;
 }
 
 export interface PatternCategory {

@@ -10,6 +10,14 @@ import {
   HardDrive,
 } from 'lucide-react';
 import type { PatternData, PatternCategory } from '@/types/pattern';
+import {
+  INTERNAL_API_CONTEXT,
+  INTERNAL_API_CONTAINER,
+  DATA_PLATFORM_CONTEXT,
+  DATA_PLATFORM_CONTAINER,
+  AIML_CONTEXT,
+  AIML_CONTAINER,
+} from './pattern-diagrams';
 
 // ── Categories ───────────────────────────────────────────────────────
 
@@ -74,6 +82,10 @@ export const MOCK_PATTERNS: PatternData[] = [
     docsUrl: 'https://aac.muthub.org/patterns/internal-api-multiregional',
     downloads: 1_842,
     stars: 4.7,
+    diagrams: [
+      { label: 'System Context', plantumlSource: INTERNAL_API_CONTEXT },
+      { label: 'Container', plantumlSource: INTERNAL_API_CONTAINER },
+    ],
   },
   {
     id: 'data-platform-bq',
@@ -107,6 +119,10 @@ export const MOCK_PATTERNS: PatternData[] = [
     docsUrl: 'https://aac.muthub.org/patterns/data-platform-bq',
     downloads: 3_215,
     stars: 4.9,
+    diagrams: [
+      { label: 'System Context', plantumlSource: DATA_PLATFORM_CONTEXT },
+      { label: 'Container', plantumlSource: DATA_PLATFORM_CONTAINER },
+    ],
   },
   {
     id: 'aiml-model-inference',
@@ -140,5 +156,9 @@ export const MOCK_PATTERNS: PatternData[] = [
     docsUrl: 'https://aac.muthub.org/patterns/aiml-model-inference',
     downloads: 726,
     stars: 4.3,
+    diagrams: [
+      { label: 'System Context', plantumlSource: AIML_CONTEXT },
+      { label: 'Container', plantumlSource: AIML_CONTAINER },
+    ],
   },
 ];
