@@ -2,7 +2,8 @@
 
 == System Context
 
-[plantuml, target=ecommerce-platform-full, format=svg]
+.Full System Diagram (PlantUML source)
+[source,plantuml]
 ----
 include::../diagrams/ecommerce-platform/full.puml[]
 ----

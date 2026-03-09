@@ -2,7 +2,8 @@
 
 == System Context
 
-[plantuml, target=ml-platform-full, format=svg]
+.Full System Diagram (PlantUML source)
+[source,plantuml]
 ----
 include::../diagrams/ml-platform/full.puml[]
 ----

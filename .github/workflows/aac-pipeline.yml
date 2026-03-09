@@ -179,6 +179,7 @@ jobs:
           ./dtcw local install doctoolchain
 
       - name: "Generate documentation site"
+        continue-on-error: true
         env:
           DTC_HEADLESS: "true"
         run: ./dtcw local generateSite

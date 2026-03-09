@@ -2,7 +2,8 @@
 
 == System Context
 
-[plantuml, target=demand-forecasting-full, format=svg]
+.Full System Diagram (PlantUML source)
+[source,plantuml]
 ----
 include::../diagrams/demand-forecasting/full.puml[]
 ----
