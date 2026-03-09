@@ -30,7 +30,7 @@ export function SystemsOverview({ systems, standards, waivers }: SystemsOverview
 
   const tabs: CatalogTab[] = [
     { id: 'applications', label: 'Application Catalog', icon: LayoutGrid, count: systems.length },
-    { id: 'patterns', label: 'Pattern Catalog', icon: Puzzle, count: 3 },
+    { id: 'patterns', label: 'Pattern Catalog', icon: Puzzle, count: 6 },
     { id: 'standards', label: 'Standards Catalog', icon: ShieldCheck, count: standards.length },
     { id: 'waivers', label: 'Waiver Registry', icon: FileWarning, count: waivers.length },
     { id: 'utilities', label: 'Utilities', icon: Wrench },
