@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://enterpirse.arc-code/aac/schema/v1",
+  "$id": "https://aac.muthub.org/schema/v1",
   "title": "Architecture-as-Code (AaC) Schema",
   "description": "JSON Schema for validating Architecture-as-Code YAML/JSON artifacts. Models the C4 hierarchy (System -> Container -> Component) with people, relationships, deployment topology, and filter able views.",
   "type": "object",
