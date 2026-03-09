@@ -1,0 +1,67 @@
+exceptionId: EXC-DATA-001
+title: Extended Data Retention in Analytics Pipeline
+targetAppId: demand-forecasting
+targetAppName: Demand Forecasting
+violatedStandardId: STD-DATA-001
+violatedStandardName: Data Platform & Warehousing
+violatedRequirementIds:
+  - REQ-DATA-003
+status: EXPIRED
+rationale: >-
+  The analytics pipeline retains raw customer behavior data for 36 months instead
+  of the mandated 18-month maximum. The extended retention supports long-term
+  demand trend analysis and seasonal pattern detection that requires multi-year
+  historical data.
+financialImpact:
+  complianceCost: "$60,000"
+  delayCost: "$200,000"
+  riskExposureCost: "$500,000"
+  summary: >-
+    Implementing compliant data lifecycle management costs $60K. Losing 18+ months
+    of historical data would degrade forecasting accuracy by 15%, costing $200K in
+    inventory waste. GDPR non-compliance risk exposure is $500K in potential fines.
+riskSeverity: HIGH
+riskDescription: >-
+  Retaining personal data beyond the declared retention period violates GDPR Article
+  5(1)(e) storage limitation principle. A regulatory audit finding could result in
+  significant fines and mandatory data deletion orders.
+compensatingControls:
+  - control: Data anonymization pipeline removing PII from records older than 18 months
+    effectiveness: MEDIUM
+    verificationMethod: Monthly PII scan of anonymized dataset with false-positive review
+  - control: Access controls restricting historical data to ML training pipelines only
+    effectiveness: MEDIUM
+    verificationMethod: Quarterly access review and privilege audit
+requestedBy: Data Engineering Team
+requestedDate: "2024-06-15"
+approvedBy: Chief Data Officer
+approvalDate: "2024-07-01"
+expirationDate: "2025-01-31"
+remediationPlan:
+  description: >-
+    Implement automated data lifecycle management with PII stripping for data
+    beyond 18 months and full deletion beyond 36 months.
+  targetDate: "2025-03-31"
+  backlogItemUrl: https://github.com/muthub-ai/aac/issues/107
+  assignedTeam: Data Engineering Team
+  progressPercent: 10
+domain: Data
+tags:
+  - data-retention
+  - GDPR
+  - privacy
+  - analytics
+reviewNotes: >-
+  EXPIRED. The waiver was approved in July 2024 and expired January 31, 2025.
+  Remediation is behind schedule at 10%. Escalated to Chief Data Officer for
+  immediate action. Data anonymization pipeline must be prioritized.
+revisionHistory:
+  - date: "2024-06-15"
+    author: Data Engineering Team
+    change: Waiver request submitted
+  - date: "2024-07-01"
+    author: Chief Data Officer
+    change: Approved with anonymization requirement
+  - date: "2025-02-01"
+    author: Architecture Review Board
+    change: Waiver expired, escalation initiated

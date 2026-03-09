@@ -1,0 +1,70 @@
+exceptionId: EXC-FINOPS-001
+title: Missing Cost Allocation Tags in Development Environments
+targetAppId: ml-platform
+targetAppName: ML Platform
+violatedStandardId: STD-FINOPS-001
+violatedStandardName: Cloud Rightsizing & FinOps
+violatedRequirementIds:
+  - REQ-FINOPS-002
+status: APPROVED
+rationale: >-
+  Development and experimentation environments in the ML Platform use dynamically
+  provisioned resources (notebooks, training jobs, ephemeral clusters) that are
+  difficult to tag at creation time with the current tooling. The FinOps tagging
+  policy was designed for long-lived production resources.
+financialImpact:
+  complianceCost: "$25,000"
+  delayCost: "$15,000"
+  summary: >-
+    Implementing automated tagging for ephemeral ML resources costs $25K in
+    tooling development. Untagged resources represent approximately $15K/month
+    in unattributed cloud spend, complicating cost allocation reporting.
+riskSeverity: LOW
+riskDescription: >-
+  Untagged development resources cannot be attributed to specific teams or projects,
+  making cost optimization and chargeback difficult. This is a financial governance
+  issue, not a security or availability risk.
+compensatingControls:
+  - control: Project-level billing labels applied at the GCP project boundary
+    effectiveness: HIGH
+    verificationMethod: Monthly cloud billing report review showing project-level attribution
+  - control: Weekly untagged resource report generated and sent to team leads
+    effectiveness: MEDIUM
+    verificationMethod: Automated report delivery verification
+  - control: Budget alerts at project level with automatic notifications at 80% threshold
+    effectiveness: HIGH
+    verificationMethod: Monthly budget alert testing
+requestedBy: ML Infrastructure Team
+requestedDate: "2024-12-01"
+approvedBy: VP Engineering
+approvalDate: "2024-12-15"
+expirationDate: "2025-08-31"
+remediationPlan:
+  description: >-
+    Implement automated resource tagging via Terraform provider hooks and
+    GCP organization policies. Phase 1: Terraform module with default tags
+    (complete). Phase 2: Organization policy enforcement. Phase 3: Retroactive
+    tagging of existing resources.
+  targetDate: "2025-08-15"
+  backlogItemUrl: https://github.com/muthub-ai/aac/issues/109
+  assignedTeam: ML Infrastructure Team
+  progressPercent: 75
+domain: FinOps
+tags:
+  - cost-allocation
+  - tagging
+  - cloud-governance
+  - development
+reviewNotes: >-
+  Approved given the low risk severity and strong project-level compensating
+  controls. Good progress on automated tagging implementation.
+revisionHistory:
+  - date: "2024-12-01"
+    author: ML Infrastructure Team
+    change: Waiver request submitted
+  - date: "2024-12-15"
+    author: VP Engineering
+    change: Approved with project-level billing requirement
+  - date: "2025-02-01"
+    author: ML Infrastructure Team
+    change: Phase 1 Terraform module completed

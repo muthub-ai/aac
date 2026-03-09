@@ -1,0 +1,61 @@
+exceptionId: EXC-AIML-002
+title: Customer Support Chatbot Without Output Guardrails
+targetAppId: ecommerce-platform
+targetAppName: E-Commerce Platform
+violatedStandardId: STD-AIML-002
+violatedStandardName: Generative AI Usage
+violatedRequirementIds:
+  - REQ-GENAI-001
+  - REQ-GENAI-003
+  - REQ-GENAI-005
+status: REJECTED
+rationale: >-
+  The customer support team deployed a GPT-based chatbot for order status inquiries.
+  The team argues that the narrow scope of order status limits hallucination risk
+  and that adding guardrails would delay the launch by 3 weeks.
+financialImpact:
+  complianceCost: "$45,000"
+  delayCost: "$90,000"
+  riskExposureCost: "$5,000,000"
+  summary: >-
+    Compliance cost is modest at $45K. The 3-week delay costs $90K in support
+    cost savings. However, unguarded AI output to customers creates reputational
+    and legal risk exposure estimated at $5M in worst-case brand damage scenario.
+riskSeverity: CRITICAL
+riskDescription: >-
+  An unguarded LLM can generate harmful, offensive, or legally problematic content
+  in customer-facing interactions. Even with a narrow prompt scope, adversarial
+  inputs can bypass topic restrictions. This violates consumer protection
+  regulations and creates unacceptable brand risk.
+compensatingControls:
+  - control: Topic-restricted system prompt limiting responses to order status only
+    effectiveness: LOW
+    verificationMethod: Red team testing of prompt injection scenarios
+requestedBy: Customer Experience Team
+requestedDate: "2025-02-01"
+remediationPlan:
+  description: >-
+    Implement content safety filters, output validation layer, and human-in-the-loop
+    escalation for flagged responses before any production deployment.
+  targetDate: "2025-04-15"
+  assignedTeam: Customer Experience Team
+  progressPercent: 0
+domain: AI / ML
+tags:
+  - generative-ai
+  - chatbot
+  - customer-facing
+  - content-safety
+reviewNotes: >-
+  REJECTED by Architecture Review Board. The risk-to-benefit ratio is unacceptable.
+  A single harmful AI response to a customer could result in regulatory action and
+  significant brand damage. The chatbot must not go live without output guardrails,
+  content filtering, and human escalation. Re-submit after implementing STD-AIML-002
+  requirements REQ-GENAI-001 through REQ-GENAI-005.
+revisionHistory:
+  - date: "2025-02-01"
+    author: Customer Experience Team
+    change: Waiver request submitted
+  - date: "2025-02-08"
+    author: Architecture Review Board
+    change: Waiver rejected — unacceptable risk profile

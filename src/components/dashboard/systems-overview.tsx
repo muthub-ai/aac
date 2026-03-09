@@ -2,24 +2,27 @@
 
 import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { LayoutGrid, Puzzle, ShieldCheck, Wrench } from 'lucide-react';
+import { LayoutGrid, Puzzle, ShieldCheck, FileWarning, Wrench } from 'lucide-react';
 import { NavBar } from '@/components/dashboard/nav-bar';
 import { CatalogTabs, type CatalogTab } from '@/components/dashboard/catalog-tabs';
 import { ApplicationCatalog } from '@/components/dashboard/application-catalog';
 import { PatternCatalog } from '@/components/dashboard/pattern-catalog';
 import { StandardsCatalog } from '@/components/dashboard/standards-catalog';
+import { WaiverRegistry } from '@/components/dashboard/waiver-registry';
 import { UtilitiesCatalog } from '@/components/dashboard/utilities-catalog';
 import type { SystemData } from '@/types/system';
 import type { StandardData } from '@/types/standard';
+import type { WaiverData } from '@/types/waiver';
 
 interface SystemsOverviewProps {
   systems: SystemData[];
   standards: StandardData[];
+  waivers: WaiverData[];
 }
 
-const VALID_TABS = new Set(['applications', 'patterns', 'standards', 'utilities']);
+const VALID_TABS = new Set(['applications', 'patterns', 'standards', 'waivers', 'utilities']);
 
-export function SystemsOverview({ systems, standards }: SystemsOverviewProps) {
+export function SystemsOverview({ systems, standards, waivers }: SystemsOverviewProps) {
   const searchParams = useSearchParams();
   const tabParam = searchParams.get('tab');
   const initialTab = tabParam && VALID_TABS.has(tabParam) ? tabParam : 'applications';
@@ -27,8 +30,9 @@ export function SystemsOverview({ systems, standards }: SystemsOverviewProps) {
 
   const tabs: CatalogTab[] = [
     { id: 'applications', label: 'Application Catalog', icon: LayoutGrid, count: systems.length },
-    { id: 'patterns', label: 'Pattern Catalog', icon: Puzzle, count: 3 },
+    { id: 'patterns', label: 'Pattern Catalog', icon: Puzzle, count: 6 },
     { id: 'standards', label: 'Standards Catalog', icon: ShieldCheck, count: standards.length },
+    { id: 'waivers', label: 'Waiver Registry', icon: FileWarning, count: waivers.length },
     { id: 'utilities', label: 'Utilities', icon: Wrench },
   ];
 
@@ -59,6 +63,7 @@ export function SystemsOverview({ systems, standards }: SystemsOverviewProps) {
             {activeTab === 'applications' && <ApplicationCatalog systems={systems} />}
             {activeTab === 'patterns' && <PatternCatalog />}
             {activeTab === 'standards' && <StandardsCatalog standards={standards} />}
+            {activeTab === 'waivers' && <WaiverRegistry waivers={waivers} />}
             {activeTab === 'utilities' && <UtilitiesCatalog />}
           </div>
         </main>

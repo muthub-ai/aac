@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 import { SystemsOverview } from '@/components/dashboard/systems-overview';
 import { loadSystems } from '@/lib/model/load-systems';
 import { loadStandards } from '@/lib/model/load-standards';
+import { loadWaivers } from '@/lib/model/load-waivers';
 
 function DashboardFallback() {
   return (
@@ -17,9 +18,10 @@ function DashboardFallback() {
 export default function DashboardPage() {
   const systems = loadSystems();
   const standards = loadStandards();
+  const waivers = loadWaivers();
   return (
     <Suspense fallback={<DashboardFallback />}>
-      <SystemsOverview systems={systems} standards={standards} />
+      <SystemsOverview systems={systems} standards={standards} waivers={waivers} />
     </Suspense>
   );
 }

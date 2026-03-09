@@ -1,0 +1,68 @@
+exceptionId: EXC-DEVOPS-001
+title: Manual Provisioning for Legacy Payment Gateway
+targetAppId: ecommerce-platform
+targetAppName: E-Commerce Platform
+violatedStandardId: STD-DEVOPS-001
+violatedStandardName: Infrastructure as Code
+violatedRequirementIds:
+  - REQ-IAC-001
+  - REQ-IAC-002
+status: APPROVED
+rationale: >-
+  The legacy payment gateway runs on dedicated bare-metal servers with vendor-
+  managed firmware. The vendor does not support IaC tooling (Terraform, Pulumi)
+  and requires manual console-based provisioning for compliance with their
+  PCI-DSS attestation. Migration to a cloud-native payment processor is planned.
+financialImpact:
+  complianceCost: "$250,000"
+  delayCost: "$400,000"
+  riskExposureCost: "$180,000"
+  summary: >-
+    Full IaC compliance requires migrating to a new payment processor ($250K).
+    The vendor contract runs through Q4 2025, with $400K early termination penalty.
+    Manual provisioning risk exposure is estimated at $180K in configuration drift.
+riskSeverity: MEDIUM
+riskDescription: >-
+  Manual provisioning increases risk of configuration drift, undocumented changes,
+  and slower disaster recovery. The payment gateway is a critical path component
+  for all e-commerce transactions.
+compensatingControls:
+  - control: Configuration documentation with change approval workflow in ServiceNow
+    effectiveness: MEDIUM
+    verificationMethod: Quarterly configuration audit comparing docs to actual state
+  - control: Automated configuration drift detection scanning every 4 hours
+    effectiveness: HIGH
+    verificationMethod: Weekly review of drift detection alerts and remediation actions
+  - control: Documented disaster recovery runbook with quarterly rehearsals
+    effectiveness: MEDIUM
+    verificationMethod: DR rehearsal results reviewed by Operations Review Board
+requestedBy: Infrastructure Operations Team
+requestedDate: "2024-08-20"
+approvedBy: VP Infrastructure
+approvalDate: "2024-09-01"
+expirationDate: "2025-11-30"
+remediationPlan:
+  description: >-
+    Migrate payment processing to cloud-native Stripe integration with full
+    Terraform IaC. Phase 1: Stripe integration development. Phase 2: parallel
+    processing validation. Phase 3: legacy gateway decommission.
+  targetDate: "2025-11-15"
+  backlogItemUrl: https://github.com/muthub-ai/aac/issues/106
+  assignedTeam: Payment Platform Squad
+  progressPercent: 35
+domain: DevOps
+tags:
+  - infrastructure-as-code
+  - legacy
+  - payment
+  - bare-metal
+reviewNotes: >-
+  Approved given vendor constraints. The automated drift detection compensating
+  control must remain active. Monthly drift reports to be shared with the ARB.
+revisionHistory:
+  - date: "2024-08-20"
+    author: Infrastructure Operations Team
+    change: Waiver request submitted
+  - date: "2024-09-01"
+    author: VP Infrastructure
+    change: Approved with drift detection requirement

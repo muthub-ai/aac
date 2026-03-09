@@ -6,7 +6,7 @@
 
 <p align="center">
   Define, validate, visualize, and publish enterprise system architectures from declarative YAML.<br />
-  A full-lifecycle platform: interactive C4 diagram editor, pattern catalog, standards catalog, CI/CD governance pipeline, and auto-generated documentation site.
+  A full-lifecycle platform: interactive C4 diagram editor, pattern catalog, standards catalog, waiver registry, CI/CD governance pipeline, and auto-generated documentation site.
 </p>
 
 <p align="center">
@@ -36,8 +36,9 @@ The result is a single source of truth that stays in sync with the codebase, enf
 | **C4 Model Support** | Full C4 hierarchy: Persons, Software Systems, Containers, Components, Deployment Nodes, and Infrastructure Nodes with boundary classification. |
 | **Pattern Catalog** | 6 reusable enterprise architecture patterns with C4 diagrams, design considerations, NFR targets, cost profiles, and getting-started guides. |
 | **Standards Catalog** | 9 enterprise architecture standards covering AI/ML governance, cryptography, data platforms, resiliency, API integration, IaC, FinOps, and IAM -- each with RFC 2119 requirements, guidelines, solutions, and authoritative sources. |
-| **Governance Pipeline** | 7-job CI/CD pipeline with parallel domain stages: quality gate, then App Architecture / Patterns / Standards in parallel, assembly, PR feedback, and GitHub Pages deployment. |
-| **Published Documentation** | Auto-generated static site with system detail pages, pattern catalog, standards catalog, pipeline visualization, and lightbox diagram zoom. Deployed to GitHub Pages on every merge to `main`. |
+| **Waiver Registry** | 10 architecture exception/waiver requests documenting temporary deviations from enterprise standards with risk assessments, compensating controls, financial impact analysis, and remediation plans across 8 domains. |
+| **Governance Pipeline** | 8-job CI/CD pipeline with parallel domain stages: quality gate, then App Architecture / Patterns / Standards / Waivers in parallel, assembly, PR feedback, and GitHub Pages deployment. |
+| **Published Documentation** | Auto-generated static site with system detail pages, pattern catalog, standards catalog, waiver registry, pipeline visualization, and lightbox diagram zoom. Deployed to GitHub Pages on every merge to `main`. |
 | **Multi-Format Export** | Export diagrams to PlantUML (`.puml`) and Draw.io XML (`.drawio.xml`) with correct C4 styling. |
 
 ---
@@ -56,6 +57,8 @@ The documentation site is auto-published on every push to `main`:
 | Pattern detail (diagrams, NFRs, cost, getting started) | [`/patterns/{id}.html`](https://aac.muthub.org/patterns/public-web-application.html) |
 | Standards catalog index | [`/standards/`](https://aac.muthub.org/standards/) |
 | Standard detail (requirements, guidelines, solutions) | [`/standards/{id}.html`](https://aac.muthub.org/standards/ml-model-governance.html) |
+| Waiver registry index | [`/waivers/`](https://aac.muthub.org/waivers/) |
+| Waiver detail (risk, controls, financial impact) | [`/waivers/{id}.html`](https://aac.muthub.org/waivers/legacy-encryption-waiver.html) |
 
 ---
 
@@ -86,7 +89,7 @@ The documentation site is auto-published on every push to `main`:
 ```
 aac/
 ├── .github/workflows/
-│   └── aac-pipeline.yml              # 7-job CI/CD pipeline (parallel domain stages)
+│   └── aac-pipeline.yml              # 8-job CI/CD pipeline (parallel domain stages)
 ├── model/                             # System architecture definitions (YAML + metadata)
 │   ├── demand-forecasting/
 │   ├── ecommerce-platform/
@@ -101,19 +104,27 @@ aac/
 │   ├── cryptography-key-management.yaml
 │   ├── api-microservices-integration.yaml
 │   └── ... (9 total)
+├── waivers/                           # Architecture waiver/exception definitions (10 YAML files)
+│   ├── legacy-encryption-waiver.yaml
+│   ├── api-gateway-bypass.yaml
+│   ├── genai-unfiltered-output.yaml
+│   └── ... (10 total)
 ├── schema/                            # JSON Schema definitions
 │   ├── application-schema.json        #   C4 model YAML validation (draft-07)
 │   ├── pattern-schema.json            #   Pattern definition validation (draft-07)
 │   ├── patterns-schema.json           #   Pattern catalog entry validation (draft-07)
 │   └── standards.json                 #   Architecture standard validation (draft 2020-12)
+│   └── waivers.json                   #   Architecture waiver validation (draft 2020-12)
 ├── scripts/                           # Build & governance scripts
 │   ├── validate-models.ts             #   Model schema validation (Ajv + Zod)
 │   ├── validate-standards.ts          #   Standards schema validation (Ajv 2020-12)
+│   ├── validate-waivers.ts            #   Waiver schema validation (Ajv 2020-12)
 │   ├── lint-architecture.ts           #   Enterprise policy linter (5 rules)
 │   ├── build-diagrams.ts              #   PlantUML + Draw.io generation
 │   ├── build-docs.ts                  #   Documentation site generator
 │   ├── build-pattern-pages.ts         #   Pattern catalog page generator
-│   └── build-standard-pages.ts        #   Standards catalog page generator
+│   ├── build-standard-pages.ts        #   Standards catalog page generator
+│   └── build-waiver-pages.ts          #   Waiver registry page generator
 ├── src/
 │   ├── app/                           # Next.js App Router
 │   │   ├── page.tsx                   #   Landing page (/)
@@ -122,7 +133,7 @@ aac/
 │   │   └── globals.css                #   Design tokens (light/dark themes)
 │   ├── components/                    # 40+ React components
 │   │   ├── canvas/                    #   React Flow canvas with minimap
-│   │   ├── dashboard/                 #   Catalog tabs, pattern/standards catalogs, system cards
+│   │   ├── dashboard/                 #   Catalog tabs, pattern/standards/waiver catalogs, system cards
 │   │   ├── editor/                    #   Monaco YAML editor
 │   │   ├── landing/                   #   Landing page sections
 │   │   ├── nodes/                     #   C4 node renderers (6 types)
@@ -137,11 +148,12 @@ aac/
 │   │   ├── data/                      #   Pattern catalog data
 │   │   └── model/                     #   Filesystem model & standards loader
 │   ├── store/                         # Zustand store (bidirectional graph state)
-│   └── types/                         # TypeScript types (C4, system, pattern, standard, YAML schema)
+│   └── types/                         # TypeScript types (C4, system, pattern, standard, waiver, YAML schema)
 └── build/                             # Generated artifacts (gitignored)
     ├── microsite/output/              #   Documentation site (HTML)
     ├── patterns/                      #   Pattern pages (HTML)
-    └── standards/                     #   Standards pages (HTML)
+    ├── standards/                     #   Standards pages (HTML)
+    └── waivers/                       #   Waiver pages (HTML)
 ```
 
 ---
@@ -203,11 +215,13 @@ npm start
 |--------|-------------|
 | `npm run validate:models` | Validate all YAML models against JSON Schema + Zod |
 | `npm run validate:standards` | Validate all standards YAML against JSON Schema (draft 2020-12) |
+| `npm run validate:waivers` | Validate all waiver YAML against JSON Schema (draft 2020-12) |
 | `npm run lint:architecture` | Enterprise architecture policy compliance checks |
 | `npm run build:diagrams` | Generate PlantUML + Draw.io diagrams from models |
 | `npm run build:docs` | Generate documentation site to `build/microsite/output/` |
 | `npm run build:patterns` | Generate pattern catalog pages to `build/patterns/` |
 | `npm run build:standards` | Generate standards catalog pages to `build/standards/` |
+| `npm run build:waivers` | Generate waiver registry pages to `build/waivers/` |
 
 ---
 
@@ -247,24 +261,24 @@ Each level maps to a custom React Flow node type with C4-standard colors and sty
 
 ### CI/CD Pipeline
 
-Every push triggers a 7-job governance pipeline organized into 4 phases. The three domain-specific build stages run **in parallel** after the quality gate:
+Every push triggers an 8-job governance pipeline organized into 4 phases. The four domain-specific build stages run **in parallel** after the quality gate:
 
 ```
                 ┌─────────────────┐
                 │   Lint & Test    │   ← Quality Gate
                 └────────┬────────┘
-          ┌──────────────┼──────────────┐
-          ▼              ▼              ▼      ← Parallel Build
-   ┌────────────┐  ┌──────────┐  ┌───────────┐
-   │    App     │  │ Patterns │  │ Standards │
-   │Architecture│  │          │  │           │
-   │            │  │ Catalog  │  │ Schema    │
-   │ Schema     │  │ 10 pages │  │ Validation│
-   │ Compliance │  │          │  │ Catalog   │
-   │ Diagrams   │  │          │  │ 10 pages  │
-   │ Docs       │  │          │  │           │
-   └─────┬──────┘  └────┬─────┘  └─────┬─────┘
-         └───────────────┼──────────────┘
+          ┌──────────────┼──────────────┬──────────────┐
+          ▼              ▼              ▼              ▼      ← Parallel Build
+   ┌────────────┐  ┌──────────┐  ┌───────────┐  ┌──────────┐
+   │    App     │  │ Patterns │  │ Standards │  │ Waivers  │
+   │Architecture│  │          │  │           │  │          │
+   │            │  │ Catalog  │  │ Schema    │  │ Schema   │
+   │ Schema     │  │ 10 pages │  │ Validation│  │ Validation│
+   │ Compliance │  │          │  │ Catalog   │  │ Registry │
+   │ Diagrams   │  │          │  │ 10 pages  │  │ 11 pages │
+   │ Docs       │  │          │  │           │  │          │
+   └─────┬──────┘  └────┬─────┘  └─────┬─────┘  └────┬─────┘
+         └───────────────┼──────────────┼─────────────┘
                 ┌────────▼────────┐
                 │    Assemble     │   ← Merge Artifacts
                 └────────┬────────┘
@@ -282,7 +296,8 @@ Every push triggers a 7-job governance pipeline organized into 4 phases. The thr
 | **Build** | **App Architecture** | Schema validation (Ajv + Zod), Architecture compliance (5 policy rules), Diagram generation (PlantUML + Draw.io), Documentation rendering (Asciidoctor.js) | Blocks merge |
 | **Build** | **Patterns** | Pattern catalog generation (10 HTML pages) | Required |
 | **Build** | **Standards** | Schema validation (Ajv 2020-12), Standards catalog generation (10 HTML pages) | Blocks merge |
-| **Assembly** | **Assemble** | Merge docs + patterns + standards into unified microsite | Required |
+| **Build** | **Waivers** | Schema validation (Ajv 2020-12), Waiver registry generation (11 HTML pages) | Blocks merge |
+| **Assembly** | **Assemble** | Merge docs + patterns + standards + waivers into unified microsite | Required |
 | **Deploy** | **PR Review** | Post diagram previews to PR comments | PRs only |
 | **Deploy** | **Publish** | Deploy to GitHub Pages via `gh-pages` branch | Main only |
 
@@ -353,6 +368,36 @@ Each standard includes:
 - **Revision History** -- change log with authors and reviewers
 
 Standards are browsable in the [Next.js dashboard](http://localhost:3000/dashboard?tab=standards) and on the [published documentation site](https://muthub-ai.github.io/aac/standards/).
+
+---
+
+## Waiver Registry
+
+The platform ships with 10 architecture exception/waiver requests, each validated against a JSON Schema (draft 2020-12) and published as static HTML pages:
+
+| Waiver | ID | Domain | Status | Risk |
+|--------|-----|--------|--------|------|
+| Legacy AES-128 Encryption in E-Commerce Payment Module | EXC-SEC-001 | Security | Approved | Critical |
+| Direct Database Access Bypassing API Gateway in ML Platform | EXC-INT-001 | Integration | Approved | High |
+| Single-Region Deployment for Image Categorization Service | EXC-INFRA-001 | Infrastructure | Approved | High |
+| Missing Model Lineage Tracking in Demand Forecasting | EXC-AIML-001 | AI / ML | Pending Review | Medium |
+| Customer Support Chatbot Without Output Guardrails | EXC-AIML-002 | AI / ML | Rejected | Critical |
+| Manual Provisioning for Legacy Payment Gateway | EXC-DEVOPS-001 | DevOps | Approved | Medium |
+| Extended Data Retention in Analytics Pipeline | EXC-DATA-001 | Data | Expired | High |
+| Partner Portal Using SAML 1.1 Instead of OIDC | EXC-IAM-001 | Identity | Remediated | Medium |
+| Missing Cost Allocation Tags in Development Environments | EXC-FINOPS-001 | FinOps | Approved | Low |
+| Internal Analytics API Missing Rate Limiting | EXC-INT-002 | Integration | Pending Review | High |
+
+Each waiver includes:
+
+- **Risk Assessment** -- severity classification (Critical / High / Medium / Low) with detailed risk description
+- **Compensating Controls** -- specific security or operational measures with effectiveness ratings and verification methods
+- **Financial Impact** -- compliance cost, delay cost, risk exposure cost, and executive summary
+- **Remediation Plan** -- description, target date, assigned team, progress percentage, and backlog item link
+- **Revision History** -- audit trail of request, review, approval, and milestone events
+- **Review Notes** -- Architecture Review Board decisions and conditions
+
+Waivers are browsable in the [Next.js dashboard](http://localhost:3000/dashboard?tab=waivers) and on the [published documentation site](https://muthub-ai.github.io/aac/waivers/).
 
 ---
 
@@ -431,7 +476,7 @@ relationships:
 
 ## JSON Schemas
 
-Four JSON Schema files in `schema/` define the contract for all architecture data:
+Five JSON Schema files in `schema/` define the contract for all architecture data:
 
 | Schema | Draft | Validates | Key Structures |
 |--------|-------|-----------|----------------|
@@ -439,6 +484,7 @@ Four JSON Schema files in `schema/` define the contract for all architecture dat
 | `pattern-schema.json` | draft-07 | `patterns/*/pattern.yaml` | Pattern definitions with validation rules, resiliency patterns, components, deployment model |
 | `patterns-schema.json` | draft-07 | Pattern catalog entries | UI-facing metadata: id, version, name, category, maturity, exposure, tags |
 | `standards.json` | 2020-12 | `standards/*.yaml` | Architecture standards with metadata, scope, requirements (RFC 2119), guidelines, solutions, authoritative sources, definitions, FAQs |
+| `waivers.json` | 2020-12 | `waivers/*.yaml` | Architecture waivers with risk severity, compensating controls, financial impact, remediation plans, revision history |
 
 ---
 
@@ -494,6 +540,7 @@ All components use semantic Tailwind classes (`bg-card`, `text-foreground`, `bor
 | `/dashboard` | System catalog with tabbed navigation |
 | `/dashboard?tab=patterns` | Pattern catalog with search, filters, and detail drawer |
 | `/dashboard?tab=standards` | Standards catalog |
+| `/dashboard?tab=waivers` | Waiver registry |
 | `/dashboard?tab=utilities` | Utilities catalog |
 | `/systems/:id` | Interactive diagram editor for a specific system |
 
