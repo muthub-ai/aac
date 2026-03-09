@@ -1,3 +1,4 @@
+import yaml from 'js-yaml';
 import {
   Brain,
   BarChart3,
@@ -134,7 +135,7 @@ export const MOCK_PATTERNS: PatternData[] = [
     ],
     maturity: 'Production Ready',
     maintainerTeam: 'Platform Infrastructure',
-    docsUrl: 'https://aac.muthub.org/patterns/internal-api-multiregional',
+    docsUrl: 'https://muthub-ai.github.io/aac/patterns/internal-api-multiregional.html',
     downloads: 1_842,
     stars: 4.7,
     diagrams: [
@@ -222,7 +223,7 @@ export const MOCK_PATTERNS: PatternData[] = [
     ],
     maturity: 'Production Ready',
     maintainerTeam: 'Data Engineering',
-    docsUrl: 'https://aac.muthub.org/patterns/data-platform-bq',
+    docsUrl: 'https://muthub-ai.github.io/aac/patterns/data-platform-bq.html',
     downloads: 3_215,
     stars: 4.9,
     diagrams: [
@@ -309,7 +310,7 @@ export const MOCK_PATTERNS: PatternData[] = [
     ],
     maturity: 'Beta',
     maintainerTeam: 'ML Platform',
-    docsUrl: 'https://aac.muthub.org/patterns/aiml-model-inference',
+    docsUrl: 'https://muthub-ai.github.io/aac/patterns/aiml-model-inference.html',
     downloads: 726,
     stars: 4.3,
     diagrams: [
@@ -399,7 +400,7 @@ export const MOCK_PATTERNS: PatternData[] = [
     ],
     maturity: 'Production Ready',
     maintainerTeam: 'Platform Engineering',
-    docsUrl: 'https://aac.muthub.org/patterns/internal-web-application',
+    docsUrl: 'https://muthub-ai.github.io/aac/patterns/internal-web-application.html',
     downloads: 2_456,
     stars: 4.6,
     diagrams: [
@@ -493,7 +494,7 @@ export const MOCK_PATTERNS: PatternData[] = [
     ],
     maturity: 'Production Ready',
     maintainerTeam: 'Web Platform',
-    docsUrl: 'https://aac.muthub.org/patterns/public-web-application',
+    docsUrl: 'https://muthub-ai.github.io/aac/patterns/public-web-application.html',
     downloads: 4_130,
     stars: 4.8,
     diagrams: [
@@ -587,7 +588,7 @@ export const MOCK_PATTERNS: PatternData[] = [
     ],
     maturity: 'Beta',
     maintainerTeam: 'Integration Services',
-    docsUrl: 'https://aac.muthub.org/patterns/managed-file-transfer',
+    docsUrl: 'https://muthub-ai.github.io/aac/patterns/managed-file-transfer.html',
     downloads: 987,
     stars: 4.4,
     diagrams: [
@@ -596,3 +597,51 @@ export const MOCK_PATTERNS: PatternData[] = [
     ],
   },
 ];
+
+// ── Generate yamlContent for every pattern ───────────────────────────
+// Serializes pattern data into a schema-compliant YAML document matching
+// the patterns-schema.json contract (camelCase field names, all required
+// fields at top level).
+
+function generatePatternYaml(p: PatternData): string {
+  const doc = {
+    pattern: {
+      id: p.id,
+      version: p.version,
+      name: p.name,
+      description: p.description,
+      category: p.category,
+      tags: p.tags,
+      exposure: p.exposure,
+      maturity: p.maturity,
+      maintainerTeam: p.maintainerTeam,
+      docsUrl: p.docsUrl,
+      advantages: p.advantages,
+      considerations: p.considerations,
+      gettingStarted: p.gettingStarted.map((gs) => ({
+        step: gs.step,
+        title: gs.title,
+      })),
+      productsUsed: p.productsUsed.map((pu) => ({
+        name: pu.name,
+        role: pu.role,
+      })),
+      nonFunctionalRequirements: p.nonFunctionalRequirements.map((n) => ({
+        metric: n.metric,
+        target: n.target,
+      })),
+      designConsiderations: p.designConsiderations.map((dc) => ({
+        title: dc.title,
+        description: dc.description,
+      })),
+      constraints: p.constraints,
+      costProfile: p.costProfile,
+      architectureOverview: p.architectureOverview,
+    },
+  };
+  return yaml.dump(doc, { lineWidth: 100, noRefs: true, sortKeys: false });
+}
+
+for (const p of MOCK_PATTERNS) {
+  p.yamlContent = generatePatternYaml(p);
+}

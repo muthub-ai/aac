@@ -1,0 +1,203 @@
+metadata:
+  schemaVersion: 2
+  standardId: "STD-DATA-001"
+  name: "Enterprise Data Platform and Warehousing Standard"
+  architectureDomain: "Data"
+  architecturePrinciple:
+    - "Data-Centric Architecture"
+    - "Optimize Technology Spend"
+  l4Domain: "Data Architecture"
+  l3Domain: "Data Platforms"
+  l2Domain: "Data Warehousing and Lakes"
+  standardOwner: "Chief Data Officer"
+  assignedArchitect: "Data Platform Architect"
+  lifecycleCategory: "PROVISIONAL STANDARD"
+  publicationStatus: "APPROVED"
+  version: "1.2"
+  approvalDate: "2024-09-15"
+  communicationDate: "2024-09-20"
+  plannedActiveDate: "2024-11-01"
+  conformanceMetric: "Percentage of data pipelines registered in the enterprise data catalog"
+  tags:
+    - "data-warehouse"
+    - "data-lake"
+    - "data-mesh"
+    - "data-catalog"
+    - "etl"
+    - "data-governance"
+  versionControl:
+    repository: "github.com/org/architecture-standards"
+    path: "standards/data-platform-warehousing.yaml"
+    semver: "1.2.0"
+  revisionHistory:
+    - date: "2024-04-01T09:00:00Z"
+      version: "1.0"
+      changeType: "Initial Release"
+      summary: "First approved version establishing enterprise data platform and warehousing standards"
+      changedBy: "Data Platform Architect"
+      approvedBy: "Chief Data Officer"
+    - date: "2024-09-15T11:00:00Z"
+      version: "1.2"
+      changeType: "Minor Update"
+      summary: "Added data mesh guidelines, cross-domain data sharing requirements, and cost allocation tagging standards"
+      changedBy: "Data Platform Architect"
+      approvedBy: "Chief Data Officer"
+
+scope:
+  inScope:
+    - "Enterprise data warehouse and data lake architectures"
+    - "Data ingestion and ETL/ELT pipeline standards"
+    - "Data catalog and metadata management"
+    - "Data quality monitoring and SLA enforcement"
+    - "Cross-domain data sharing and data mesh principles"
+  outOfScope:
+    - "Application-specific transactional databases"
+    - "Real-time streaming analytics (covered by separate standard)"
+    - "Data privacy and retention policies (covered by Data Privacy Standard)"
+
+requirements:
+  - id: "REQ-001"
+    statement: "All data pipelines and datasets MUST be registered in the enterprise data catalog with complete metadata including owner, schema definition, data classification, and refresh schedule."
+    severity: "MUST"
+    rationale: "A centralized data catalog enables data discovery, prevents duplication of effort, and provides the foundation for data governance and lineage tracking across the enterprise."
+    verification: "Automated catalog completeness scan validating required metadata fields for all registered pipelines and datasets"
+    appliesTo:
+      platforms:
+        - "Snowflake"
+        - "Databricks"
+        - "AWS Redshift"
+      tiers:
+        - "Tier 1"
+        - "Tier 2"
+      exceptionsProcess: "Submit exception request to Data Governance Council"
+  - id: "REQ-002"
+    statement: "Data schemas MUST follow a versioned evolution strategy using backward-compatible changes; breaking changes require a new major version and a documented migration plan."
+    severity: "MUST"
+    rationale: "Uncontrolled schema changes break downstream consumers and create cascading failures across data pipelines, making backward compatibility essential for platform reliability."
+    verification: "Schema registry validation checks integrated into data pipeline CI/CD ensuring backward compatibility for minor versions"
+    appliesTo:
+      platforms:
+        - "Snowflake"
+        - "Databricks"
+        - "AWS Redshift"
+      tiers:
+        - "Tier 1"
+        - "Tier 2"
+      exceptionsProcess: "Submit exception request to Data Governance Council"
+  - id: "REQ-003"
+    statement: "Production data pipelines MUST implement data quality gates with automated validation checks for completeness, accuracy, consistency, and timeliness before data is published to downstream consumers."
+    severity: "MUST"
+    rationale: "Data quality issues propagate downstream and erode trust in data products; automated quality gates catch issues early and prevent bad data from reaching business-critical reports and models."
+    verification: "Data quality test suite execution results reviewed as part of pipeline deployment approval workflow"
+    appliesTo:
+      platforms:
+        - "Snowflake"
+        - "Databricks"
+        - "AWS Redshift"
+      tiers:
+        - "Tier 1"
+        - "Tier 2"
+      exceptionsProcess: "Submit exception request to Data Governance Council"
+  - id: "REQ-004"
+    statement: "All data platform resources MUST include cost allocation tags identifying the owning business domain, cost center, environment, and data tier classification."
+    severity: "MUST"
+    rationale: "Without consistent cost allocation tagging, it is impossible to attribute data platform costs to business domains, leading to uncontrolled spend and inability to optimize resource usage."
+    verification: "Cloud cost management policy enforcement scanning for required tags on all data platform resources"
+    appliesTo:
+      platforms:
+        - "Snowflake"
+        - "Databricks"
+        - "AWS Redshift"
+      tiers:
+        - "Tier 1"
+        - "Tier 2"
+        - "Tier 3"
+      exceptionsProcess: "Submit exception request to Data Governance Council"
+  - id: "REQ-005"
+    statement: "Data pipelines SHOULD implement end-to-end data lineage tracking from source systems through transformation layers to consumption endpoints."
+    severity: "SHOULD"
+    rationale: "Data lineage provides visibility into data transformations, supports impact analysis for upstream changes, and is essential for regulatory compliance and audit requirements."
+    verification: "Lineage visualization review in data catalog confirming source-to-target mapping for critical data pipelines"
+    appliesTo:
+      platforms:
+        - "Snowflake"
+        - "Databricks"
+        - "AWS Redshift"
+      tiers:
+        - "Tier 1"
+        - "Tier 2"
+      exceptionsProcess: "Submit exception request to Data Governance Council"
+  - id: "REQ-006"
+    statement: "Data products MUST define and enforce retention policies aligned with the enterprise data retention schedule, with automated archival and purge mechanisms."
+    severity: "MUST"
+    rationale: "Unmanaged data retention leads to unnecessary storage costs, increases compliance risk, and makes it difficult to respond to data subject access and deletion requests."
+    verification: "Retention policy configuration audit verifying alignment with enterprise retention schedule and automated enforcement mechanisms"
+    appliesTo:
+      platforms:
+        - "Snowflake"
+        - "Databricks"
+        - "AWS Redshift"
+      tiers:
+        - "Tier 1"
+        - "Tier 2"
+        - "Tier 3"
+      exceptionsProcess: "Submit exception request to Data Governance Council"
+
+guidelines:
+  - id: "GL-001"
+    text: "Adopt a medallion architecture (bronze, silver, gold) for data lake organization to provide clear separation between raw, cleansed, and curated data layers"
+  - id: "GL-002"
+    text: "Implement data mesh principles by organizing data products around business domains with clear ownership and self-serve data infrastructure"
+  - id: "GL-003"
+    text: "Use infrastructure-as-code for all data platform provisioning to ensure reproducibility and enable consistent environment management"
+
+solutions:
+  - id: "SOL-001"
+    name: "Snowflake"
+    description: "Cloud-native data warehouse platform with automatic scaling, data sharing, and multi-cloud support"
+  - id: "SOL-002"
+    name: "Databricks"
+    description: "Unified analytics platform combining data engineering, data science, and business analytics on a lakehouse architecture"
+  - id: "SOL-003"
+    name: "dbt"
+    description: "Data transformation tool enabling analytics engineers to build modular, tested, and documented data models using SQL"
+
+authoritativeSources:
+  - id: "SRC-001"
+    source: "DAMA-DMBOK2 - Data Management Body of Knowledge"
+    issuingAgency: "DAMA International"
+    controlName: "Chapter 6 - Data Storage and Operations"
+  - id: "SRC-002"
+    source: "ISO 8000 - Data Quality"
+    issuingAgency: "ISO"
+    controlName: "ISO 8000-61 - Data Quality Management"
+
+definitions:
+  - id: "DEF-001"
+    term: "Data Catalog"
+    definition: "A centralized inventory of data assets within an organization that provides metadata management, data discovery, and governance capabilities to enable users to find, understand, and trust data."
+  - id: "DEF-002"
+    term: "Data Mesh"
+    definition: "A decentralized data architecture paradigm that organizes data around business domains, treats data as a product with dedicated ownership, and provides self-serve data infrastructure as a platform."
+  - id: "DEF-003"
+    term: "Data Lineage"
+    definition: "The complete lifecycle of data from its origin through all transformations, movements, and aggregations, providing a traceable path that documents how data is created, modified, and consumed."
+
+faq:
+  - id: "FAQ-001"
+    question: "Does the data catalog registration requirement apply to temporary or experimental pipelines?"
+    answer: "No. Only production and pre-production data pipelines that serve downstream consumers or business reporting require catalog registration. However, experimental pipelines should be tagged and tracked in the development workspace to prevent promotion without proper cataloging."
+  - id: "FAQ-002"
+    question: "How should teams handle data sharing across business domains under the data mesh model?"
+    answer: "Cross-domain data sharing should be facilitated through well-defined data products with published contracts, SLAs, and access policies. Use the enterprise data marketplace to publish and discover data products, and establish data sharing agreements between domain teams before consumption begins."
+  - id: "FAQ-003"
+    question: "Can teams use data platform tools not listed in the approved solutions?"
+    answer: "Teams may propose alternative tools by submitting an Architecture Decision Record (ADR) to the Data Governance Council. The proposal must include a comparison with approved solutions, total cost of ownership analysis, and a plan for integration with the enterprise data catalog and governance framework."
+
+references:
+  - id: "REF-001"
+    description: "Zhamak Dehghani - Data Mesh: Delivering Data-Driven Value at Scale"
+    link: "https://www.oreilly.com/library/view/data-mesh/9781492092384/"
+  - id: "REF-002"
+    description: "Databricks Lakehouse Architecture Whitepaper"
+    link: "https://www.databricks.com/research/lakehouse-a-new-generation-of-open-platforms"

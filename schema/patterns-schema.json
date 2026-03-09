@@ -124,6 +124,55 @@
       "maximum": 5,
       "default": 0,
       "description": "Average star rating (0-5)"
+    },
+    "productsUsed": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "role"],
+        "properties": {
+          "name": { "type": "string" },
+          "role": { "type": "string" }
+        }
+      },
+      "description": "Cloud products / services used in the pattern with their roles"
+    },
+    "nonFunctionalRequirements": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["metric", "target"],
+        "properties": {
+          "metric": { "type": "string" },
+          "target": { "type": "string" }
+        }
+      },
+      "description": "Non-functional requirement targets (availability, latency, RPO/RTO, etc.)"
+    },
+    "designConsiderations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["title", "description"],
+        "properties": {
+          "title": { "type": "string" },
+          "description": { "type": "string" }
+        }
+      },
+      "description": "Key architectural decisions and design rationale"
+    },
+    "constraints": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Known constraints and limitations of the pattern"
+    },
+    "costProfile": {
+      "type": "string",
+      "description": "Cost estimation guidance for the pattern"
+    },
+    "architectureOverview": {
+      "type": "string",
+      "description": "Prose description of the architecture design"
     }
   },
   "additionalProperties": false

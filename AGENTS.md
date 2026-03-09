@@ -40,6 +40,20 @@ npm run build:diagrams     # Generate PlantUML + Draw.io diagrams from models
 - AsciiDoc docs: `src/docs/` (generated diagrams go in `src/docs/diagrams/`)
 - Scripts use `tsx` for TypeScript execution and relative imports (not `@/*` alias)
 
+## Git Workflow
+
+- **Always work in a feature branch.** Never commit directly to `main`. Create a descriptive branch (e.g., `standards`, `fix-nav-links`) before making any changes.
+- **Ask the user if anything is unclear** before proceeding — do not guess at requirements or make assumptions about ambiguous requests.
+- **Before merging to `main`**, run the full verification suite and ensure everything passes:
+  ```bash
+  npm run test:run           # 288 tests must pass
+  npm run build              # Production build must succeed
+  npm run lint               # No lint errors
+  npm run validate:models    # All YAML models must be valid
+  npm run lint:architecture  # Architecture policy compliance
+  ```
+- Only merge after all checks above pass with zero failures.
+
 ## Key Conventions
 
 - Semantic Tailwind CSS tokens (light/dark themes via CSS custom properties in globals.css)

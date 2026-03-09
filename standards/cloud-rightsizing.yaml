@@ -1,0 +1,186 @@
+metadata:
+  schemaVersion: 2
+  standardId: "STD-FINOPS-001"
+  name: "Cloud Workload Resource Rightsizing Standard"
+  architectureDomain: "FinOps"
+  architecturePrinciple:
+    - "Optimize Technology Spend"
+  l4Domain: "Cloud Economics"
+  l3Domain: "Cost Optimization"
+  l2Domain: "Resource Rightsizing"
+  standardOwner: "FinOps Director"
+  assignedArchitect: "Cloud Economics Architect"
+  lifecycleCategory: "PROVISIONAL STANDARD"
+  publicationStatus: "APPROVED"
+  version: "1.0"
+  approvalDate: "2024-10-15"
+  communicationDate: "2024-10-20"
+  plannedActiveDate: "2024-12-01"
+  conformanceMetric: "Percentage of cloud workloads reviewed for rightsizing within the last 90 days"
+  tags:
+    - "finops"
+    - "cloud-cost"
+    - "rightsizing"
+    - "reserved-instances"
+    - "spot-instances"
+    - "cost-allocation"
+  versionControl:
+    repository: "github.com/org/architecture-standards"
+    path: "standards/cloud-rightsizing.yaml"
+    semver: "1.0.0"
+  revisionHistory:
+    - date: "2024-10-15T00:00:00Z"
+      version: "1.0"
+      changeType: "Initial Release"
+      summary: "Initial release of the Cloud Workload Resource Rightsizing Standard"
+      changedBy: "Cloud Economics Architect"
+      approvedBy: "FinOps Director"
+
+scope:
+  inScope:
+    - "Compute instance rightsizing recommendations and enforcement"
+    - "Reserved instance and savings plan procurement guidelines"
+    - "Spot/preemptible instance usage for fault-tolerant workloads"
+    - "Cost allocation tagging and chargeback models"
+    - "Idle resource detection and automated cleanup"
+  outOfScope:
+    - "Application-level performance optimization"
+    - "Software licensing cost management"
+    - "Data transfer cost optimization across regions"
+
+requirements:
+  - id: "REQ-001"
+    statement: "All cloud resources MUST have cost allocation tags matching the enterprise tagging taxonomy."
+    severity: "MUST"
+    rationale: "Consistent cost allocation tagging is the foundation of cloud financial management, enabling accurate chargeback, showback, and cost attribution to business units, projects, and environments."
+    verification: "Run automated tag compliance scans using cloud-native tools (e.g., AWS Config Rules, Azure Policy) and report the percentage of resources with compliant tags on a weekly basis."
+    appliesTo:
+      platforms:
+        - "AWS"
+        - "Azure"
+        - "GCP"
+      tiers:
+        - "Tier 1"
+        - "Tier 2"
+        - "Tier 3"
+        - "Tier 4"
+  - id: "REQ-002"
+    statement: "Rightsizing recommendations SHOULD be reviewed and actioned within 30 days of generation."
+    severity: "SHOULD"
+    rationale: "Timely review of rightsizing recommendations ensures cost savings opportunities are captured before cloud spending compounds, and keeps resource utilization aligned with actual workload demands."
+    verification: "Track the age of open rightsizing recommendations in the FinOps dashboard and report on the percentage actioned within the 30-day SLA each month."
+    appliesTo:
+      platforms:
+        - "AWS"
+        - "Azure"
+        - "GCP"
+      tiers:
+        - "Tier 1"
+        - "Tier 2"
+        - "Tier 3"
+        - "Tier 4"
+  - id: "REQ-003"
+    statement: "Idle resources with no traffic for 14 days MUST be flagged for decommission review."
+    severity: "MUST"
+    rationale: "Idle resources represent direct waste in cloud spending. Automated detection and flagging ensures that unused resources are identified promptly and either justified or decommissioned."
+    verification: "Configure automated idle resource detection using cloud monitoring tools; verify that flagged resources are reviewed within 7 days and either decommissioned or documented with a business justification."
+    appliesTo:
+      platforms:
+        - "AWS"
+        - "Azure"
+        - "GCP"
+      tiers:
+        - "Tier 1"
+        - "Tier 2"
+        - "Tier 3"
+        - "Tier 4"
+  - id: "REQ-004"
+    statement: "Teams SHOULD leverage spot instances for batch processing and fault-tolerant workloads."
+    severity: "SHOULD"
+    rationale: "Spot and preemptible instances offer 60-90% cost savings over on-demand pricing for workloads that can tolerate interruption, significantly reducing compute costs for batch, CI/CD, and data processing jobs."
+    verification: "Review compute spend reports to measure spot instance adoption rates for eligible workload categories; target a minimum of 50% spot usage for identified fault-tolerant workloads."
+    appliesTo:
+      platforms:
+        - "AWS"
+        - "Azure"
+        - "GCP"
+      tiers:
+        - "Tier 2"
+        - "Tier 3"
+        - "Tier 4"
+  - id: "REQ-005"
+    statement: "Reserved instance coverage MUST target minimum 70% of steady-state compute workloads."
+    severity: "MUST"
+    rationale: "Reserved instances and savings plans provide 30-60% cost savings for predictable workloads. Maintaining at least 70% coverage for steady-state compute ensures the organization captures significant savings on its baseline infrastructure spend."
+    verification: "Monitor reserved instance utilization and coverage metrics through cloud provider cost management tools; report coverage percentage monthly to FinOps steering committee."
+    appliesTo:
+      platforms:
+        - "AWS"
+        - "Azure"
+        - "GCP"
+      tiers:
+        - "Tier 1"
+        - "Tier 2"
+
+guidelines:
+  - id: "GUIDE-001"
+    text: "Tagging Strategy: Implement a minimum set of mandatory tags for all cloud resources including cost-center, environment, application-id, owner-email, and project-code. Use tag enforcement policies at the account or subscription level to prevent resource creation without required tags. Automate tag remediation for non-compliant resources discovered during audits."
+  - id: "GUIDE-002"
+    text: "Spot Instance Patterns: Design fault-tolerant workloads to leverage spot instances using diversified instance type pools, capacity-optimized allocation strategies, and graceful interruption handling. Use spot fleet or managed instance groups with automatic fallback to on-demand capacity. Implement checkpointing for long-running batch jobs to minimize reprocessing on interruption."
+  - id: "GUIDE-003"
+    text: "Savings Plans and Reservations: Analyze 90 days of historical usage data before purchasing reserved instances or savings plans. Start with compute savings plans for flexibility, then layer in specific reserved instances for stable workloads. Stagger reservation purchases quarterly to avoid lock-in risks and allow adjustment as workload patterns evolve."
+
+solutions:
+  - id: "SOL-001"
+    name: "AWS Cost Explorer and Compute Optimizer"
+    description: "Native AWS tools providing cost visualization, rightsizing recommendations based on CloudWatch metrics, reserved instance purchase recommendations, and savings plan coverage analysis."
+    link: "https://aws.amazon.com/aws-cost-management/"
+  - id: "SOL-002"
+    name: "Kubecost"
+    description: "Kubernetes cost monitoring and optimization platform providing real-time cost allocation, rightsizing recommendations for pods and nodes, cluster efficiency scoring, and integration with cloud provider billing APIs."
+    link: "https://www.kubecost.com"
+  - id: "SOL-003"
+    name: "Apptio Cloudability"
+    description: "Multi-cloud FinOps platform offering cost allocation, rightsizing recommendations, reserved instance management, anomaly detection, and executive dashboards for cloud financial management."
+    link: "https://www.apptio.com/products/cloudability/"
+
+authoritativeSources:
+  - id: "AUTH-001"
+    source: "FinOps Foundation Framework"
+    issuingAgency: "FinOps Foundation"
+    link: "https://www.finops.org/framework/"
+  - id: "AUTH-002"
+    source: "AWS Well-Architected Framework - Cost Optimization Pillar"
+    issuingAgency: "Amazon Web Services"
+    link: "https://docs.aws.amazon.com/wellarchitected/latest/cost-optimization-pillar/"
+  - id: "AUTH-003"
+    source: "Gartner Guide to Cloud FinOps"
+    issuingAgency: "Gartner"
+    link: "https://www.gartner.com/en/information-technology/topics/cloud-strategy"
+
+definitions:
+  - id: "DEF-001"
+    term: "Rightsizing"
+    definition: "The process of analyzing cloud resource utilization metrics and adjusting instance types, storage tiers, or configurations to match actual workload requirements, eliminating over-provisioning while maintaining performance and availability targets."
+  - id: "DEF-002"
+    term: "Reserved Instance"
+    definition: "A billing discount mechanism offered by cloud providers where customers commit to a specific instance type and region for a one- or three-year term in exchange for significantly reduced hourly rates compared to on-demand pricing."
+  - id: "DEF-003"
+    term: "FinOps"
+    definition: "An evolving cloud financial management discipline and cultural practice that enables organizations to get maximum business value by helping engineering, finance, and business teams collaborate on data-driven spending decisions around cloud infrastructure and services."
+
+faq:
+  - id: "FAQ-001"
+    question: "How do we handle rightsizing recommendations that conflict with application performance requirements?"
+    answer: "Rightsizing recommendations should be validated against application-specific performance baselines before implementation. If a recommendation would degrade performance below acceptable thresholds, teams should document the exception with supporting metrics in the FinOps platform and re-evaluate during the next quarterly review cycle."
+  - id: "FAQ-002"
+    question: "Should reserved instances be purchased centrally or by individual teams?"
+    answer: "Reserved instances and savings plans should be purchased centrally by the FinOps team to maximize flexibility and coverage across the organization. Central procurement enables pooling of commitments, better discount tiers, and avoidance of overlapping or underutilized reservations. Individual teams provide demand forecasts quarterly to inform purchasing decisions."
+
+references:
+  - id: "REF-001"
+    description: "FinOps Foundation Cloud Cost Optimization Resources"
+    link: "https://www.finops.org/resources/"
+  - id: "REF-002"
+    description: "Cloud Provider Pricing Calculators and Cost Management Documentation"
+    link: "https://calculator.aws"

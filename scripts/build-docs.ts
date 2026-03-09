@@ -535,6 +535,7 @@ function nav(activePage: string, isSubpage = false): string {
       <a href="${prefix}index.html" class="nav-link ${activePage === 'home' ? 'active' : ''}">Overview</a>
       <a href="${prefix}index.html#systems" class="nav-link ${activePage === 'systems' ? 'active' : ''}">Systems</a>
       <a href="${prefix}patterns/index.html" class="nav-link ${activePage === 'patterns' ? 'active' : ''}">Patterns</a>
+      <a href="${prefix}standards/index.html" class="nav-link ${activePage === 'standards' ? 'active' : ''}">Standards</a>
       <a href="${prefix}index.html#pipeline" class="nav-link">Pipeline</a>
       <a href="https://github.com/muthub-ai/aac" class="nav-link" target="_blank" rel="noopener">GitHub &nearr;</a>
     </div>
@@ -739,6 +740,33 @@ ${nav('home')}
         <div class="system-card-stat"><div class="val">6</div><div class="lbl">Patterns</div></div>
         <div class="system-card-stat"><div class="val">12</div><div class="lbl">Diagrams</div></div>
         <div class="system-card-stat"><div class="val">5</div><div class="lbl">Categories</div></div>
+      </div>
+    </a>
+  </div>
+</section>
+
+<section class="container systems-section" id="standards">
+  <div class="section-header">
+    <h2>Standards Catalog</h2>
+    <p>Enterprise architecture standards &mdash; governance policies, compliance rules, and best practices across 7 domains.</p>
+  </div>
+  <div class="system-grid">
+    <a href="standards/index.html" class="system-card">
+      <div class="system-card-header">
+        <div>
+          <span class="group-badge">All Standards</span>
+          <h3 style="margin-top:6px">Browse Standards Catalog</h3>
+        </div>
+        <span class="badge" style="background:var(--success-subtle);color:var(--success);border-color:var(--success)">9 standards</span>
+      </div>
+      <p class="system-card-desc">Organization-wide architecture standards covering AI/ML governance, security, data platforms, resiliency, API integration, DevOps, FinOps, and identity management. Each standard includes requirements with RFC 2119 severity levels, guidelines, and authoritative sources.</p>
+      <div class="system-card-tags">
+        <span class="tag">AI/ML</span><span class="tag">Security</span><span class="tag">Data</span><span class="tag">Infrastructure</span><span class="tag">Integration</span><span class="tag">DevOps</span><span class="tag">FinOps</span>
+      </div>
+      <div class="system-card-footer">
+        <div class="system-card-stat"><div class="val">9</div><div class="lbl">Standards</div></div>
+        <div class="system-card-stat"><div class="val">7</div><div class="lbl">Domains</div></div>
+        <div class="system-card-stat"><div class="val">57</div><div class="lbl">Requirements</div></div>
       </div>
     </a>
   </div>

@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 import { SystemsOverview } from '@/components/dashboard/systems-overview';
 import { loadSystems } from '@/lib/model/load-systems';
+import { loadStandards } from '@/lib/model/load-standards';
 
 function DashboardFallback() {
   return (
@@ -15,9 +16,10 @@ function DashboardFallback() {
 
 export default function DashboardPage() {
   const systems = loadSystems();
+  const standards = loadStandards();
   return (
     <Suspense fallback={<DashboardFallback />}>
-      <SystemsOverview systems={systems} />
+      <SystemsOverview systems={systems} standards={standards} />
     </Suspense>
   );
 }

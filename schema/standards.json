@@ -1,0 +1,423 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aac.muthub.org/ea/schemas/architecture-standard.schema.json",
+  "title": "Architecture Standard",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "metadata",
+    "scope",
+    "requirements"
+  ],
+  "$defs": {
+    "architecturePrinciple": {
+      "type": "string",
+      "enum": [
+        "AI-First Mindset",
+        "Responsible AI by Design",
+        "Governance with Minimized Friction",
+        "Human-AI Collaboration",
+        "Adaptive Customer-Centric Design",
+        "Security by Design",
+        "Data-Centric Architecture",
+        "Modular and Composable Architecture",
+        "Resilient and Scalable infrastructure",
+        "Optimize Technology Spend"
+      ]
+    }
+  },
+  "properties": {
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "standardId",
+        "name",
+        "architectureDomain",
+        "publicationStatus",
+        "version",
+        "approvalDate"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "type": "integer",
+          "enum": [1, 2]
+        },
+        "standardId": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "architectureDomain": {
+          "type": "string"
+        },
+        "architecturePrinciple": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/architecturePrinciple"
+          }
+        },
+        "l4Domain": {
+          "type": "string"
+        },
+        "l3Domain": {
+          "type": "string"
+        },
+        "l2Domain": {
+          "type": "string"
+        },
+        "standardOwner": {
+          "type": "string"
+        },
+        "assignedArchitect": {
+          "type": "string"
+        },
+        "lifecycleCategory": {
+          "type": "string",
+          "enum": [
+            "DRAFT",
+            "PROVISIONAL",
+            "STANDARD",
+            "PROVISIONAL STANDARD",
+            "RETIRED"
+          ]
+        },
+        "publicationStatus": {
+          "type": "string",
+          "enum": [
+            "APPROVED",
+            "DRAFT",
+            "RETIRED"
+          ]
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+$"
+        },
+        "approvalDate": {
+          "type": "string",
+          "format": "date"
+        },
+        "communicationDate": {
+          "type": "string",
+          "format": "date"
+        },
+        "plannedActiveDate": {
+          "type": ["string", "null"],
+          "format": "date"
+        },
+        "conformanceMetric": {
+          "type": "string"
+        },
+        "relatedChildStandards": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "versionControl": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "repository": {
+              "type": "string"
+            },
+            "path": {
+              "type": "string"
+            },
+            "semver": {
+              "type": "string",
+              "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+            }
+          }
+        },
+        "revisionHistory": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "date": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "version": {
+                "type": "string",
+                "pattern": "^[0-9]+\\.[0-9]+$"
+              },
+              "changeType": {
+                "type": "string"
+              },
+              "summary": {
+                "type": "string"
+              },
+              "changedBy": {
+                "type": "string"
+              },
+              "approvedBy": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "inScope",
+        "outOfScope"
+      ],
+      "properties": {
+        "inScope": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "outOfScope": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "requirements": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "statement"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "statement": {
+            "type": "string"
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "MUST",
+              "MUST NOT",
+              "SHOULD",
+              "SHOULD NOT"
+            ]
+          },
+          "reportedMetric": {
+            "type": "string"
+          },
+          "verification": {
+            "type": "string"
+          },
+          "rationale": {
+            "type": "string"
+          },
+          "appliesTo": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "platforms": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "tiers": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "exceptionsProcess": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "guidelines": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "text"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "solutions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "name"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "link": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "authoritativeSources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "source",
+          "issuingAgency"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "issuingAgency": {
+            "type": "string"
+          },
+          "controlName": {
+            "type": "string"
+          },
+          "link": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "faq": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "question",
+          "answer"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "question": {
+            "type": "string"
+          },
+          "answer": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "definitions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "term",
+          "definition"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "term": {
+            "type": "string"
+          },
+          "definition": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "references": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "link": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "metadata": {
+            "properties": {
+              "schemaVersion": {
+                "const": 2
+              }
+            },
+            "required": [
+              "schemaVersion"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "metadata": {
+            "required": [
+              "architecturePrinciple"
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

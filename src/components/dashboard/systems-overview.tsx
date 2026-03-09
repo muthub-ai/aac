@@ -10,14 +10,16 @@ import { PatternCatalog } from '@/components/dashboard/pattern-catalog';
 import { StandardsCatalog } from '@/components/dashboard/standards-catalog';
 import { UtilitiesCatalog } from '@/components/dashboard/utilities-catalog';
 import type { SystemData } from '@/types/system';
+import type { StandardData } from '@/types/standard';
 
 interface SystemsOverviewProps {
   systems: SystemData[];
+  standards: StandardData[];
 }
 
 const VALID_TABS = new Set(['applications', 'patterns', 'standards', 'utilities']);
 
-export function SystemsOverview({ systems }: SystemsOverviewProps) {
+export function SystemsOverview({ systems, standards }: SystemsOverviewProps) {
   const searchParams = useSearchParams();
   const tabParam = searchParams.get('tab');
   const initialTab = tabParam && VALID_TABS.has(tabParam) ? tabParam : 'applications';
@@ -26,7 +28,7 @@ export function SystemsOverview({ systems }: SystemsOverviewProps) {
   const tabs: CatalogTab[] = [
     { id: 'applications', label: 'Application Catalog', icon: LayoutGrid, count: systems.length },
     { id: 'patterns', label: 'Pattern Catalog', icon: Puzzle, count: 3 },
-    { id: 'standards', label: 'Standards Catalog', icon: ShieldCheck },
+    { id: 'standards', label: 'Standards Catalog', icon: ShieldCheck, count: standards.length },
     { id: 'utilities', label: 'Utilities', icon: Wrench },
   ];
 
@@ -56,7 +58,7 @@ export function SystemsOverview({ systems }: SystemsOverviewProps) {
           >
             {activeTab === 'applications' && <ApplicationCatalog systems={systems} />}
             {activeTab === 'patterns' && <PatternCatalog />}
-            {activeTab === 'standards' && <StandardsCatalog />}
+            {activeTab === 'standards' && <StandardsCatalog standards={standards} />}
             {activeTab === 'utilities' && <UtilitiesCatalog />}
           </div>
         </main>

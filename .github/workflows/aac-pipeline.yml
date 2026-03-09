@@ -1,14 +1,16 @@
 # =============================================================================
 # Architecture as Code (AaC) — CI/CD Pipeline
 # =============================================================================
-# This workflow automates the full enterprise architecture lifecycle:
-#   1. Setup          — checkout, toolchain installation, dependency caching
-#   2. Verify         — JSON Schema validation + Zod checks + unit tests
-#   3. Compliance     — enterprise architecture policy linting
-#   4. Artifacts      — PlantUML + Draw.io diagram generation
-#   5. Documentation  — Asciidoctor.js static site generation
-#   6. PR Feedback    — post diagram previews to pull request comments
-#   7. Publish        — deploy microsite to GitHub Pages on merge to main
+# This workflow automates the full enterprise architecture lifecycle with
+# parallel domain-specific stages:
+#
+#   1. Lint & Test     — project-wide quality gate (ESLint + Vitest)
+#   2. App Architecture — schema validation, compliance, diagrams, docs  (parallel)
+#   3. Patterns         — pattern catalog page generation               (parallel)
+#   4. Standards        — schema validation, standards catalog pages    (parallel)
+#   5. Assemble         — merge all artifacts into a unified microsite
+#   6. PR Feedback      — post diagram previews to pull request comments
+#   7. Publish          — deploy microsite to GitHub Pages on merge to main
 #
 # CRITICAL: This pipeline does NOT use Structurizr CLI/DSL anywhere.
 # All parsing, validation, and export is handled by our custom Node.js tooling.
@@ -49,78 +51,49 @@ permissions:
 
 jobs:
   # =========================================================================
-  # STAGE 1 — Setup + STAGE 2 — Verify + STAGE 3 — Compliance
+  # STAGE 1 — Lint & Test (Quality Gate)
   # =========================================================================
-  # These run in a single job to avoid re-installing dependencies.
-  verify-and-comply:
-    name: "Verify & Compliance"
+  # Project-wide quality gate that must pass before any domain-specific
+  # stages can run. Ensures code quality and test coverage.
+  # =========================================================================
+  lint-and-test:
+    name: "Lint & Test"
     runs-on: ubuntu-latest
     steps:
-      # ---------------------------------------------------------------------
-      # 1a. Checkout source
-      # ---------------------------------------------------------------------
+      # --- Setup -----------------------------------------------------------
       - name: "Checkout repository"
         uses: actions/checkout@v4
 
-      # ---------------------------------------------------------------------
-      # 1b. Set up Node.js from .nvmrc with npm dependency caching
-      # ---------------------------------------------------------------------
       - name: "Set up Node.js"
         uses: actions/setup-node@v4
         with:
           node-version-file: ".nvmrc"
           cache: "npm"
 
-      # ---------------------------------------------------------------------
-      # 1c. Install Node dependencies (ci = clean install, reproducible)
-      # ---------------------------------------------------------------------
       - name: "Install dependencies"
         run: npm ci
 
-      # ---------------------------------------------------------------------
-      # 2a. Schema Validation — validate all model YAML files against our
-      #     enterprise JSON Schema + Zod schemas + cross-reference checks.
-      #     Fails fast if any model file is structurally invalid.
-      # ---------------------------------------------------------------------
-      - name: "Validate model schemas"
-        run: npx tsx scripts/validate-models.ts
-
-      # ---------------------------------------------------------------------
-      # 2b. Unit Tests — run the full Vitest test suite in single-run mode.
-      #     Covers: YAML parsing, graph transforms, validation logic,
-      #     layout algorithms, export modules, and utility functions.
-      # ---------------------------------------------------------------------
-      - name: "Run unit tests"
-        run: npm run test:run
-
-      # ---------------------------------------------------------------------
-      # 2c. ESLint — enforce code quality and Next.js best practices
-      # ---------------------------------------------------------------------
-      - name: "Lint source code"
+      # --- Sub-stage: Lint -------------------------------------------------
+      - name: "ESLint — code quality & Next.js best practices"
         run: npm run lint
 
-      # ---------------------------------------------------------------------
-      # 3. Architecture Compliance — run our custom enterprise policy linter.
-      #    Enforces rules like: frontends cannot bypass API gateways to reach
-      #    databases, all systems must have containers, deployment references
-      #    must be valid, etc. Blocks the PR if any policy is violated.
-      # ---------------------------------------------------------------------
-      - name: "Architecture compliance check"
-        run: npx tsx scripts/lint-architecture.ts
+      # --- Sub-stage: Unit Tests -------------------------------------------
+      - name: "Vitest — run full test suite (288 tests)"
+        run: npm run test:run
 
   # =========================================================================
-  # STAGE 4 — Artifact Creation (Diagrams)
-  # STAGE 5 — Documentation Generation (Asciidoctor.js)
-  # STAGE 5b — Pattern Catalog Page Generation
+  # STAGE 2a — Application Architecture
   # =========================================================================
-  build-docs:
-    name: "Build Diagrams & Documentation"
+  # Validates architecture model YAML files, enforces enterprise compliance
+  # policies, generates diagrams, and builds the documentation microsite.
+  # Runs in PARALLEL with Patterns and Standards stages.
+  # =========================================================================
+  app-architecture:
+    name: "App Architecture"
     runs-on: ubuntu-latest
-    needs: verify-and-comply
+    needs: lint-and-test
     steps:
-      # ---------------------------------------------------------------------
-      # Checkout + Node.js (same as verify job)
-      # ---------------------------------------------------------------------
+      # --- Setup -----------------------------------------------------------
       - name: "Checkout repository"
         uses: actions/checkout@v4
 
@@ -130,56 +103,48 @@ jobs:
           node-version-file: ".nvmrc"
           cache: "npm"
 
-      - name: "Install Node dependencies"
+      - name: "Install dependencies"
         run: npm ci
 
-      # ---------------------------------------------------------------------
-      # 4. Artifact Creation — Transpile YAML models into PlantUML (.puml)
-      #    and Draw.io XML (.drawio.xml) diagram files. These are written
-      #    to src/docs/diagrams/ for the documentation build to pick up.
-      # ---------------------------------------------------------------------
-      - name: "Generate diagrams (PlantUML + Draw.io)"
+      # --- Sub-stage: Schema Validation ------------------------------------
+      # Validates all model YAML files against the enterprise JSON Schema
+      # + Zod schemas + cross-reference checks.
+      # Fails fast if any model file is structurally invalid.
+      # -------------------------------------------------------------------
+      - name: "Schema validation — models (JSON Schema + Zod)"
+        run: npx tsx scripts/validate-models.ts
+
+      # --- Sub-stage: Architecture Compliance ------------------------------
+      # Enforces enterprise architecture policies: no frontend-to-database
+      # bypass, valid deployment references, technology standards compliance.
+      # Blocks the PR if any policy is violated.
+      # -------------------------------------------------------------------
+      - name: "Architecture compliance — enterprise policy enforcement"
+        run: npx tsx scripts/lint-architecture.ts
+
+      # --- Sub-stage: Diagram Generation -----------------------------------
+      # Transpiles YAML models into PlantUML (.puml) and Draw.io XML
+      # (.drawio.xml) diagram files for all systems and views.
+      # -------------------------------------------------------------------
+      - name: "Diagram generation — PlantUML + Draw.io"
         run: npx tsx scripts/build-diagrams.ts
 
-      # ---------------------------------------------------------------------
-      # 5. Documentation Generation — convert AsciiDoc sources into a static
-      #    HTML microsite using Asciidoctor.js (pure Node.js, no Java).
-      #    Output lands in build/microsite/output/.
-      # ---------------------------------------------------------------------
-      - name: "Generate documentation site"
+      # --- Sub-stage: Documentation Rendering ------------------------------
+      # Converts AsciiDoc sources into a static HTML microsite using
+      # Asciidoctor.js (pure Node.js, no Java).
+      # Output: build/microsite/output/
+      # -------------------------------------------------------------------
+      - name: "Documentation rendering — Asciidoctor.js microsite"
         run: npx tsx scripts/build-docs.ts
 
-      # ---------------------------------------------------------------------
-      # 5b. Pattern Catalog Pages — generate static HTML pages for each
-      #     architecture pattern with full documentation (architecture
-      #     overview, diagrams, NFRs, constraints, cost profile, etc.).
-      #     Output lands in build/patterns/.
-      # ---------------------------------------------------------------------
-      - name: "Generate pattern catalog pages"
-        run: npx tsx scripts/build-pattern-pages.ts
-
-      # ---------------------------------------------------------------------
-      # Copy pattern pages into the microsite output for unified deployment
-      # ---------------------------------------------------------------------
-      - name: "Merge pattern pages into microsite"
-        run: |
-          mkdir -p build/microsite/output/patterns
-          cp -r build/patterns/* build/microsite/output/patterns/
-
-      # ---------------------------------------------------------------------
-      # Upload the generated site as a build artifact. This is used by both
-      # the PR feedback job and the publish job.
-      # ---------------------------------------------------------------------
+      # --- Artifacts -------------------------------------------------------
       - name: "Upload documentation artifact"
         uses: actions/upload-artifact@v4
         with:
-          name: microsite
+          name: app-docs
           path: build/microsite/output/
           retention-days: 7
 
-      # ---------------------------------------------------------------------
-      # Upload generated diagrams separately for PR feedback
-      # ---------------------------------------------------------------------
       - name: "Upload diagram artifacts"
         uses: actions/upload-artifact@v4
         with:
@@ -188,7 +153,143 @@ jobs:
           retention-days: 7
 
   # =========================================================================
-  # STAGE 6 — PR Feedback Loop
+  # STAGE 2b — Patterns
+  # =========================================================================
+  # Generates the architecture pattern catalog with full documentation,
+  # C4 diagrams, NFRs, constraints, and cost profiles.
+  # Runs in PARALLEL with App Architecture and Standards stages.
+  # =========================================================================
+  patterns:
+    name: "Patterns"
+    runs-on: ubuntu-latest
+    needs: lint-and-test
+    steps:
+      # --- Setup -----------------------------------------------------------
+      - name: "Checkout repository"
+        uses: actions/checkout@v4
+
+      - name: "Set up Node.js"
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: "npm"
+
+      - name: "Install dependencies"
+        run: npm ci
+
+      # --- Sub-stage: Pattern Catalog Generation ---------------------------
+      # Generates static HTML pages for each architecture pattern with
+      # architecture overview, C4 diagrams, NFRs, constraints, cost profile.
+      # Output: build/patterns/
+      # -------------------------------------------------------------------
+      - name: "Pattern catalog — generate static pages"
+        run: npx tsx scripts/build-pattern-pages.ts
+
+      # --- Artifacts -------------------------------------------------------
+      - name: "Upload pattern pages artifact"
+        uses: actions/upload-artifact@v4
+        with:
+          name: pattern-pages
+          path: build/patterns/
+          retention-days: 7
+
+  # =========================================================================
+  # STAGE 2c — Standards
+  # =========================================================================
+  # Validates architecture standards against JSON Schema (draft 2020-12)
+  # and generates the standards catalog pages.
+  # Runs in PARALLEL with App Architecture and Patterns stages.
+  # =========================================================================
+  standards:
+    name: "Standards"
+    runs-on: ubuntu-latest
+    needs: lint-and-test
+    steps:
+      # --- Setup -----------------------------------------------------------
+      - name: "Checkout repository"
+        uses: actions/checkout@v4
+
+      - name: "Set up Node.js"
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: "npm"
+
+      - name: "Install dependencies"
+        run: npm ci
+
+      # --- Sub-stage: Schema Validation ------------------------------------
+      # Validates all standards YAML files against the architecture-standard
+      # JSON Schema (draft 2020-12).
+      # -------------------------------------------------------------------
+      - name: "Schema validation — standards (JSON Schema 2020-12)"
+        run: npx tsx scripts/validate-standards.ts
+
+      # --- Sub-stage: Standards Catalog Generation -------------------------
+      # Generates static HTML pages for each architecture standard with
+      # requirements, guidelines, solutions, authoritative sources, etc.
+      # Output: build/standards/
+      # -------------------------------------------------------------------
+      - name: "Standards catalog — generate static pages"
+        run: npx tsx scripts/build-standard-pages.ts
+
+      # --- Artifacts -------------------------------------------------------
+      - name: "Upload standards pages artifact"
+        uses: actions/upload-artifact@v4
+        with:
+          name: standards-pages
+          path: build/standards/
+          retention-days: 7
+
+  # =========================================================================
+  # STAGE 3 — Assemble Microsite
+  # =========================================================================
+  # Merges documentation, pattern catalog, and standards catalog into a
+  # unified microsite for deployment. Waits for all three parallel stages.
+  # =========================================================================
+  assemble:
+    name: "Assemble Microsite"
+    runs-on: ubuntu-latest
+    needs: [app-architecture, patterns, standards]
+    steps:
+      # --- Sub-stage: Download Artifacts -----------------------------------
+      - name: "Download documentation artifact"
+        uses: actions/download-artifact@v4
+        with:
+          name: app-docs
+          path: site/
+
+      - name: "Download pattern pages artifact"
+        uses: actions/download-artifact@v4
+        with:
+          name: pattern-pages
+          path: patterns/
+
+      - name: "Download standards pages artifact"
+        uses: actions/download-artifact@v4
+        with:
+          name: standards-pages
+          path: standards/
+
+      # --- Sub-stage: Merge ------------------------------------------------
+      - name: "Merge all catalogs into microsite"
+        run: |
+          mkdir -p site/patterns site/standards
+          cp -r patterns/* site/patterns/
+          cp -r standards/* site/standards/
+          echo "Assembled microsite contents:"
+          find site -type f | head -50
+
+      # --- Artifacts -------------------------------------------------------
+      - name: "Upload assembled microsite"
+        uses: actions/upload-artifact@v4
+        with:
+          name: microsite
+          path: site/
+          retention-days: 7
+
+  # =========================================================================
+  # STAGE 4 — PR Feedback Loop
   # =========================================================================
   # Only runs on pull_request events. Posts generated PlantUML diagrams
   # directly into the PR conversation so reviewers can see architecture
@@ -197,7 +298,7 @@ jobs:
   pr-feedback:
     name: "PR Diagram Preview"
     runs-on: ubuntu-latest
-    needs: build-docs
+    needs: assemble
     if: github.event_name == 'pull_request'
     steps:
       - name: "Download diagram artifacts"
@@ -290,18 +391,18 @@ jobs:
             }
 
   # =========================================================================
-  # STAGE 7 — Publish to GitHub Pages
+  # STAGE 5 — Publish to GitHub Pages
   # =========================================================================
   # Only runs on push to main (i.e., after a PR is merged).
-  # Deploys the generated microsite to the gh-pages branch.
+  # Deploys the assembled microsite to the gh-pages branch.
   # =========================================================================
   publish:
     name: "Publish to GitHub Pages"
     runs-on: ubuntu-latest
-    needs: build-docs
+    needs: assemble
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     steps:
-      - name: "Download documentation artifact"
+      - name: "Download assembled microsite"
         uses: actions/download-artifact@v4
         with:
           name: microsite
