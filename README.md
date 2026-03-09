@@ -5,36 +5,54 @@
 <h1 align="center">Architecture as Code</h1>
 
 <p align="center">
-  An interactive C4 architecture diagram editor with bidirectional YAML-to-canvas sync.<br />
-  Define your system architecture in YAML. See it rendered as a live, editable diagram.
+  Define, validate, visualize, and publish enterprise system architectures from declarative YAML.<br />
+  A full-lifecycle platform: interactive C4 diagram editor, pattern catalog, CI/CD governance pipeline, and auto-generated documentation site.
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Next.js-16.1-black?logo=next.js" alt="Next.js 16.1" />
-  <img src="https://img.shields.io/badge/React-19.2-61DAFB?logo=react&logoColor=white" alt="React 19.2" />
-  <img src="https://img.shields.io/badge/TypeScript-Strict-3178C6?logo=typescript&logoColor=white" alt="TypeScript Strict" />
-  <img src="https://img.shields.io/badge/Tailwind%20CSS-v4-06B6D4?logo=tailwindcss&logoColor=white" alt="Tailwind CSS v4" />
-  <img src="https://img.shields.io/badge/Tests-169%20passing-22C55E?logo=vitest&logoColor=white" alt="169 tests passing" />
+  <a href="https://muthub-ai.github.io/aac/"><img src="https://img.shields.io/badge/Live%20Site-muthub--ai.github.io/aac-2563eb?style=flat-square" alt="Live Site" /></a>
+  <img src="https://img.shields.io/badge/Next.js-16.1-black?logo=next.js&style=flat-square" alt="Next.js 16.1" />
+  <img src="https://img.shields.io/badge/React-19.2-61DAFB?logo=react&logoColor=white&style=flat-square" alt="React 19.2" />
+  <img src="https://img.shields.io/badge/TypeScript-Strict-3178C6?logo=typescript&logoColor=white&style=flat-square" alt="TypeScript Strict" />
+  <img src="https://img.shields.io/badge/Tailwind%20CSS-v4-06B6D4?logo=tailwindcss&logoColor=white&style=flat-square" alt="Tailwind CSS v4" />
+  <img src="https://img.shields.io/badge/Tests-288%20passing-22C55E?logo=vitest&logoColor=white&style=flat-square" alt="288 tests passing" />
 </p>
 
 ---
 
-## Overview
+## Why Architecture as Code?
 
-**Architecture as Code (aac)** brings the C4 model to life. Instead of drawing boxes in a diagramming tool, you define your system architecture in a declarative YAML format. The editor parses it in real time, renders an interactive node graph, and syncs changes bidirectionally -- edit the YAML and the diagram updates; drag a node and the YAML updates.
+Most organizations store architecture knowledge in slide decks and wiki pages that drift from reality within weeks of creation. **Architecture as Code** treats architecture definitions as source code: version-controlled YAML files that are validated, linted for policy compliance, and automatically rendered into interactive diagrams and a published documentation site -- all through a CI/CD pipeline.
 
-### Key Features
+The result is a single source of truth that stays in sync with the codebase, enforces enterprise standards, and makes architecture knowledge accessible to every engineer on the team.
 
-- **Bidirectional Sync** -- YAML editor and visual canvas stay in sync. Edit either one and the other updates in real time (debounced at 300ms).
-- **C4 Model Support** -- Persons, Software Systems, Containers, and Components with internal/external boundaries, following the [C4 model](https://c4model.com) standard.
-- **Monaco Editor** -- Full-featured YAML editing with syntax highlighting, bracket matching, line numbers, and real-time validation error banners.
-- **Interactive Canvas** -- Drag, pan, zoom, and connect nodes on a React Flow canvas with a minimap, background grid, and smooth-step edge routing.
-- **Auto Layout** -- One-click Dagre-powered automatic graph layout with parent-child nesting.
-- **Draw.io Export** -- Export your architecture diagram to Draw.io XML format with correct C4 styling, ready to open in [draw.io](https://draw.io).
-- **Light & Dark Themes** -- GitHub-inspired color palette with full semantic token system. Toggle with one click.
-- **Responsive Design** -- Resizable split panes on desktop (15/85 editor/canvas); tabbed layout on mobile.
-- **Schema Validation** -- Zod v4 schemas validate YAML structure, relationship references, and system metadata with human-readable error messages.
-- **Dashboard** -- Landing page with system catalog, pattern catalog, standards catalog, and utilities tabs with deep-linking via query params.
+---
+
+## What This Project Does
+
+| Capability | Description |
+|------------|-------------|
+| **Interactive Diagram Editor** | Bidirectional sync between a Monaco YAML editor and a React Flow canvas. Edit YAML and the diagram updates; drag a node and the YAML updates. |
+| **C4 Model Support** | Full C4 hierarchy: Persons, Software Systems, Containers, Components, Deployment Nodes, and Infrastructure Nodes with boundary classification. |
+| **Pattern Catalog** | 6 reusable enterprise architecture patterns with C4 diagrams, design considerations, NFR targets, cost profiles, and getting-started guides. |
+| **Governance Pipeline** | 7-stage CI/CD pipeline: schema validation, test suite, ESLint, architecture policy linting, diagram generation, documentation build, and GitHub Pages deployment. |
+| **Published Documentation** | Auto-generated static site with system detail pages, pattern catalog, pipeline visualization, and lightbox diagram zoom. Deployed to GitHub Pages on every merge to `main`. |
+| **Multi-Format Export** | Export diagrams to PlantUML (`.puml`) and Draw.io XML (`.drawio.xml`) with correct C4 styling. |
+
+---
+
+## Live Site
+
+The documentation site is auto-published on every push to `main`:
+
+**[https://muthub-ai.github.io/aac/](https://muthub-ai.github.io/aac/)**
+
+| Page | URL |
+|------|-----|
+| Homepage (system catalog, stats, pipeline) | `/` |
+| System detail (per-system diagrams, containers, actors) | `/systems/{id}.html` |
+| Pattern catalog index | `/patterns/` |
+| Pattern detail (diagrams, NFRs, cost, getting started) | `/patterns/{id}.html` |
 
 ---
 
@@ -47,13 +65,16 @@
 | **Diagram Canvas** | [React Flow](https://reactflow.dev) (`@xyflow/react`) |
 | **Code Editor** | [Monaco Editor](https://microsoft.github.io/monaco-editor/) (`@monaco-editor/react`) |
 | **Graph Layout** | [Dagre](https://github.com/dagrejs/dagre) (`@dagrejs/dagre`) |
-| **State** | [Zustand](https://zustand-demo.pmnd.rs/) |
-| **Validation** | [Zod v4](https://zod.dev) |
+| **State** | [Zustand 5](https://zustand-demo.pmnd.rs/) |
+| **Validation** | [Zod v4](https://zod.dev) + [Ajv](https://ajv.js.org) (JSON Schema draft-07) |
 | **YAML** | [js-yaml](https://github.com/nodeca/js-yaml) |
+| **Diagram Export** | [plantuml-encoder](https://github.com/markushedvall/plantuml-encoder), custom Draw.io XML generator |
 | **Animation** | [Framer Motion](https://www.framer.com/motion/) |
 | **Theming** | [next-themes](https://github.com/pacocoursey/next-themes) |
-| **Testing** | [Vitest](https://vitest.dev), jsdom |
-| **Language** | TypeScript 5 (`strict: true`, zero `any`) |
+| **Testing** | [Vitest](https://vitest.dev) (288 tests), jsdom |
+| **Documentation** | Custom static site generator (TypeScript), [Asciidoctor.js](https://docs.asciidoctor.org/asciidoctor.js/) |
+| **CI/CD** | GitHub Actions, [GitHub Pages](https://pages.github.com) |
+| **Runtime** | Node.js 22, TypeScript 5 (`strict: true`, zero `any`) |
 
 ---
 
@@ -61,49 +82,54 @@
 
 ```
 aac/
-├── model/                          # System architecture definitions
+├── .github/workflows/
+│   └── aac-pipeline.yml              # 7-stage CI/CD pipeline
+├── model/                             # System architecture definitions (YAML + metadata)
 │   ├── demand-forecasting/
-│   │   ├── metadata.json           # System metadata (name, stats, branch)
-│   │   └── system.yaml             # C4 architecture in YAML
 │   ├── ecommerce-platform/
 │   ├── image-categorization/
 │   └── ml-platform/
-├── public/
-│   └── logo.svg                    # App logo
+├── patterns/                          # Pattern definitions (YAML + PlantUML diagrams)
+│   ├── internal-api-multiregional/
+│   ├── data-platform-bq/
+│   └── aiml-model-inference/
+├── schema/                            # JSON Schema definitions
+│   ├── application-schema.json        #   C4 model YAML validation
+│   ├── pattern-schema.json            #   Pattern definition validation
+│   └── patterns-schema.json           #   Pattern catalog entry validation
+├── scripts/                           # Build & governance scripts
+│   ├── validate-models.ts             #   Schema validation (Ajv + Zod)
+│   ├── lint-architecture.ts           #   Enterprise policy linter (5 rules)
+│   ├── build-diagrams.ts              #   PlantUML + Draw.io generation
+│   ├── build-docs.ts                  #   Documentation site generator
+│   └── build-pattern-pages.ts         #   Pattern catalog page generator
 ├── src/
-│   ├── app/                        # Next.js App Router
-│   │   ├── page.tsx                # Landing page (/)
-│   │   ├── dashboard/page.tsx      # System catalog (/dashboard)
-│   │   ├── systems/[id]/page.tsx   # Diagram editor (/systems/:id)
-│   │   ├── error.tsx               # Error boundary
-│   │   ├── not-found.tsx           # Custom 404
-│   │   ├── layout.tsx              # Root layout (fonts, providers)
-│   │   └── globals.css             # Design tokens (light/dark themes)
-│   ├── components/
-│   │   ├── canvas/                 # React Flow canvas with minimap
-│   │   ├── dashboard/              # System catalog, tabs, nav bar
-│   │   ├── editor/                 # Monaco YAML editor
-│   │   ├── landing/                # Landing page sections
-│   │   ├── nodes/                  # C4 node renderers (person, system, container, component)
-│   │   ├── providers/              # Theme provider & toggle
-│   │   ├── toolbar/                # Toolbar (auto-layout, export, theme)
-│   │   ├── ui/                     # Shadcn primitives (button, badge, tooltip, separator)
-│   │   └── diagram-workspace.tsx   # Split-pane workspace (editor + canvas)
-│   ├── hooks/                      # Custom hooks (debounce, mounted)
+│   ├── app/                           # Next.js App Router
+│   │   ├── page.tsx                   #   Landing page (/)
+│   │   ├── dashboard/page.tsx         #   System & pattern catalog (/dashboard)
+│   │   ├── systems/[id]/page.tsx      #   Interactive diagram editor (/systems/:id)
+│   │   └── globals.css                #   Design tokens (light/dark themes)
+│   ├── components/                    # 40 React components
+│   │   ├── canvas/                    #   React Flow canvas with minimap
+│   │   ├── dashboard/                 #   Catalog tabs, pattern catalog, system cards
+│   │   ├── editor/                    #   Monaco YAML editor
+│   │   ├── landing/                   #   Landing page sections
+│   │   ├── nodes/                     #   C4 node renderers (6 types)
+│   │   ├── providers/                 #   Theme provider & toggle
+│   │   ├── toolbar/                   #   Toolbar (auto-layout, export, theme)
+│   │   └── ui/                        #   Shadcn primitives
 │   ├── lib/
-│   │   ├── parser/                 # YAML <-> graph bidirectional conversion
-│   │   ├── validation/             # Zod schemas + validation helpers
-│   │   ├── layout/                 # Dagre auto-layout engine
-│   │   ├── export/                 # Draw.io XML export
-│   │   ├── model/                  # Filesystem model loader
-│   │   ├── constants/              # C4 color palette
-│   │   └── utils.ts                # Tailwind class merge helper
-│   ├── store/                      # Zustand store (bidirectional graph state)
-│   └── types/                      # TypeScript type definitions (C4, system, YAML schema)
-├── vitest.config.ts
-├── tsconfig.json
-├── next.config.ts
-└── package.json
+│   │   ├── parser/                    #   YAML <-> graph bidirectional conversion
+│   │   ├── validation/                #   Zod schemas + validation helpers
+│   │   ├── layout/                    #   Dagre auto-layout engine
+│   │   ├── export/                    #   Draw.io XML + PlantUML export
+│   │   ├── data/                      #   Pattern catalog data
+│   │   └── model/                     #   Filesystem model loader
+│   ├── store/                         # Zustand store (bidirectional graph state)
+│   └── types/                         # TypeScript types (C4, system, pattern, YAML schema)
+└── build/                             # Generated artifacts (gitignored)
+    ├── microsite/output/              #   Documentation site (HTML)
+    └── patterns/                      #   Pattern pages (HTML)
 ```
 
 ---
@@ -112,7 +138,7 @@ aac/
 
 ### Prerequisites
 
-- **Node.js** >= 18.18
+- **Node.js** >= 22 (see `.nvmrc`)
 - **npm** >= 9
 
 ### Installation
@@ -129,7 +155,7 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to see the landing page. Navigate to the [dashboard](http://localhost:3000/dashboard) to browse systems, or click any system card to open the interactive diagram editor.
+Open [http://localhost:3000](http://localhost:3000). Navigate to the [dashboard](http://localhost:3000/dashboard) to browse systems and patterns, or click any system card to open the interactive diagram editor.
 
 ### Production Build
 
@@ -142,15 +168,32 @@ npm start
 
 ## Available Scripts
 
-| Script | Command | Description |
-|--------|---------|-------------|
-| `npm run dev` | `next dev` | Start development server with Turbopack HMR |
-| `npm run build` | `next build` | Create optimized production build |
-| `npm start` | `next start` | Serve production build |
-| `npm run lint` | `eslint` | Run ESLint checks |
-| `npm test` | `vitest` | Run tests in watch mode |
-| `npm run test:run` | `vitest run` | Single test run (CI-friendly) |
-| `npm run test:coverage` | `vitest run --coverage` | Test run with V8 coverage report |
+### Application
+
+| Script | Description |
+|--------|-------------|
+| `npm run dev` | Start dev server with Turbopack HMR |
+| `npm run build` | Create optimized production build |
+| `npm start` | Serve production build |
+| `npm run lint` | Run ESLint checks |
+
+### Testing
+
+| Script | Description |
+|--------|-------------|
+| `npm test` | Run tests in watch mode |
+| `npm run test:run` | Single test run (CI-friendly) |
+| `npm run test:coverage` | Test run with V8 coverage report |
+
+### Governance & Documentation
+
+| Script | Description |
+|--------|-------------|
+| `npm run validate:models` | Validate all YAML models against JSON Schema + Zod |
+| `npm run lint:architecture` | Enterprise architecture policy compliance checks |
+| `npm run build:diagrams` | Generate PlantUML + Draw.io diagrams from models |
+| `npm run build:docs` | Generate documentation site to `build/microsite/output/` |
+| `npm run build:patterns` | Generate pattern catalog pages to `build/patterns/` |
 
 ---
 
@@ -160,9 +203,9 @@ npm start
 
 ```
 ┌─────────────┐     updateFromYaml()     ┌─────────────────┐     applyDagreLayout()     ┌──────────────┐
-│  Monaco      │ ──────────────────────▶  │  Zustand Store   │ ─────────────────────────▶ │  React Flow  │
+│  Monaco      │ ──────────────────────>  │  Zustand Store   │ ─────────────────────────> │  React Flow  │
 │  YAML Editor │                          │                   │                            │  Canvas      │
-│              │ ◀──────────────────────  │  yamlText         │ ◀───────────────────────── │              │
+│              │ <──────────────────────  │  yamlText         │ <───────────────────────── │              │
 └─────────────┘     updateFromCanvas()    │  nodes[]          │     onNodesChange()        └──────────────┘
                                           │  edges[]          │     onEdgesChange()
                                           │  syncSource       │     onConnect()
@@ -181,11 +224,92 @@ Person (actor)
 Software System
   └── Container
         └── Component
+Deployment Node
+  └── Infrastructure Node
+        └── Container Instance
 ```
 
 Each level maps to a custom React Flow node type with C4-standard colors and styling. Relationships are rendered as labeled edges with optional protocol annotations.
 
+### CI/CD Pipeline
+
+Every push triggers a 7-stage governance pipeline:
+
+```
+ ┌──────────────┐   ┌──────────────┐   ┌──────────────┐   ┌──────────────┐
+ │ 1. Model     │──>│ 2. Test      │──>│ 3. Arch      │──>│ 4. Diagram   │
+ │    Validation│   │    Suite     │   │    Lint      │   │    Generation│
+ └──────────────┘   └──────────────┘   └──────────────┘   └──────────────┘
+                                                                 │
+ ┌──────────────┐   ┌──────────────┐   ┌──────────────┐         │
+ │ 7. Publish   │<──│ 6. PR        │<──│ 5. Docs &    │<────────┘
+ │    to Pages  │   │    Feedback  │   │    Patterns  │
+ └──────────────┘   └──────────────┘   └──────────────┘
+```
+
+| Stage | What It Does |
+|-------|--------------|
+| **1. Model Validation** | Validates every `system.yaml` against JSON Schema (Ajv) + Zod, checks cross-references |
+| **2. Test Suite** | Runs 288 Vitest tests across 10 suites |
+| **3. Architecture Lint** | 5 enterprise policy rules (no DB bypass, no orphaned systems, containers must have technology, etc.) |
+| **4. Diagram Generation** | Produces PlantUML `.puml` and Draw.io `.drawio.xml` for every system and view |
+| **5. Docs & Patterns** | Generates static HTML documentation site + pattern catalog pages |
+| **6. PR Feedback** | Posts PlantUML diagram previews as collapsible sections in PR comments |
+| **7. Publish** | Deploys to GitHub Pages via `gh-pages` branch (force orphan) |
+
+Architecture policy rules enforced in Stage 3:
+
+1. No frontend container may connect directly to a database (must go through an API layer)
+2. Every system must define at least one container
+3. No orphaned external systems (must have at least one relationship)
+4. Deployment container references must resolve to defined containers
+5. Every container must specify its technology
+
+---
+
+## Pattern Catalog
+
+The platform ships with 6 reusable architecture patterns, each documented to production-grade depth:
+
+| Pattern | Category | Maturity | Exposure |
+|---------|----------|----------|----------|
+| Internal API (Multi-Regional VMs) | Compute | Production Ready | Internal |
+| Enterprise Data Warehouse (BigQuery) | Database | Production Ready | Internal |
+| AI/ML Model Inference | AI + ML | Beta | Internal |
+| Internal Web Application | Compute | Production Ready | Internal |
+| Public Web Application | Compute | Production Ready | External |
+| Managed File Transfer | Networking | Beta | External |
+
+Each pattern includes:
+
+- **Architecture Overview** -- prose description of the design
+- **C4 Diagrams** -- System Context and Container-level PlantUML diagrams
+- **Design Considerations** -- 3-4 key architectural decisions
+- **Products Used** -- technology table with roles
+- **Non-Functional Requirements** -- availability, latency, throughput, RPO/RTO targets
+- **Advantages & Considerations** -- pros/cons analysis
+- **Constraints & Limitations** -- known boundaries
+- **Cost Profile** -- cost estimation guidance
+- **Getting Started** -- step-by-step onboarding
+
+Patterns are browsable in the [Next.js dashboard](http://localhost:3000/dashboard?tab=patterns) and on the [published documentation site](https://muthub-ai.github.io/aac/patterns/).
+
+---
+
+## System Models
+
+The project ships with 4 example system architectures defined in `model/`:
+
+| System | Containers | Description |
+|--------|-----------|-------------|
+| **E-Commerce Platform** | 10 | Full e-commerce stack: web app, API gateway, database, payment gateway, messaging |
+| **Demand Forecasting** | 7 | ML-powered demand prediction pipeline with feature store and model serving |
+| **Image Categorization** | 3 | Image classification service with training and inference endpoints |
+| **ML Platform** | 2 | Shared ML infrastructure platform with model registry |
+
 ### YAML Schema
+
+System architectures are defined in a declarative YAML format following the C4 model:
 
 ```yaml
 actors:
@@ -218,44 +342,9 @@ relationships:
     protocol: HTTPS
 ```
 
----
+### Adding a New System
 
-## Testing
-
-The project uses [Vitest](https://vitest.dev) with 169 tests across 7 test suites covering all pure-logic modules:
-
-| Test Suite | File | Tests | What It Covers |
-|-----------|------|-------|----------------|
-| YAML Parser | `parser/yaml-to-graph.test.ts` | 36 | YAML string to nodes/edges, boundary mapping, suffix resolution, edge cases |
-| YAML Serializer | `parser/graph-to-yaml.test.ts` | 29 | Nodes/edges back to YAML, hierarchy nesting, boundary mapping |
-| Schema Validation | `validation/system-schema.test.ts` | 15 | Zod schema validation, ref resolution, metadata validation |
-| System Validation | `validation/validate-new-system.test.ts` | 23 | End-to-end validation pipeline, error categorization |
-| Auto Layout | `layout/dagre-layout.test.ts` | 15 | Dagre positioning, parent-child grid, custom options |
-| Draw.io Export | `export/drawio-export.test.ts` | 43 | XML generation, C4 styles, position offsets, HTML escaping |
-| Utilities | `utils.test.ts` | 8 | Tailwind class merging, conflict resolution |
-
-```bash
-# Run all tests
-npm run test:run
-
-# Watch mode
-npm test
-
-# With coverage
-npm run test:coverage
-```
-
----
-
-## Adding a New System
-
-1. Create a new directory under `model/`:
-
-```bash
-mkdir model/my-system
-```
-
-2. Add `metadata.json`:
+1. Create `model/my-system/metadata.json`:
 
 ```json
 {
@@ -272,30 +361,54 @@ mkdir model/my-system
 }
 ```
 
-3. Add `system.yaml` following the C4 YAML schema (see [YAML Schema](#yaml-schema) above).
+2. Create `model/my-system/system.yaml` following the C4 YAML schema above.
 
-4. Restart the dev server. The new system will appear in the dashboard automatically.
+3. Restart the dev server. The new system appears in the dashboard automatically and will be validated, diagrammed, and published by the CI pipeline on the next push.
 
 > **Validation rules**: System IDs must be lowercase alphanumeric with hyphens (`/^[a-z0-9-]+$/`). All numeric fields must be non-negative integers. `lastScan` must be a valid ISO 8601 datetime.
 
 ---
 
-## Included Systems
+## JSON Schemas
 
-The project ships with 4 example architectures:
+Three JSON Schema (draft-07) files in `schema/` define the contract for all architecture data:
 
-| System | Containers | Description |
-|--------|-----------|-------------|
-| **E-Commerce Platform** | 10 | Full e-commerce stack with web app, API, database, payment gateway, and more |
-| **Demand Forecasting** | 7 | ML-powered demand prediction pipeline |
-| **Image Categorization** | 3 | Image classification service with training and inference |
-| **ML Platform** | 2 | Shared ML infrastructure platform |
+| Schema | Validates | Key Structures |
+|--------|-----------|----------------|
+| `application-schema.json` | `model/*/system.yaml` | C4 hierarchy (System -> Container -> Component), People, Relationships, Deployment Nodes, Views |
+| `pattern-schema.json` | `patterns/*/pattern.yaml` | Pattern definitions with validation rules, resiliency patterns, components, deployment model |
+| `patterns-schema.json` | Pattern catalog entries | UI-facing metadata: id, version, name, category, maturity, exposure, tags |
+
+---
+
+## Testing
+
+288 tests across 10 suites covering all pure-logic modules:
+
+| Test Suite | File | Tests | Coverage |
+|-----------|------|-------|----------|
+| YAML Parser | `parser/yaml-to-graph.test.ts` | 46 | YAML to nodes/edges, boundary mapping, suffix resolution, edge cases |
+| YAML Serializer | `parser/graph-to-yaml.test.ts` | 29 | Nodes/edges back to YAML, hierarchy nesting, boundary mapping |
+| Schema Transform | `parser/new-to-old-transform.test.ts` | 29 | Schema migration transforms |
+| View Filtering | `graph/filter-by-view.test.ts` | 21 | C4 view filtering (system context, container, deployment) |
+| PlantUML Export | `export/plantuml-export.test.ts` | 51 | PlantUML syntax generation, C4 stereotypes, relationship labels |
+| Draw.io Export | `export/drawio-export.test.ts` | 43 | XML generation, C4 styles, position offsets, HTML escaping |
+| Schema Validation | `validation/system-schema.test.ts` | 23 | Zod schema validation, ref resolution, metadata validation |
+| System Validation | `validation/validate-new-system.test.ts` | 23 | End-to-end validation pipeline, error categorization |
+| Auto Layout | `layout/dagre-layout.test.ts` | 15 | Dagre positioning, parent-child grid, custom options |
+| Utilities | `utils.test.ts` | 8 | Tailwind class merging, conflict resolution |
+
+```bash
+npm run test:run          # Single run (CI)
+npm test                  # Watch mode
+npm run test:coverage     # With V8 coverage
+```
 
 ---
 
 ## Design System
 
-The app uses a GitHub-inspired semantic token system defined in `globals.css`, supporting light and dark themes:
+GitHub-inspired semantic token system with automatic light/dark mode support:
 
 | Token | Light | Dark | Usage |
 |-------|-------|------|-------|
@@ -308,7 +421,7 @@ The app uses a GitHub-inspired semantic token system defined in `globals.css`, s
 | `--success` | `#1a7f37` | `#238636` | Success states |
 | `--destructive` | `#cf222e` | `#f85149` | Error states |
 
-All components use semantic Tailwind classes (`bg-card`, `text-foreground`, `border-border`) rather than hardcoded colors, ensuring consistent theming throughout the app.
+All components use semantic Tailwind classes (`bg-card`, `text-foreground`, `border-border`) rather than hardcoded colors. The published documentation site shares the same token system for visual consistency across the interactive app and static pages.
 
 ---
 
@@ -317,15 +430,20 @@ All components use semantic Tailwind classes (`bg-card`, `text-foreground`, `bor
 | Route | Description |
 |-------|-------------|
 | `/` | Landing page with feature overview and system cards |
-| `/dashboard` | System catalog with tabbed navigation (applications, patterns, standards, utilities) |
-| `/dashboard?tab=patterns` | Deep-link to a specific tab |
+| `/dashboard` | System catalog with tabbed navigation |
+| `/dashboard?tab=patterns` | Pattern catalog with search, filters, and detail drawer |
+| `/dashboard?tab=standards` | Standards catalog |
+| `/dashboard?tab=utilities` | Utilities catalog |
 | `/systems/:id` | Interactive diagram editor for a specific system |
 
 ---
 
 ## Acknowledgements
 
-- Inspired by the [C4 Model](https://c4model.com/)
+- [C4 Model](https://c4model.com/) by Simon Brown
+- [PlantUML](https://plantuml.com/) for diagram rendering
+- [React Flow](https://reactflow.dev/) for the interactive canvas
+- [Shadcn UI](https://ui.shadcn.com/) for accessible component primitives
 
 ---
 
