@@ -4,6 +4,50 @@ import type { Node, Edge } from '@xyflow/react';
 import type { C4NodeData, C4EdgeData } from '@/types/c4';
 
 // ---------------------------------------------------------------------------
+// Parsed YAML shape (used for type-safe assertions in tests)
+// ---------------------------------------------------------------------------
+
+interface ParsedYamlComponent {
+  label?: string;
+  technology?: string;
+  description?: string;
+}
+
+interface ParsedYamlContainer {
+  label?: string;
+  technology?: string;
+  description?: string;
+  components?: Record<string, ParsedYamlComponent>;
+}
+
+interface ParsedYamlSystem {
+  label?: string;
+  description?: string;
+  boundary?: string;
+  containers?: Record<string, ParsedYamlContainer>;
+}
+
+interface ParsedYamlActor {
+  type?: string;
+  label?: string;
+  description?: string;
+  boundary?: string;
+}
+
+interface ParsedYamlRelationship {
+  from: string;
+  to: string;
+  label?: string;
+  protocol?: string;
+}
+
+interface ParsedYaml {
+  actors?: Record<string, ParsedYamlActor>;
+  softwareSystems?: Record<string, ParsedYamlSystem>;
+  relationships?: ParsedYamlRelationship[];
+}
+
+// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
@@ -123,7 +167,7 @@ describe('graphToYaml', () => {
     it('serializes a single person into the actors map', () => {
       const nodes = [makePersonNode('user1', 'End User', { description: 'A customer', boundary: 'external' })];
       const result = graphToYaml(nodes, []);
-      const parsed = yaml.load(result) as Record<string, any>;
+      const parsed = yaml.load(result) as ParsedYaml;
 
       expect(parsed.actors).toBeDefined();
       expect(parsed.actors.user1).toBeDefined();
@@ -138,7 +182,7 @@ describe('graphToYaml', () => {
         makePersonNode('admin', 'Admin', { boundary: 'internal' }),
         makePersonNode('customer', 'Customer', { boundary: 'external' }),
       ];
-      const parsed = yaml.load(graphToYaml(nodes, [])) as Record<string, any>;
+      const parsed = yaml.load(graphToYaml(nodes, [])) as ParsedYaml;
 
       expect(Object.keys(parsed.actors)).toHaveLength(2);
       expect(parsed.actors.admin).toBeDefined();
@@ -147,7 +191,7 @@ describe('graphToYaml', () => {
 
     it('does not include actors key when there are no persons', () => {
       const nodes = [makeSystemNode('sys1', 'My System')];
-      const parsed = yaml.load(graphToYaml(nodes, [])) as Record<string, any>;
+      const parsed = yaml.load(graphToYaml(nodes, [])) as ParsedYaml;
 
       expect(parsed.actors).toBeUndefined();
     });
@@ -159,7 +203,7 @@ describe('graphToYaml', () => {
   describe('software systems', () => {
     it('serializes a single software system', () => {
       const nodes = [makeSystemNode('banking', 'Banking System', { description: 'Handles banking', boundary: 'internal' })];
-      const parsed = yaml.load(graphToYaml(nodes, [])) as Record<string, any>;
+      const parsed = yaml.load(graphToYaml(nodes, [])) as ParsedYaml;
 
       expect(parsed.softwareSystems).toBeDefined();
       expect(parsed.softwareSystems.banking).toBeDefined();
@@ -173,14 +217,14 @@ describe('graphToYaml', () => {
         makeSystemNode('sys1', 'System One'),
         makeSystemNode('sys2', 'System Two'),
       ];
-      const parsed = yaml.load(graphToYaml(nodes, [])) as Record<string, any>;
+      const parsed = yaml.load(graphToYaml(nodes, [])) as ParsedYaml;
 
       expect(Object.keys(parsed.softwareSystems)).toHaveLength(2);
     });
 
     it('does not include softwareSystems key when there are none', () => {
       const nodes = [makePersonNode('u1', 'User')];
-      const parsed = yaml.load(graphToYaml(nodes, [])) as Record<string, any>;
+      const parsed = yaml.load(graphToYaml(nodes, [])) as ParsedYaml;
 
       expect(parsed.softwareSystems).toBeUndefined();
     });
@@ -196,7 +240,7 @@ describe('graphToYaml', () => {
         makeContainerNode('sys1.api', 'sys1', 'API Server', { technology: 'Node.js', description: 'REST API' }),
         makeContainerNode('sys1.db', 'sys1', 'Database', { technology: 'PostgreSQL', description: 'Stores data' }),
       ];
-      const parsed = yaml.load(graphToYaml(nodes, [])) as Record<string, any>;
+      const parsed = yaml.load(graphToYaml(nodes, [])) as ParsedYaml;
 
       expect(parsed.softwareSystems.sys1.containers).toBeDefined();
       expect(Object.keys(parsed.softwareSystems.sys1.containers)).toHaveLength(2);
@@ -214,7 +258,7 @@ describe('graphToYaml', () => {
         makeSystemNode('myApp', 'My App'),
         makeContainerNode('myApp.frontend.web', 'myApp', 'Web UI', { technology: 'React' }),
       ];
-      const parsed = yaml.load(graphToYaml(nodes, [])) as Record<string, any>;
+      const parsed = yaml.load(graphToYaml(nodes, [])) as ParsedYaml;
 
       // The function calls id.split('.').pop(), so the key should be 'web'
       expect(parsed.softwareSystems.myApp.containers.web).toBeDefined();
@@ -225,7 +269,7 @@ describe('graphToYaml', () => {
       const nodes: Node<C4NodeData>[] = [
         makeSystemNode('sys1', 'Lonely System'),
       ];
-      const parsed = yaml.load(graphToYaml(nodes, [])) as Record<string, any>;
+      const parsed = yaml.load(graphToYaml(nodes, [])) as ParsedYaml;
 
       expect(parsed.softwareSystems.sys1.containers).toBeUndefined();
     });
@@ -237,7 +281,7 @@ describe('graphToYaml', () => {
         makeContainerNode('sysA.web', 'sysA', 'Web App'),
         makeContainerNode('sysB.worker', 'sysB', 'Worker'),
       ];
-      const parsed = yaml.load(graphToYaml(nodes, [])) as Record<string, any>;
+      const parsed = yaml.load(graphToYaml(nodes, [])) as ParsedYaml;
 
       expect(Object.keys(parsed.softwareSystems.sysA.containers)).toEqual(['web']);
       expect(Object.keys(parsed.softwareSystems.sysB.containers)).toEqual(['worker']);
@@ -261,7 +305,7 @@ describe('graphToYaml', () => {
           description: 'Manages users',
         }),
       ];
-      const parsed = yaml.load(graphToYaml(nodes, [])) as Record<string, any>;
+      const parsed = yaml.load(graphToYaml(nodes, [])) as ParsedYaml;
 
       const apiContainer = parsed.softwareSystems.sys.containers.api;
       expect(apiContainer.components).toBeDefined();
@@ -280,7 +324,7 @@ describe('graphToYaml', () => {
         makeContainerNode('sys.api', 'sys', 'API'),
         makeComponentNode('sys.api.deep.nested.ctrl', 'sys.api', 'Controller'),
       ];
-      const parsed = yaml.load(graphToYaml(nodes, [])) as Record<string, any>;
+      const parsed = yaml.load(graphToYaml(nodes, [])) as ParsedYaml;
 
       expect(parsed.softwareSystems.sys.containers.api.components.ctrl).toBeDefined();
     });
@@ -290,7 +334,7 @@ describe('graphToYaml', () => {
         makeSystemNode('sys', 'System'),
         makeContainerNode('sys.api', 'sys', 'API'),
       ];
-      const parsed = yaml.load(graphToYaml(nodes, [])) as Record<string, any>;
+      const parsed = yaml.load(graphToYaml(nodes, [])) as ParsedYaml;
 
       expect(parsed.softwareSystems.sys.containers.api.components).toBeUndefined();
     });
@@ -308,7 +352,7 @@ describe('graphToYaml', () => {
         makeEdge('e1', 'user', 'ecommerce.web', { label: 'Uses', protocol: 'HTTPS' }),
         makeEdge('e2', 'ecommerce.web', 'ecommerce.api', { label: 'Calls' }),
       ];
-      const parsed = yaml.load(graphToYaml(nodes, edges)) as Record<string, any>;
+      const parsed = yaml.load(graphToYaml(nodes, edges)) as ParsedYaml;
 
       // Verify actors
       expect(parsed.actors.user.label).toBe('User');
@@ -337,7 +381,7 @@ describe('graphToYaml', () => {
       const edges = [
         makeEdge('e1', 'user', 'system', { label: 'Uses', protocol: 'HTTPS' }),
       ];
-      const parsed = yaml.load(graphToYaml([], edges)) as Record<string, any>;
+      const parsed = yaml.load(graphToYaml([], edges)) as ParsedYaml;
 
       expect(parsed.relationships).toBeDefined();
       expect(parsed.relationships).toHaveLength(1);
@@ -355,7 +399,7 @@ describe('graphToYaml', () => {
         makeEdge('e2', 'b', 'c', { label: 'Reads from', protocol: 'SQL' }),
         makeEdge('e3', 'c', 'a'),
       ];
-      const parsed = yaml.load(graphToYaml([], edges)) as Record<string, any>;
+      const parsed = yaml.load(graphToYaml([], edges)) as ParsedYaml;
 
       expect(parsed.relationships).toHaveLength(3);
       expect(parsed.relationships[0].from).toBe('a');
@@ -365,7 +409,7 @@ describe('graphToYaml', () => {
 
     it('handles edges with no data (label and protocol are undefined)', () => {
       const edges = [makeEdge('e1', 'src', 'tgt')];
-      const parsed = yaml.load(graphToYaml([], edges)) as Record<string, any>;
+      const parsed = yaml.load(graphToYaml([], edges)) as ParsedYaml;
 
       expect(parsed.relationships[0].from).toBe('src');
       expect(parsed.relationships[0].to).toBe('tgt');
@@ -376,7 +420,7 @@ describe('graphToYaml', () => {
 
     it('handles edges with partial data (only label, no protocol)', () => {
       const edges = [makeEdge('e1', 'x', 'y', { label: 'Sends data' })];
-      const parsed = yaml.load(graphToYaml([], edges)) as Record<string, any>;
+      const parsed = yaml.load(graphToYaml([], edges)) as ParsedYaml;
 
       expect(parsed.relationships[0].label).toBe('Sends data');
       expect(parsed.relationships[0].protocol).toBeUndefined();
@@ -384,7 +428,7 @@ describe('graphToYaml', () => {
 
     it('does not include relationships key when there are no edges', () => {
       const nodes = [makePersonNode('u', 'User')];
-      const parsed = yaml.load(graphToYaml(nodes, [])) as Record<string, any>;
+      const parsed = yaml.load(graphToYaml(nodes, [])) as ParsedYaml;
 
       expect(parsed.relationships).toBeUndefined();
     });
@@ -396,28 +440,28 @@ describe('graphToYaml', () => {
   describe('boundary mapping', () => {
     it('maps "internal" to "Internal" for persons', () => {
       const nodes = [makePersonNode('p1', 'Internal User', { boundary: 'internal' })];
-      const parsed = yaml.load(graphToYaml(nodes, [])) as Record<string, any>;
+      const parsed = yaml.load(graphToYaml(nodes, [])) as ParsedYaml;
 
       expect(parsed.actors.p1.boundary).toBe('Internal');
     });
 
     it('maps "external" to "External" for persons', () => {
       const nodes = [makePersonNode('p1', 'External User', { boundary: 'external' })];
-      const parsed = yaml.load(graphToYaml(nodes, [])) as Record<string, any>;
+      const parsed = yaml.load(graphToYaml(nodes, [])) as ParsedYaml;
 
       expect(parsed.actors.p1.boundary).toBe('External');
     });
 
     it('maps "internal" to "Internal" for software systems', () => {
       const nodes = [makeSystemNode('s1', 'Internal System', { boundary: 'internal' })];
-      const parsed = yaml.load(graphToYaml(nodes, [])) as Record<string, any>;
+      const parsed = yaml.load(graphToYaml(nodes, [])) as ParsedYaml;
 
       expect(parsed.softwareSystems.s1.boundary).toBe('Internal');
     });
 
     it('maps "external" to "External" for software systems', () => {
       const nodes = [makeSystemNode('s1', 'External System', { boundary: 'external' })];
-      const parsed = yaml.load(graphToYaml(nodes, [])) as Record<string, any>;
+      const parsed = yaml.load(graphToYaml(nodes, [])) as ParsedYaml;
 
       expect(parsed.softwareSystems.s1.boundary).toBe('External');
     });
@@ -448,7 +492,7 @@ describe('graphToYaml', () => {
       ];
       const edges = [makeEdge('e1', 'u', 's.c', { label: 'Uses' })];
 
-      const parsed = yaml.load(graphToYaml(nodes, edges)) as Record<string, any>;
+      const parsed = yaml.load(graphToYaml(nodes, edges)) as ParsedYaml;
 
       expect(parsed).toHaveProperty('actors');
       expect(parsed).toHaveProperty('softwareSystems');
@@ -475,7 +519,7 @@ describe('graphToYaml', () => {
           boundary: 'internal',
         }),
       ];
-      const parsed = yaml.load(graphToYaml(nodes, [])) as Record<string, any>;
+      const parsed = yaml.load(graphToYaml(nodes, [])) as ParsedYaml;
 
       expect(parsed.actors.p.label).toBe('User & Admin');
       expect(parsed.actors.p.description).toBe('Manages "everything" <and> more');

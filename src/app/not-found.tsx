@@ -5,7 +5,7 @@ export default function NotFound() {
     <div className="flex min-h-dvh flex-col items-center justify-center bg-background px-6 text-center">
       <h1 className="text-6xl font-bold tracking-tight text-foreground">404</h1>
       <p className="mt-3 text-lg text-muted-foreground">
-        The page you're looking for doesn't exist.
+        The page you&apos;re looking for doesn&apos;t exist.
       </p>
       <div className="mt-8 flex gap-3">
         <Link

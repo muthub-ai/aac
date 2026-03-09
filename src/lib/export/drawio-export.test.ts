@@ -415,7 +415,7 @@ describe('exportToDrawioXml', () => {
   // ---------------------------------------------------------------
   describe('position offset', () => {
     it('offsets x by +100 and y by +60', () => {
-      const nodes = [makeNode('n1', 'person', 'internal', { x: 100, y: 200 } as any)];
+      const nodes = [makeNode('n1', 'person', 'internal', { x: 100, y: 200 })];
       const xml = exportToDrawioXml(nodes, []);
       const doc = parseXml(xml);
       const geom = doc.querySelector('mxCell[vertex="1"] > mxGeometry');
@@ -424,7 +424,7 @@ describe('exportToDrawioXml', () => {
     });
 
     it('offsets position (0,0) to (100,60)', () => {
-      const nodes = [makeNode('n1', 'person', 'internal', { x: 0, y: 0 } as any)];
+      const nodes = [makeNode('n1', 'person', 'internal', { x: 0, y: 0 })];
       const xml = exportToDrawioXml(nodes, []);
       const doc = parseXml(xml);
       const geom = doc.querySelector('mxCell[vertex="1"] > mxGeometry');
@@ -433,7 +433,7 @@ describe('exportToDrawioXml', () => {
     });
 
     it('rounds fractional positions', () => {
-      const nodes = [makeNode('n1', 'person', 'internal', { x: 33.7, y: 44.3 } as any)];
+      const nodes = [makeNode('n1', 'person', 'internal', { x: 33.7, y: 44.3 })];
       const xml = exportToDrawioXml(nodes, []);
       const doc = parseXml(xml);
       const geom = doc.querySelector('mxCell[vertex="1"] > mxGeometry');
