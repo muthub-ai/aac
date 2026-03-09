@@ -444,20 +444,48 @@ footer a { color: var(--text-secondary); }
   opacity: 0; visibility: hidden; transition: opacity 0.25s ease, visibility 0.25s ease;
 }
 .lightbox-overlay.active { opacity: 1; visibility: visible; }
-.lightbox-overlay img {
-  max-width: 92vw; max-height: 90vh; border-radius: 8px;
-  box-shadow: 0 8px 40px rgba(0,0,0,0.5);
-  transform: scale(0.95); transition: transform 0.25s ease;
-}
-.lightbox-overlay.active img { transform: scale(1); }
-.lightbox-close {
-  position: absolute; top: 20px; right: 24px; width: 40px; height: 40px;
-  border-radius: 50%; background: rgba(255,255,255,0.15); color: #fff;
-  border: none; cursor: pointer; font-size: 22px; line-height: 1;
+.lightbox-img-container {
+  position: relative; overflow: auto; max-width: 94vw; max-height: calc(100vh - 80px);
   display: flex; align-items: center; justify-content: center;
-  transition: background 0.15s;
 }
-.lightbox-close:hover { background: rgba(255,255,255,0.3); }
+.lightbox-overlay img {
+  border-radius: 8px; box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+  transform-origin: center center; transition: transform 0.2s ease;
+  max-width: 92vw; max-height: 88vh; cursor: grab;
+}
+.lightbox-overlay img.lb-dragging { cursor: grabbing; transition: none; }
+.lightbox-close {
+  position: absolute; top: 16px; right: 20px; width: 38px; height: 38px;
+  border-radius: 50%; background: rgba(255,255,255,0.12); color: #fff;
+  border: 1px solid rgba(255,255,255,0.12); cursor: pointer; font-size: 20px; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s; z-index: 10002;
+}
+.lightbox-close:hover { background: rgba(255,255,255,0.25); }
+.lightbox-toolbar {
+  position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 2px;
+  background: rgba(30,30,30,0.85); backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.1); border-radius: 10px;
+  padding: 4px; z-index: 10002; user-select: none;
+}
+.lightbox-toolbar button {
+  width: 36px; height: 36px; border: none; border-radius: 8px;
+  background: transparent; color: #fff; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; font-weight: 500; transition: background 0.12s;
+}
+.lightbox-toolbar button:hover { background: rgba(255,255,255,0.15); }
+.lightbox-toolbar button:active { background: rgba(255,255,255,0.25); }
+.lightbox-toolbar button:disabled { opacity: 0.3; cursor: default; }
+.lightbox-toolbar button:disabled:hover { background: transparent; }
+.lightbox-toolbar .lb-zoom-level {
+  min-width: 48px; text-align: center; font-size: 12px; font-weight: 600;
+  color: rgba(255,255,255,0.7); letter-spacing: 0.02em; padding: 0 4px;
+}
+.lightbox-toolbar .lb-sep {
+  width: 1px; height: 20px; background: rgba(255,255,255,0.15); margin: 0 2px;
+}
 `;
 
 // ── SVG Icons (inline) ───────────────────────────────────────────────
@@ -524,18 +552,50 @@ function footer(): string {
 
 <div class="lightbox-overlay" id="lightboxOverlay" onclick="closeLightbox()">
   <button class="lightbox-close" onclick="closeLightbox()" aria-label="Close">&times;</button>
-  <img id="lightboxImg" src="" alt="" onclick="event.stopPropagation()">
+  <div class="lightbox-img-container" onclick="event.stopPropagation()">
+    <img id="lightboxImg" src="" alt="">
+  </div>
+  <div class="lightbox-toolbar" onclick="event.stopPropagation()">
+    <button id="lbZoomOut" aria-label="Zoom out" title="Zoom out (-)">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+    </button>
+    <span class="lb-zoom-level" id="lbZoomLevel">100%</span>
+    <button id="lbZoomIn" aria-label="Zoom in" title="Zoom in (+)">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+    </button>
+    <span class="lb-sep"></span>
+    <button id="lbZoomReset" aria-label="Reset zoom" title="Fit to screen (0)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg>
+    </button>
+  </div>
 </div>
 
 <script>
 (function(){
   var overlay = document.getElementById('lightboxOverlay');
   var lbImg = document.getElementById('lightboxImg');
+  var zoomLabel = document.getElementById('lbZoomLevel');
+  var btnIn = document.getElementById('lbZoomIn');
+  var btnOut = document.getElementById('lbZoomOut');
+  var btnReset = document.getElementById('lbZoomReset');
+  var zoom = 1;
+  var MIN_ZOOM = 0.25;
+  var MAX_ZOOM = 5;
+  var ZOOM_STEP = 0.25;
+
+  function applyZoom() {
+    lbImg.style.transform = 'scale(' + zoom + ')';
+    zoomLabel.textContent = Math.round(zoom * 100) + '%';
+    btnIn.disabled = zoom >= MAX_ZOOM;
+    btnOut.disabled = zoom <= MIN_ZOOM;
+  }
 
   window.openLightbox = function(img) {
     if (!img) return;
     lbImg.src = img.src;
     lbImg.alt = img.alt;
+    zoom = 1;
+    applyZoom();
     overlay.classList.add('active');
     document.body.style.overflow = 'hidden';
   };
@@ -543,12 +603,34 @@ function footer(): string {
   window.closeLightbox = function() {
     overlay.classList.remove('active');
     document.body.style.overflow = '';
+    zoom = 1;
+    applyZoom();
   };
 
+  btnIn.addEventListener('click', function() {
+    if (zoom < MAX_ZOOM) { zoom = Math.min(MAX_ZOOM, +(zoom + ZOOM_STEP).toFixed(2)); applyZoom(); }
+  });
+  btnOut.addEventListener('click', function() {
+    if (zoom > MIN_ZOOM) { zoom = Math.max(MIN_ZOOM, +(zoom - ZOOM_STEP).toFixed(2)); applyZoom(); }
+  });
+  btnReset.addEventListener('click', function() {
+    zoom = 1; applyZoom();
+  });
+
+  overlay.addEventListener('wheel', function(e) {
+    if (!overlay.classList.contains('active')) return;
+    e.preventDefault();
+    var delta = e.deltaY < 0 ? ZOOM_STEP : -ZOOM_STEP;
+    zoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, +(zoom + delta).toFixed(2)));
+    applyZoom();
+  }, { passive: false });
+
   document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape' && overlay.classList.contains('active')) {
-      closeLightbox();
-    }
+    if (!overlay.classList.contains('active')) return;
+    if (e.key === 'Escape') closeLightbox();
+    else if (e.key === '+' || e.key === '=') { btnIn.click(); e.preventDefault(); }
+    else if (e.key === '-' || e.key === '_') { btnOut.click(); e.preventDefault(); }
+    else if (e.key === '0') { btnReset.click(); e.preventDefault(); }
   });
 })();
 </script>

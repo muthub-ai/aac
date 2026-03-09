@@ -9,7 +9,8 @@ import {
   Container,
   ArrowRightLeft,
   ChevronRight,
-  BookOpen,
+  ExternalLink,
+  CircleCheck,
 } from 'lucide-react';
 import type { SystemData } from '@/types/system';
 import { cn } from '@/lib/utils';
@@ -97,14 +98,15 @@ export function SystemCard({ system, onClick }: SystemCardProps) {
             }
           }}
           className={cn(
-            'ml-auto inline-flex shrink-0 items-center gap-1 rounded px-1.5 py-0.5',
-            'text-[10px] font-medium text-muted-foreground/50',
-            'transition-colors hover:bg-ring/10 hover:text-ring',
+            'ml-auto inline-flex shrink-0 items-center gap-1 rounded-md border px-2 py-0.5',
+            'text-[10px] font-semibold',
+            'border-chart-5/30 bg-chart-5/10 text-chart-5',
+            'transition-all hover:border-chart-5/50 hover:bg-chart-5/20',
             'cursor-pointer',
           )}
-          title="View documentation"
+          title="View documentation on GitHub Pages"
         >
-          <BookOpen className="h-2.5 w-2.5" strokeWidth={1.8} />
+          <ExternalLink className="h-2.5 w-2.5" strokeWidth={2} />
           Docs
         </span>
         <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground/40 transition-transform group-hover:translate-x-0.5 group-hover:text-ring" />
@@ -144,6 +146,16 @@ export function SystemCard({ system, onClick }: SystemCardProps) {
 
       {/* Row 5: Architecture stats + meta — single line */}
       <div className="mt-auto flex items-center gap-x-2.5 border-t border-border/50 pt-3 text-[11px] text-muted-foreground">
+        <span
+          className="inline-flex items-center gap-1 rounded-full border border-success/30 bg-success/10 px-1.5 py-px text-[10px] font-semibold text-success"
+          title="All validation checks passed"
+        >
+          <CircleCheck className="h-3 w-3 shrink-0" strokeWidth={2} />
+          Passing
+        </span>
+
+        <span className="mx-0.5 h-3 w-px bg-border/60" />
+
         <span className="inline-flex items-center gap-1" title="People">
           <Users className="h-3 w-3 shrink-0 text-blue-500/70" strokeWidth={1.8} />
           {system.peopleCount}
