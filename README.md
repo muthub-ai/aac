@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://muthub-ai.github.io/aac/"><img src="https://img.shields.io/badge/Live%20Site-muthub--ai.github.io/aac-2563eb?style=flat-square" alt="Live Site" /></a>
+  <a href="https://aac.muthub.org/"><img src="https://img.shields.io/badge/Live%20Site-aac.muthub.org-2563eb?style=flat-square" alt="Live Site" /></a>
   <img src="https://img.shields.io/badge/Next.js-16.1-black?logo=next.js&style=flat-square" alt="Next.js 16.1" />
   <img src="https://img.shields.io/badge/React-19.2-61DAFB?logo=react&logoColor=white&style=flat-square" alt="React 19.2" />
   <img src="https://img.shields.io/badge/TypeScript-Strict-3178C6?logo=typescript&logoColor=white&style=flat-square" alt="TypeScript Strict" />
@@ -45,14 +45,14 @@ The result is a single source of truth that stays in sync with the codebase, enf
 
 The documentation site is auto-published on every push to `main`:
 
-**[https://muthub-ai.github.io/aac/](https://muthub-ai.github.io/aac/)**
+**[https://aac.muthub.org/](https://aac.muthub.org/)**
 
 | Page | URL |
 |------|-----|
-| Homepage (system catalog, stats, pipeline) | `/` |
-| System detail (per-system diagrams, containers, actors) | `/systems/{id}.html` |
-| Pattern catalog index | `/patterns/` |
-| Pattern detail (diagrams, NFRs, cost, getting started) | `/patterns/{id}.html` |
+| Homepage (system catalog, stats, pipeline) | [`/`](https://aac.muthub.org/) |
+| System detail (per-system diagrams, containers, actors) | [`/systems/{id}.html`](https://aac.muthub.org/systems/ecommerce-platform.html) |
+| Pattern catalog index | [`/patterns/`](https://aac.muthub.org/patterns/) |
+| Pattern detail (diagrams, NFRs, cost, getting started) | [`/patterns/{id}.html`](https://aac.muthub.org/patterns/public-web-application.html) |
 
 ---
 
