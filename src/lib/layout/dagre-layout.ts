@@ -22,6 +22,9 @@ const NODE_DIMENSIONS: Record<string, { width: number; height: number }> = {
   systemNode: { width: 300, height: 160 },
   containerNode: { width: 260, height: 130 },
   componentNode: { width: 240, height: 110 },
+  deploymentNode: { width: 340, height: 180 },
+  deploymentChildNode: { width: 260, height: 140 },
+  infrastructureNode: { width: 240, height: 100 },
 };
 
 const CHILD_W = 260;

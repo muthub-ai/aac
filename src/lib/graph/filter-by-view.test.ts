@@ -192,10 +192,28 @@ describe('filterGraphByView', () => {
       environment: 'GCP Production',
     };
 
-    it('returns all nodes and edges (not yet supported)', () => {
+    it('returns only deployment/infrastructure nodes (no C4 nodes)', () => {
       const result = filterGraphByView(nodes, edges, view);
-      expect(result.nodes).toHaveLength(nodes.length);
-      expect(result.edges).toHaveLength(edges.length);
+      // test data has no deployment nodes, so result should be empty
+      expect(result.nodes).toHaveLength(0);
+      expect(result.edges).toHaveLength(0);
+    });
+
+    it('returns deployment nodes when present in the graph', () => {
+      const deployNodes: Node<C4NodeData>[] = [
+        ...nodes,
+        { id: 'deploy:gcp-region', type: 'deploymentNode', position: { x: 0, y: 0 }, data: { kind: 'deploymentNode', label: 'GCP Region', boundary: 'internal' } },
+        { id: 'infra:lb', type: 'infrastructureNode', position: { x: 0, y: 0 }, parentId: 'deploy:gcp-region', data: { kind: 'infrastructureNode', label: 'Load Balancer', boundary: 'internal' } },
+        { id: 'deploy:gke', type: 'deploymentChildNode', position: { x: 0, y: 0 }, parentId: 'deploy:gcp-region', data: { kind: 'deploymentNode', label: 'GKE', boundary: 'internal' } },
+      ];
+      const deployEdges: Edge<C4EdgeData>[] = [
+        ...edges,
+        { id: 'infra:lb->deploy:gke', source: 'infra:lb', target: 'deploy:gke', data: { label: 'Routes to' } },
+      ];
+      const result = filterGraphByView(deployNodes, deployEdges, view);
+      expect(result.nodes).toHaveLength(3);
+      expect(result.edges).toHaveLength(1);
+      expect(result.nodes.every((n) => n.id.startsWith('deploy:') || n.id.startsWith('infra:'))).toBe(true);
     });
   });
 

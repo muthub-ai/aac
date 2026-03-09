@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import {
   GitBranch,
   Clock,
@@ -11,6 +12,8 @@ import {
 } from 'lucide-react';
 import type { SystemData } from '@/types/system';
 import { cn } from '@/lib/utils';
+
+const MAX_VISIBLE_TAGS = 5;
 
 interface SystemCardProps {
   system: SystemData;
@@ -38,6 +41,10 @@ function truncateBranch(name: string, max = 12): string {
 }
 
 export function SystemCard({ system, onClick }: SystemCardProps) {
+  const [tagsExpanded, setTagsExpanded] = useState(false);
+  const hiddenCount = system.tags.length - MAX_VISIBLE_TAGS;
+  const visibleTags = tagsExpanded ? system.tags : system.tags.slice(0, MAX_VISIBLE_TAGS);
+
   return (
     <button
       type="button"
@@ -79,7 +86,7 @@ export function SystemCard({ system, onClick }: SystemCardProps) {
       {/* Row 4: Tags */}
       {system.tags.length > 0 && (
         <div className="mb-3 flex flex-wrap gap-1">
-          {system.tags.map((tag) => (
+          {visibleTags.map((tag) => (
             <span
               key={tag}
               className="rounded bg-ring/8 px-1.5 py-0.5 text-[10px] font-medium text-ring/80"
@@ -87,6 +94,17 @@ export function SystemCard({ system, onClick }: SystemCardProps) {
               {tag}
             </span>
           ))}
+          {hiddenCount > 0 && (
+            <span
+              role="button"
+              tabIndex={0}
+              onClick={(e) => { e.stopPropagation(); setTagsExpanded(!tagsExpanded); }}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); e.preventDefault(); setTagsExpanded(!tagsExpanded); } }}
+              className="cursor-pointer rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground transition-colors hover:bg-muted-foreground/15"
+            >
+              {tagsExpanded ? 'show less' : `+${hiddenCount} more`}
+            </span>
+          )}
         </div>
       )}
 

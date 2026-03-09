@@ -37,6 +37,8 @@ export function ApplicationCatalog({ systems }: ApplicationCatalogProps) {
   const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set());
   const [selectedDisposition, setSelectedDisposition] = useState<string | null>(null);
   const [showDispositionDropdown, setShowDispositionDropdown] = useState(false);
+  const [tagsExpanded, setTagsExpanded] = useState(false);
+  const MAX_VISIBLE_TAGS = 8;
 
   const allTags = useMemo(() => collectAllTags(systems), [systems]);
   const allDispositions = useMemo(() => collectDispositions(systems), [systems]);
@@ -182,7 +184,7 @@ export function ApplicationCatalog({ systems }: ApplicationCatalogProps) {
         {allTags.length > 0 && (
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs text-muted-foreground">Tags:</span>
-            {allTags.map((tag) => (
+            {(tagsExpanded ? allTags : allTags.slice(0, MAX_VISIBLE_TAGS)).map((tag) => (
               <button
                 key={tag}
                 onClick={() => toggleTag(tag)}
@@ -196,6 +198,14 @@ export function ApplicationCatalog({ systems }: ApplicationCatalogProps) {
                 {tag}
               </button>
             ))}
+            {allTags.length > MAX_VISIBLE_TAGS && (
+              <button
+                onClick={() => setTagsExpanded(!tagsExpanded)}
+                className="rounded-full bg-muted px-2.5 py-1 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-muted-foreground/15"
+              >
+                {tagsExpanded ? 'show less' : `+${allTags.length - MAX_VISIBLE_TAGS} more`}
+              </button>
+            )}
           </div>
         )}
 

@@ -83,8 +83,11 @@ export function CanvasPane() {
         />
         <MiniMap
           nodeColor={(n) => {
-            const boundary = (n.data as Record<string, unknown>)?.boundary;
-            return boundary === 'external' ? '#999' : '#1168BD';
+            const data = n.data as Record<string, unknown>;
+            const kind = data?.kind as string;
+            if (kind === 'deploymentNode') return '#2EA043';
+            if (kind === 'infrastructureNode') return '#D29922';
+            return data?.boundary === 'external' ? '#999' : '#1168BD';
           }}
           className="!rounded-xl !border !border-border !bg-card !shadow-md"
           maskColor={isDark ? 'rgba(13,17,23,0.6)' : 'rgba(200,200,200,0.6)'}

@@ -12,14 +12,17 @@ interface FilteredGraph {
  *
  * - System Context: focus system + people and external systems connected to it
  * - Container:      containers inside the focus system + people and external systems connected to them
- * - Deployment:     not yet supported (returns all)
+ * - Deployment:     deployment nodes, infrastructure nodes, and their edges
  */
 export function filterGraphByView(
   allNodes: Node<C4NodeData>[],
   allEdges: Edge<C4EdgeData>[],
   view: ViewInfo | undefined,
 ): FilteredGraph {
-  if (!view) return { nodes: allNodes, edges: allEdges };
+  if (!view) {
+    // No view selected: show only C4 nodes (hide deployment nodes)
+    return filterC4Only(allNodes, allEdges);
+  }
 
   switch (view.type) {
     case 'systemContext':
@@ -27,11 +30,41 @@ export function filterGraphByView(
     case 'container':
       return filterContainer(allNodes, allEdges, view.softwareSystemId);
     case 'deployment':
-      // Deployment views not yet supported — show all
-      return { nodes: allNodes, edges: allEdges };
+      return filterDeployment(allNodes, allEdges);
     default:
-      return { nodes: allNodes, edges: allEdges };
+      return filterC4Only(allNodes, allEdges);
   }
+}
+
+/**
+ * Default view: show only C4 model nodes (people, systems, containers, components).
+ * Excludes deployment/infrastructure nodes which are only shown in deployment views.
+ */
+function filterC4Only(
+  allNodes: Node<C4NodeData>[],
+  allEdges: Edge<C4EdgeData>[],
+): FilteredGraph {
+  const DEPLOYMENT_KINDS = new Set(['deploymentNode', 'infrastructureNode']);
+  const nodes = allNodes.filter((n) => !DEPLOYMENT_KINDS.has(n.data.kind));
+  const nodeIds = new Set(nodes.map((n) => n.id));
+  const edges = allEdges.filter((e) => nodeIds.has(e.source) && nodeIds.has(e.target));
+  return { nodes, edges };
+}
+
+/**
+ * Deployment View:
+ *   Show only deployment nodes, infrastructure nodes, and deployment children.
+ *   Edges between them (from infrastructure relationships).
+ */
+function filterDeployment(
+  allNodes: Node<C4NodeData>[],
+  allEdges: Edge<C4EdgeData>[],
+): FilteredGraph {
+  const DEPLOYMENT_KINDS = new Set(['deploymentNode', 'infrastructureNode']);
+  const nodes = allNodes.filter((n) => DEPLOYMENT_KINDS.has(n.data.kind));
+  const nodeIds = new Set(nodes.map((n) => n.id));
+  const edges = allEdges.filter((e) => nodeIds.has(e.source) && nodeIds.has(e.target));
+  return { nodes, edges };
 }
 
 /**
@@ -44,21 +77,24 @@ function filterSystemContext(
   allEdges: Edge<C4EdgeData>[],
   systemId: string,
 ): FilteredGraph {
-  const focusSystemNode = allNodes.find(
+  // Exclude deployment/infra nodes first
+  const { nodes: c4Nodes, edges: c4Edges } = filterC4Only(allNodes, allEdges);
+
+  const focusSystemNode = c4Nodes.find(
     (n) => n.id === systemId && n.data.kind === 'softwareSystem',
   );
-  if (!focusSystemNode) return { nodes: allNodes, edges: allEdges };
+  if (!focusSystemNode) return { nodes: c4Nodes, edges: c4Edges };
 
   // IDs that belong to the focus system (the system + its containers/components)
   const focusFamilyIds = new Set(
-    allNodes
+    c4Nodes
       .filter((n) => n.id === systemId || n.id.startsWith(systemId + '.'))
       .map((n) => n.id),
   );
 
   // Find all nodes connected to any node in the focus family
   const connectedNodeIds = new Set<string>();
-  for (const edge of allEdges) {
+  for (const edge of c4Edges) {
     if (focusFamilyIds.has(edge.source)) connectedNodeIds.add(edge.target);
     if (focusFamilyIds.has(edge.target)) connectedNodeIds.add(edge.source);
   }
@@ -66,7 +102,7 @@ function filterSystemContext(
   // Visible nodes: the focus system + connected people and external software systems
   const visibleIds = new Set<string>([systemId]);
   for (const id of connectedNodeIds) {
-    const node = allNodes.find((n) => n.id === id);
+    const node = c4Nodes.find((n) => n.id === id);
     if (!node) continue;
     // Include people and other top-level software systems (not containers of other systems)
     if (node.data.kind === 'person' || node.data.kind === 'softwareSystem') {
@@ -81,10 +117,10 @@ function filterSystemContext(
     }
   }
 
-  const filteredNodes = allNodes.filter((n) => visibleIds.has(n.id));
+  const filteredNodes = c4Nodes.filter((n) => visibleIds.has(n.id));
 
   // Edges: re-map edges that go to/from containers to point at the system level
-  const filteredEdges = collectEdgesBetween(allEdges, allNodes, visibleIds, focusFamilyIds, systemId);
+  const filteredEdges = collectEdgesBetween(c4Edges, c4Nodes, visibleIds, focusFamilyIds, systemId);
 
   return { nodes: filteredNodes, edges: filteredEdges };
 }
@@ -100,18 +136,21 @@ function filterContainer(
   allEdges: Edge<C4EdgeData>[],
   systemId: string,
 ): FilteredGraph {
+  // Exclude deployment/infra nodes first
+  const { nodes: c4Nodes, edges: c4Edges } = filterC4Only(allNodes, allEdges);
+
   // Nodes belonging to the focus system (system + containers + components)
   const focusFamilyIds = new Set(
-    allNodes
+    c4Nodes
       .filter((n) => n.id === systemId || n.id.startsWith(systemId + '.'))
       .map((n) => n.id),
   );
 
-  if (focusFamilyIds.size === 0) return { nodes: allNodes, edges: allEdges };
+  if (focusFamilyIds.size === 0) return { nodes: c4Nodes, edges: c4Edges };
 
   // Find external nodes connected to any focus-family node
   const connectedExternalIds = new Set<string>();
-  for (const edge of allEdges) {
+  for (const edge of c4Edges) {
     if (focusFamilyIds.has(edge.source) && !focusFamilyIds.has(edge.target)) {
       connectedExternalIds.add(edge.target);
     }
@@ -123,7 +162,7 @@ function filterContainer(
   // Resolve containers/components of other systems to their parent system
   const visibleIds = new Set<string>(focusFamilyIds);
   for (const id of connectedExternalIds) {
-    const node = allNodes.find((n) => n.id === id);
+    const node = c4Nodes.find((n) => n.id === id);
     if (!node) continue;
     if (node.data.kind === 'person' || node.data.kind === 'softwareSystem') {
       visibleIds.add(id);
@@ -134,10 +173,10 @@ function filterContainer(
     }
   }
 
-  const filteredNodes = allNodes.filter((n) => visibleIds.has(n.id));
+  const filteredNodes = c4Nodes.filter((n) => visibleIds.has(n.id));
 
   // Edges between visible nodes (collapse internal references to visible IDs)
-  const filteredEdges = collectEdgesBetween(allEdges, allNodes, visibleIds, focusFamilyIds, systemId);
+  const filteredEdges = collectEdgesBetween(c4Edges, c4Nodes, visibleIds, focusFamilyIds, systemId);
 
   return { nodes: filteredNodes, edges: filteredEdges };
 }

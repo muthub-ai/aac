@@ -74,8 +74,16 @@ export function graphToYaml(
     }
   }
 
-  if (edges.length > 0) {
-    doc.relationships = edges.map((e): YamlRelationship => ({
+  // Filter out deployment/infrastructure edges (they are read-only from YAML)
+  const c4Edges = edges.filter(
+    (e) =>
+      !e.source.startsWith('deploy:') &&
+      !e.source.startsWith('infra:') &&
+      !e.target.startsWith('deploy:') &&
+      !e.target.startsWith('infra:'),
+  );
+  if (c4Edges.length > 0) {
+    doc.relationships = c4Edges.map((e): YamlRelationship => ({
       from: e.source,
       to: e.target,
       label: e.data?.label,

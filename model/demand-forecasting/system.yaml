@@ -202,36 +202,95 @@ model:
           description: Reads data from
           technology: JDBC
   deploymentNodes:
-    - id: gcp-us-central1
-      name: Google Cloud us-central1
+    # ── Global edge ─────────────────────────────────────────────
+    - id: gcp-global
+      name: Google Cloud Global
       environment: Production
-      technology: GCP Region
-      tags: gcp,production
+      technology: GCP Global Infrastructure
+      tags: gcp,global,production
       infrastructureNodes:
-        - id: cloud-load-balancer
-          name: Cloud Load Balancer
-          technology: Google Cloud Load Balancing
-          tags: networking,gcp
+        - id: cloud-dns
+          name: Cloud DNS
+          technology: Google Cloud DNS
+          tags: networking,dns,gcp
+          properties:
+            type: dns
+          relationships:
+            - destinationId: global-https-lb
+              description: Resolves client requests to
+              technology: DNS
+        - id: global-https-lb
+          name: Global HTTPS Load Balancer
+          technology: Google Cloud External Application Load Balancer
+          tags: networking,load-balancer,gcp
           properties:
             type: load-balancer
           relationships:
             - destinationId: DemandForecasting.PerformanceDashboard
-              description: Routes dashboard traffic to
+              description: Routes dashboard traffic to nearest healthy region
               technology: HTTPS
-        - id: cloud-nat
+        - id: cloud-cdn
+          name: Cloud CDN
+          technology: Google Cloud CDN
+          tags: caching,cdn,gcp
+          properties:
+            type: cdn
+          relationships:
+            - destinationId: DemandForecasting.PerformanceDashboard
+              description: Caches and serves static dashboard assets from
+              technology: HTTPS
+        - id: cloud-armor
+          name: Cloud Armor
+          technology: Google Cloud Armor
+          tags: security,waf,gcp
+          properties:
+            type: waf
+          relationships:
+            - destinationId: global-https-lb
+              description: Applies WAF and DDoS protection to
+              technology: Security Policy
+
+    # ── Region 1: us-central1 (Iowa) ───────────────────────────
+    - id: gcp-us-central1
+      name: Google Cloud us-central1
+      environment: Production
+      technology: GCP Region
+      tags: gcp,production,us-central1
+      infrastructureNodes:
+        - id: us-internal-lb
+          name: Internal Load Balancer
+          technology: Google Cloud Internal TCP/UDP Load Balancer
+          tags: networking,load-balancer,gcp
+          properties:
+            type: load-balancer
+          relationships:
+            - destinationId: DemandForecasting.PredictionPipeline
+              description: Distributes batch traffic to
+              technology: gRPC
+        - id: us-cloud-nat
           name: Cloud NAT Gateway
           technology: Google Cloud NAT
           tags: networking,gcp
           properties:
             type: nat-gateway
-        - id: vpc-firewall
+        - id: us-vpc-firewall
           name: VPC Firewall
-          technology: Google Cloud VPC
-          tags: networking,security
+          technology: Google Cloud VPC Firewall Rules
+          tags: networking,security,gcp
           properties:
             type: firewall
+        - id: us-cloud-interconnect
+          name: Cloud Interconnect
+          technology: Google Cloud Dedicated Interconnect
+          tags: networking,replication,gcp
+          properties:
+            type: interconnect
+          relationships:
+            - destinationId: eu-cloud-interconnect
+              description: Cross-region VPC peering to europe-west1
+              technology: Google Cloud VPC Network Peering
       children:
-        - id: dataproc-cluster
+        - id: us-dataproc-cluster
           name: Dataproc Cluster
           technology: Google Cloud Dataproc
           tags: compute,spark,gcp
@@ -240,7 +299,7 @@ model:
               instanceId: 1
             - containerId: DemandForecasting.EvaluationJob
               instanceId: 1
-        - id: vertex-ai-platform
+        - id: us-vertex-ai-platform
           name: Vertex AI Platform
           technology: Google Cloud Vertex AI
           tags: ml,ai,gcp
@@ -251,27 +310,109 @@ model:
               instanceId: 1
             - containerId: DemandForecasting.DataExploration
               instanceId: 1
-        - id: firestore-cluster
-          name: Cloud Firestore
+        - id: us-firestore
+          name: Cloud Firestore (Multi-Region nam5)
           technology: Google Cloud Firestore
-          tags: database,nosql,gcp
+          tags: database,nosql,gcp,multi-region
           containerInstances:
             - containerId: DemandForecasting.ForecastStorage
               instanceId: 1
-        - id: looker-studio-instance
+        - id: us-looker-studio
           name: Looker Studio
           technology: Google Looker Studio
           tags: ui,dashboard,gcp
           containerInstances:
             - containerId: DemandForecasting.PerformanceDashboard
               instanceId: 1
-        - id: bigquery-instance
-          name: BigQuery
+        - id: us-bigquery
+          name: BigQuery (US Multi-Region)
           technology: Google BigQuery
-          tags: database,analytics,gcp
+          tags: database,analytics,gcp,multi-region
           containerInstances:
             - containerId: DataWarehouse.SalesData
               instanceId: 1
+
+    # ── Region 2: europe-west1 (Belgium) ───────────────────────
+    - id: gcp-europe-west1
+      name: Google Cloud europe-west1
+      environment: Production
+      technology: GCP Region
+      tags: gcp,production,europe-west1
+      infrastructureNodes:
+        - id: eu-internal-lb
+          name: Internal Load Balancer
+          technology: Google Cloud Internal TCP/UDP Load Balancer
+          tags: networking,load-balancer,gcp
+          properties:
+            type: load-balancer
+          relationships:
+            - destinationId: DemandForecasting.PredictionPipeline
+              description: Distributes batch traffic to
+              technology: gRPC
+        - id: eu-cloud-nat
+          name: Cloud NAT Gateway
+          technology: Google Cloud NAT
+          tags: networking,gcp
+          properties:
+            type: nat-gateway
+        - id: eu-vpc-firewall
+          name: VPC Firewall
+          technology: Google Cloud VPC Firewall Rules
+          tags: networking,security,gcp
+          properties:
+            type: firewall
+        - id: eu-cloud-interconnect
+          name: Cloud Interconnect
+          technology: Google Cloud Dedicated Interconnect
+          tags: networking,replication,gcp
+          properties:
+            type: interconnect
+          relationships:
+            - destinationId: us-cloud-interconnect
+              description: Cross-region VPC peering to us-central1
+              technology: Google Cloud VPC Network Peering
+      children:
+        - id: eu-dataproc-cluster
+          name: Dataproc Cluster
+          technology: Google Cloud Dataproc
+          tags: compute,spark,gcp
+          containerInstances:
+            - containerId: DemandForecasting.PredictionPipeline
+              instanceId: 2
+            - containerId: DemandForecasting.EvaluationJob
+              instanceId: 2
+        - id: eu-vertex-ai-platform
+          name: Vertex AI Platform
+          technology: Google Cloud Vertex AI
+          tags: ml,ai,gcp
+          containerInstances:
+            - containerId: DemandForecasting.ModelTraining
+              instanceId: 2
+            - containerId: DemandForecasting.ModelRegistry
+              instanceId: 2
+            - containerId: DemandForecasting.DataExploration
+              instanceId: 2
+        - id: eu-firestore
+          name: Cloud Firestore (Multi-Region eur3)
+          technology: Google Cloud Firestore
+          tags: database,nosql,gcp,multi-region
+          containerInstances:
+            - containerId: DemandForecasting.ForecastStorage
+              instanceId: 2
+        - id: eu-looker-studio
+          name: Looker Studio
+          technology: Google Looker Studio
+          tags: ui,dashboard,gcp
+          containerInstances:
+            - containerId: DemandForecasting.PerformanceDashboard
+              instanceId: 2
+        - id: eu-bigquery
+          name: BigQuery (EU Multi-Region)
+          technology: Google BigQuery
+          tags: database,analytics,gcp,multi-region
+          containerInstances:
+            - containerId: DataWarehouse.SalesData
+              instanceId: 2
 views:
   systemContextViews:
     - key: DemandForecasting-SystemContext
@@ -284,8 +425,8 @@ views:
       title: Demand Forecasting Container View
       description: Internal containers and data flows within the Demand Forecasting system.
   deploymentViews:
-    - key: DemandForecasting-Deployment-Prod
+    - key: DemandForecasting-Deployment-ActiveActive
       softwareSystemId: DemandForecasting
       environment: Production
-      title: GCP Production Deployment
-      description: Production deployment topology on Google Cloud Platform us-central1 region.
+      title: GCP Active-Active Multi-Region Deployment
+      description: Active-active deployment across us-central1 (Iowa) and europe-west1 (Belgium) with Global HTTPS Load Balancer, Cloud CDN, Cloud Armor WAF, cross-region VPC peering, and multi-region Firestore/BigQuery replication.

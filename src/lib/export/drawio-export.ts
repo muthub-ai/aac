@@ -26,6 +26,18 @@ const STYLES = {
     external:
       'rounded=1;whiteSpace=wrap;html=1;fillColor=#CCCCCC;strokeColor=#BABABA;fontColor=#000000;fontSize=11;fontStyle=1;align=center;verticalAlign=middle;arcSize=10;metaEdit=1;resizable=1;points=[];',
   },
+  deploymentNode: {
+    internal:
+      'rounded=1;whiteSpace=wrap;html=1;dashed=1;fillColor=#E8F5E9;strokeColor=#388E3C;fontColor=#1B5E20;fontSize=12;fontStyle=1;align=center;verticalAlign=middle;arcSize=10;metaEdit=1;resizable=1;points=[];',
+    external:
+      'rounded=1;whiteSpace=wrap;html=1;dashed=1;fillColor=#E8F5E9;strokeColor=#388E3C;fontColor=#1B5E20;fontSize=12;fontStyle=1;align=center;verticalAlign=middle;arcSize=10;metaEdit=1;resizable=1;points=[];',
+  },
+  infrastructureNode: {
+    internal:
+      'rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF8E1;strokeColor=#F9A825;fontColor=#E65100;fontSize=11;fontStyle=1;align=center;verticalAlign=middle;arcSize=10;metaEdit=1;resizable=1;points=[];',
+    external:
+      'rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF8E1;strokeColor=#F9A825;fontColor=#E65100;fontSize=11;fontStyle=1;align=center;verticalAlign=middle;arcSize=10;metaEdit=1;resizable=1;points=[];',
+  },
   edge:
     'edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#707070;fontColor=#585858;fontSize=11;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;',
 } as const;
@@ -35,6 +47,8 @@ const NODE_SIZES: Record<string, { w: number; h: number }> = {
   softwareSystem: { w: 280, h: 160 },
   container: { w: 240, h: 140 },
   component: { w: 220, h: 120 },
+  deploymentNode: { w: 340, h: 180 },
+  infrastructureNode: { w: 240, h: 100 },
 };
 
 function buildLabel(data: C4NodeData): string {
@@ -58,6 +72,10 @@ function formatTag(data: C4NodeData): string {
       return data.technology ? `[Container: ${data.technology}]` : '[Container]';
     case 'component':
       return data.technology ? `[Component: ${data.technology}]` : '[Component]';
+    case 'deploymentNode':
+      return data.technology ? `[${data.technology}]` : '[Deployment Node]';
+    case 'infrastructureNode':
+      return data.technology ? `[${data.technology}]` : '[Infrastructure]';
   }
 }
 
