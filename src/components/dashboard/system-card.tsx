@@ -52,7 +52,7 @@ export function SystemCard({ system, onClick }: SystemCardProps) {
       type="button"
       onClick={onClick}
       className={cn(
-        'group flex w-full cursor-pointer flex-col rounded-xl border border-border text-left',
+        'group flex w-full cursor-pointer flex-col overflow-hidden rounded-xl border border-border text-left',
         'bg-card p-5',
         'shadow-sm',
         'transition-all duration-200 ease-out',
@@ -70,44 +70,17 @@ export function SystemCard({ system, onClick }: SystemCardProps) {
         </div>
       )}
 
-      {/* Row 2: Title */}
+      {/* Row 2: Title + status */}
       <div className="mb-1 flex items-center gap-2">
         <h3 className="min-w-0 truncate text-[15px] font-semibold text-foreground transition-colors group-hover:text-ring">
           {system.name}
         </h3>
         <span
-          role="link"
-          tabIndex={0}
-          onClick={(e) => {
-            e.stopPropagation();
-            window.open(
-              `https://muthub-ai.github.io/aac/systems/${system.id}.html`,
-              '_blank',
-              'noopener,noreferrer',
-            );
-          }}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.stopPropagation();
-              e.preventDefault();
-              window.open(
-                `https://muthub-ai.github.io/aac/systems/${system.id}.html`,
-                '_blank',
-                'noopener,noreferrer',
-              );
-            }
-          }}
-          className={cn(
-            'ml-auto inline-flex shrink-0 items-center gap-1 rounded-md border px-2 py-0.5',
-            'text-[10px] font-semibold',
-            'border-chart-5/30 bg-chart-5/10 text-chart-5',
-            'transition-all hover:border-chart-5/50 hover:bg-chart-5/20',
-            'cursor-pointer',
-          )}
-          title="View documentation on GitHub Pages"
+          className="ml-auto inline-flex shrink-0 items-center gap-1 rounded-full border border-success/30 bg-success/10 px-1.5 py-0.5 text-[10px] font-semibold text-success"
+          title="All validation checks passed"
         >
-          <ExternalLink className="h-2.5 w-2.5" strokeWidth={2} />
-          Docs
+          <CircleCheck className="h-2.5 w-2.5 shrink-0" strokeWidth={2} />
+          Passing
         </span>
         <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground/40 transition-transform group-hover:translate-x-0.5 group-hover:text-ring" />
       </div>
@@ -144,14 +117,41 @@ export function SystemCard({ system, onClick }: SystemCardProps) {
         </div>
       )}
 
-      {/* Row 5: Architecture stats + meta — single line */}
-      <div className="mt-auto flex items-center gap-x-2.5 border-t border-border/50 pt-3 text-[11px] text-muted-foreground">
+      {/* Row 5: Architecture stats + meta */}
+      <div className="mt-auto flex flex-wrap items-center gap-x-2.5 gap-y-1.5 border-t border-border/50 pt-3 text-[11px] text-muted-foreground">
         <span
-          className="inline-flex items-center gap-1 rounded-full border border-success/30 bg-success/10 px-1.5 py-px text-[10px] font-semibold text-success"
-          title="All validation checks passed"
+          role="link"
+          tabIndex={0}
+          onClick={(e) => {
+            e.stopPropagation();
+            window.open(
+              `https://muthub-ai.github.io/aac/systems/${system.id}.html`,
+              '_blank',
+              'noopener,noreferrer',
+            );
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.stopPropagation();
+              e.preventDefault();
+              window.open(
+                `https://muthub-ai.github.io/aac/systems/${system.id}.html`,
+                '_blank',
+                'noopener,noreferrer',
+              );
+            }
+          }}
+          className={cn(
+            'inline-flex shrink-0 items-center gap-1 rounded-md border px-2 py-0.5',
+            'text-[10px] font-semibold',
+            'border-chart-5/30 bg-chart-5/10 text-chart-5',
+            'transition-all hover:border-chart-5/50 hover:bg-chart-5/20',
+            'cursor-pointer',
+          )}
+          title="View documentation on GitHub Pages"
         >
-          <CircleCheck className="h-3 w-3 shrink-0" strokeWidth={2} />
-          Passing
+          <ExternalLink className="h-2.5 w-2.5" strokeWidth={2} />
+          Docs
         </span>
 
         <span className="mx-0.5 h-3 w-px bg-border/60" />
