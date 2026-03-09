@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import {
   GitBranch,
   Clock,
@@ -11,9 +11,12 @@ import {
   ChevronRight,
   ExternalLink,
   CircleCheck,
+  Code2,
+  Download,
 } from 'lucide-react';
 import type { SystemData } from '@/types/system';
 import { cn } from '@/lib/utils';
+import { YamlViewerModal } from '@/components/ui/yaml-viewer-modal';
 
 const MAX_VISIBLE_TAGS = 5;
 
@@ -44,10 +47,26 @@ function truncateBranch(name: string, max = 12): string {
 
 export function SystemCard({ system, onClick }: SystemCardProps) {
   const [tagsExpanded, setTagsExpanded] = useState(false);
+  const [yamlOpen, setYamlOpen] = useState(false);
   const hiddenCount = system.tags.length - MAX_VISIBLE_TAGS;
   const visibleTags = tagsExpanded ? system.tags : system.tags.slice(0, MAX_VISIBLE_TAGS);
 
+  const handleDownloadYaml = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!system.yamlContent) return;
+    const blob = new Blob([system.yamlContent], { type: 'text/yaml' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${system.id}.yaml`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, [system.yamlContent, system.id]);
+
   return (
+    <>
     <button
       type="button"
       onClick={onClick}
@@ -114,6 +133,46 @@ export function SystemCard({ system, onClick }: SystemCardProps) {
               {tagsExpanded ? 'show less' : `+${hiddenCount} more`}
             </span>
           )}
+        </div>
+      )}
+
+      {/* Code action row */}
+      {system.yamlContent && (
+        <div className="mb-3 flex items-center gap-1.5 rounded-lg border border-border/60 bg-muted/30 px-3 py-2">
+          <Code2 className="h-3.5 w-3.5 shrink-0 text-ring" strokeWidth={2} />
+          <span className="text-[11px] font-semibold text-muted-foreground">architecture.yaml</span>
+          <div className="ml-auto flex items-center gap-1">
+            <span
+              role="button"
+              tabIndex={0}
+              onClick={(e) => { e.stopPropagation(); setYamlOpen(true); }}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); e.preventDefault(); setYamlOpen(true); } }}
+              className={cn(
+                'inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[10px] font-semibold',
+                'border-ring/30 bg-ring/10 text-ring',
+                'cursor-pointer transition-all hover:bg-ring/20',
+              )}
+              title="View YAML source"
+            >
+              <Code2 className="h-2.5 w-2.5" strokeWidth={2.5} />
+              View
+            </span>
+            <span
+              role="button"
+              tabIndex={0}
+              onClick={handleDownloadYaml}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); e.preventDefault(); handleDownloadYaml(e as unknown as React.MouseEvent); } }}
+              className={cn(
+                'inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[10px] font-semibold',
+                'border-border bg-muted/50 text-muted-foreground',
+                'cursor-pointer transition-all hover:bg-muted hover:text-foreground',
+              )}
+              title="Download YAML file"
+            >
+              <Download className="h-2.5 w-2.5" strokeWidth={2} />
+              .yaml
+            </span>
+          </div>
         </div>
       )}
 
@@ -186,5 +245,16 @@ export function SystemCard({ system, onClick }: SystemCardProps) {
         </span>
       </div>
     </button>
+
+    {system.yamlContent && (
+      <YamlViewerModal
+        open={yamlOpen}
+        onClose={() => setYamlOpen(false)}
+        yamlContent={system.yamlContent}
+        fileName={`${system.id}.yaml`}
+        title={system.name}
+      />
+    )}
+    </>
   );
 }

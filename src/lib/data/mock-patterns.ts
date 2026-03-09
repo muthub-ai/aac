@@ -1,3 +1,4 @@
+import yaml from 'js-yaml';
 import {
   Brain,
   BarChart3,
@@ -596,3 +597,49 @@ export const MOCK_PATTERNS: PatternData[] = [
     ],
   },
 ];
+
+// ── Generate yamlContent for every pattern ───────────────────────────
+// Serializes the architecture-relevant fields into a clean YAML document
+// matching the on-disk pattern.yaml schema.
+
+function generatePatternYaml(p: PatternData): string {
+  const doc = {
+    pattern: {
+      id: p.id,
+      version: p.version,
+      name: p.name,
+      description: p.description,
+      category: p.category,
+      exposure: p.exposure,
+      metadata: {
+        owner_team: p.maintainerTeam,
+        tags: p.tags,
+      },
+      products_used: p.productsUsed.map((pu) => ({
+        name: pu.name,
+        role: pu.role,
+      })),
+      non_functional_requirements: p.nonFunctionalRequirements.map((n) => ({
+        metric: n.metric,
+        target: n.target,
+      })),
+      design_considerations: p.designConsiderations.map((dc) => ({
+        title: dc.title,
+        description: dc.description,
+      })),
+      advantages: p.advantages,
+      considerations: p.considerations,
+      constraints: p.constraints,
+      cost_profile: p.costProfile,
+      getting_started: p.gettingStarted.map((gs) => ({
+        step: gs.step,
+        title: gs.title,
+      })),
+    },
+  };
+  return yaml.dump(doc, { lineWidth: 100, noRefs: true, sortKeys: false });
+}
+
+for (const p of MOCK_PATTERNS) {
+  p.yamlContent = generatePatternYaml(p);
+}

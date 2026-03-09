@@ -1,5 +1,6 @@
 'use client';
 
+import { useCallback, useState } from 'react';
 import {
   Brain,
   BarChart3,
@@ -14,10 +15,12 @@ import {
   Star,
   Rocket,
   FileCode2,
+  Code2,
 } from 'lucide-react';
 import type { PatternData } from '@/types/pattern';
 import { CATEGORY_COLORS } from '@/lib/data/mock-patterns';
 import { cn } from '@/lib/utils';
+import { YamlViewerModal } from '@/components/ui/yaml-viewer-modal';
 
 const MAX_VISIBLE_TAGS = 4;
 
@@ -45,12 +48,28 @@ function formatDownloads(n: number): string {
 }
 
 export function PatternCard({ pattern, isSelected, onClick }: PatternCardProps) {
+  const [yamlOpen, setYamlOpen] = useState(false);
   const Icon = ICON_MAP[pattern.icon] ?? Server;
   const colors = CATEGORY_COLORS[pattern.category] ?? CATEGORY_COLORS.compute;
   const visibleTags = pattern.tags.slice(0, MAX_VISIBLE_TAGS);
   const hiddenCount = pattern.tags.length - MAX_VISIBLE_TAGS;
 
+  const handleDownloadYaml = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!pattern.yamlContent) return;
+    const blob = new Blob([pattern.yamlContent], { type: 'text/yaml' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${pattern.id}.yaml`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, [pattern.yamlContent, pattern.id]);
+
   return (
+    <>
     <button
       type="button"
       onClick={onClick}
@@ -115,6 +134,46 @@ export function PatternCard({ pattern, isSelected, onClick }: PatternCardProps) 
           )}
         </div>
 
+        {/* Code action row */}
+        {pattern.yamlContent && (
+          <div className="mb-4 flex items-center gap-1.5 rounded-lg border border-border/60 bg-muted/30 px-3 py-2">
+            <Code2 className="h-3.5 w-3.5 shrink-0 text-ring" strokeWidth={2} />
+            <span className="text-[11px] font-semibold text-muted-foreground">pattern.yaml</span>
+            <div className="ml-auto flex items-center gap-1">
+              <span
+                role="button"
+                tabIndex={0}
+                onClick={(e) => { e.stopPropagation(); setYamlOpen(true); }}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); e.preventDefault(); setYamlOpen(true); } }}
+                className={cn(
+                  'inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[10px] font-semibold',
+                  'border-ring/30 bg-ring/10 text-ring',
+                  'cursor-pointer transition-all hover:bg-ring/20',
+                )}
+                title="View YAML source"
+              >
+                <Code2 className="h-2.5 w-2.5" strokeWidth={2.5} />
+                View
+              </span>
+              <span
+                role="button"
+                tabIndex={0}
+                onClick={handleDownloadYaml}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); e.preventDefault(); handleDownloadYaml(e as unknown as React.MouseEvent); } }}
+                className={cn(
+                  'inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[10px] font-semibold',
+                  'border-border bg-muted/50 text-muted-foreground',
+                  'cursor-pointer transition-all hover:bg-muted hover:text-foreground',
+                )}
+                title="Download YAML file"
+              >
+                <Download className="h-2.5 w-2.5" strokeWidth={2} />
+                .yaml
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* Footer */}
         <div className="mt-auto flex items-center gap-3 border-t border-border/50 pt-3 text-[11px] text-muted-foreground">
           <span className="inline-flex items-center gap-1" title="Downloads">
@@ -144,5 +203,16 @@ export function PatternCard({ pattern, isSelected, onClick }: PatternCardProps) 
         </div>
       </div>
     </button>
+
+    {pattern.yamlContent && (
+      <YamlViewerModal
+        open={yamlOpen}
+        onClose={() => setYamlOpen(false)}
+        yamlContent={pattern.yamlContent}
+        fileName={`${pattern.id}.yaml`}
+        title={pattern.name}
+      />
+    )}
+    </>
   );
 }
