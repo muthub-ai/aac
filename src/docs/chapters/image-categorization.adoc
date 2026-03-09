@@ -1,0 +1,13 @@
+= Image Categorization
+
+== System Context
+
+[plantuml, target=image-categorization-full, format=svg]
+----
+include::../diagrams/image-categorization/full.puml[]
+----
+
+== Architecture Details
+
+The Image Categorization system provides ML-powered image classification and tagging capabilities.
+See the C4 model YAML source at `model/image-categorization/system.yaml` for the full definition.

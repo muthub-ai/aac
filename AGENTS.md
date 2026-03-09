@@ -27,6 +27,19 @@ npm run test:coverage # Vitest with coverage
 - **Tests live alongside source:** `*.test.ts` next to the module they test
 - **Key test targets:** yaml-to-graph, graph-to-yaml, system-schema, validate-new-system, dagre-layout, drawio-export, utils
 
+## CI/CD Pipeline Scripts
+
+```bash
+npm run validate:models    # Validate all model YAML against JSON Schema + Zod
+npm run lint:architecture  # Enterprise architecture policy compliance checks
+npm run build:diagrams     # Generate PlantUML + Draw.io diagrams from models
+```
+
+- Pipeline workflow: `.github/workflows/aac-pipeline.yml`
+- DocToolchain config: `docToolchainConfig.groovy` (run `./dtcw generateSite` with `DTC_HEADLESS=true`)
+- AsciiDoc docs: `src/docs/` (generated diagrams go in `src/docs/diagrams/`)
+- Scripts use `tsx` for TypeScript execution and relative imports (not `@/*` alias)
+
 ## Key Conventions
 
 - Semantic Tailwind CSS tokens (light/dark themes via CSS custom properties in globals.css)

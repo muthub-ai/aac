@@ -39,3 +39,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# docToolchain
+/.gradle/
+/.doctoolchain/
+build/microsite/
+
+# generated diagrams (rebuilt by CI)
+src/docs/diagrams/*
+!src/docs/diagrams/.gitkeep

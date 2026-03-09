@@ -1,0 +1,334 @@
+# =============================================================================
+# Architecture as Code (AaC) — CI/CD Pipeline
+# =============================================================================
+# This workflow automates the full enterprise architecture lifecycle:
+#   1. Setup          — checkout, toolchain installation, dependency caching
+#   2. Verify         — JSON Schema validation + Zod checks + unit tests
+#   3. Compliance     — enterprise architecture policy linting
+#   4. Artifacts      — PlantUML + Draw.io diagram generation
+#   5. Documentation  — docToolchain static site generation
+#   6. PR Feedback    — post diagram previews to pull request comments
+#   7. Publish        — deploy microsite to GitHub Pages on merge to main
+#
+# CRITICAL: This pipeline does NOT use Structurizr CLI/DSL anywhere.
+# All parsing, validation, and export is handled by our custom Node.js tooling.
+# =============================================================================
+
+name: AaC Pipeline
+
+# ---------------------------------------------------------------------------
+# Triggers: PR against main (for validation + feedback) and push to main
+# (for validation + publish to GitHub Pages).
+# ---------------------------------------------------------------------------
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+# ---------------------------------------------------------------------------
+# Concurrency: Cancel in-progress runs for the same PR to save compute.
+# Push-to-main runs are never cancelled (we always want a full publish).
+# ---------------------------------------------------------------------------
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+# ---------------------------------------------------------------------------
+# Permissions required by downstream actions:
+#   contents: write  — push to gh-pages branch (peaceiris/actions-gh-pages)
+#   pull-requests: write — post PR comments (actions/github-script)
+#   pages: write     — GitHub Pages deployment (if using native pages action)
+#   id-token: write  — OIDC token for Pages deployment
+# ---------------------------------------------------------------------------
+permissions:
+  contents: write
+  pull-requests: write
+  pages: write
+  id-token: write
+
+jobs:
+  # =========================================================================
+  # STAGE 1 — Setup + STAGE 2 — Verify + STAGE 3 — Compliance
+  # =========================================================================
+  # These run in a single job to avoid re-installing dependencies.
+  verify-and-comply:
+    name: "Verify & Compliance"
+    runs-on: ubuntu-latest
+    steps:
+      # ---------------------------------------------------------------------
+      # 1a. Checkout source
+      # ---------------------------------------------------------------------
+      - name: "Checkout repository"
+        uses: actions/checkout@v4
+
+      # ---------------------------------------------------------------------
+      # 1b. Set up Node.js from .nvmrc with npm dependency caching
+      # ---------------------------------------------------------------------
+      - name: "Set up Node.js"
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: "npm"
+
+      # ---------------------------------------------------------------------
+      # 1c. Install Node dependencies (ci = clean install, reproducible)
+      # ---------------------------------------------------------------------
+      - name: "Install dependencies"
+        run: npm ci
+
+      # ---------------------------------------------------------------------
+      # 2a. Schema Validation — validate all model YAML files against our
+      #     enterprise JSON Schema + Zod schemas + cross-reference checks.
+      #     Fails fast if any model file is structurally invalid.
+      # ---------------------------------------------------------------------
+      - name: "Validate model schemas"
+        run: npx tsx scripts/validate-models.ts
+
+      # ---------------------------------------------------------------------
+      # 2b. Unit Tests — run the full Vitest test suite in single-run mode.
+      #     Covers: YAML parsing, graph transforms, validation logic,
+      #     layout algorithms, export modules, and utility functions.
+      # ---------------------------------------------------------------------
+      - name: "Run unit tests"
+        run: npm run test:run
+
+      # ---------------------------------------------------------------------
+      # 2c. ESLint — enforce code quality and Next.js best practices
+      # ---------------------------------------------------------------------
+      - name: "Lint source code"
+        run: npm run lint
+
+      # ---------------------------------------------------------------------
+      # 3. Architecture Compliance — run our custom enterprise policy linter.
+      #    Enforces rules like: frontends cannot bypass API gateways to reach
+      #    databases, all systems must have containers, deployment references
+      #    must be valid, etc. Blocks the PR if any policy is violated.
+      # ---------------------------------------------------------------------
+      - name: "Architecture compliance check"
+        run: npx tsx scripts/lint-architecture.ts
+
+  # =========================================================================
+  # STAGE 4 — Artifact Creation (Diagrams)
+  # STAGE 5 — Documentation Generation (docToolchain)
+  # =========================================================================
+  build-docs:
+    name: "Build Diagrams & Documentation"
+    runs-on: ubuntu-latest
+    needs: verify-and-comply
+    steps:
+      # ---------------------------------------------------------------------
+      # Checkout + Node.js (same as verify job)
+      # ---------------------------------------------------------------------
+      - name: "Checkout repository"
+        uses: actions/checkout@v4
+
+      - name: "Set up Node.js"
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: "npm"
+
+      - name: "Install Node dependencies"
+        run: npm ci
+
+      # ---------------------------------------------------------------------
+      # 1c. Set up Java 17 (required by docToolchain / Gradle / Groovy).
+      #     Uses Eclipse Temurin distribution with Gradle caching.
+      # ---------------------------------------------------------------------
+      - name: "Set up Java 17"
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      # ---------------------------------------------------------------------
+      # Cache docToolchain / Gradle / Groovy Grape dependencies to avoid
+      # re-downloading ~200 MB on every run.
+      # ---------------------------------------------------------------------
+      - name: "Cache docToolchain dependencies"
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.doctoolchain
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            ~/.groovy/grapes
+          key: ${{ runner.os }}-dtc-${{ hashFiles('docToolchainConfig.groovy') }}
+          restore-keys: |
+            ${{ runner.os }}-dtc-
+
+      # ---------------------------------------------------------------------
+      # 4. Artifact Creation — Transpile YAML models into PlantUML (.puml)
+      #    and Draw.io XML (.drawio.xml) diagram files. These are written
+      #    to src/docs/diagrams/<system-id>/ for docToolchain to pick up.
+      # ---------------------------------------------------------------------
+      - name: "Generate diagrams (PlantUML + Draw.io)"
+        run: npx tsx scripts/build-diagrams.ts
+
+      # ---------------------------------------------------------------------
+      # 5. Documentation Generation — run docToolchain in headless mode to
+      #    convert AsciiDoc sources + PlantUML diagrams into a static HTML
+      #    microsite. Output lands in build/microsite/output/.
+      # ---------------------------------------------------------------------
+      - name: "Generate documentation site"
+        env:
+          DTC_HEADLESS: "true"
+        run: |
+          chmod +x dtcw
+          ./dtcw generateSite
+
+      # ---------------------------------------------------------------------
+      # Upload the generated site as a build artifact. This is used by both
+      # the PR feedback job and the publish job.
+      # ---------------------------------------------------------------------
+      - name: "Upload documentation artifact"
+        uses: actions/upload-artifact@v4
+        with:
+          name: microsite
+          path: build/microsite/output/
+          retention-days: 7
+
+      # ---------------------------------------------------------------------
+      # Upload generated diagrams separately for PR feedback
+      # ---------------------------------------------------------------------
+      - name: "Upload diagram artifacts"
+        uses: actions/upload-artifact@v4
+        with:
+          name: diagrams
+          path: src/docs/diagrams/
+          retention-days: 7
+
+  # =========================================================================
+  # STAGE 6 — PR Feedback Loop
+  # =========================================================================
+  # Only runs on pull_request events. Posts generated PlantUML diagrams
+  # directly into the PR conversation so reviewers can see architecture
+  # changes without downloading artifacts.
+  # =========================================================================
+  pr-feedback:
+    name: "PR Diagram Preview"
+    runs-on: ubuntu-latest
+    needs: build-docs
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: "Download diagram artifacts"
+        uses: actions/download-artifact@v4
+        with:
+          name: diagrams
+          path: diagrams/
+
+      # ---------------------------------------------------------------------
+      # Post PlantUML diagram code blocks to the PR discussion.
+      # Collects all .puml files and formats them as collapsible sections.
+      # Updates the same comment on re-runs (idempotent via comment marker).
+      # ---------------------------------------------------------------------
+      - name: "Post diagram previews to PR"
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+
+            // Recursively find all .puml files
+            function findPuml(dir) {
+              let results = [];
+              if (!fs.existsSync(dir)) return results;
+              for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+                const full = path.join(dir, entry.name);
+                if (entry.isDirectory()) results.push(...findPuml(full));
+                else if (entry.name.endsWith('.puml')) results.push(full);
+              }
+              return results;
+            }
+
+            const pumlFiles = findPuml('diagrams');
+            if (pumlFiles.length === 0) {
+              console.log('No .puml files found — skipping PR comment.');
+              return;
+            }
+
+            // Build the comment body with collapsible sections per system
+            const marker = '<!-- aac-diagram-preview -->';
+            let body = `${marker}\n## Architecture Diagram Preview\n\n`;
+            body += `> Auto-generated from model YAML files. `;
+            body += `${pumlFiles.length} diagram(s) produced.\n\n`;
+
+            // Group by system (first directory level)
+            const grouped = {};
+            for (const f of pumlFiles) {
+              const rel = path.relative('diagrams', f);
+              const system = rel.split(path.sep)[0] || 'unknown';
+              if (!grouped[system]) grouped[system] = [];
+              grouped[system].push({ rel, content: fs.readFileSync(f, 'utf8') });
+            }
+
+            for (const [system, files] of Object.entries(grouped)) {
+              body += `<details>\n<summary><strong>${system}</strong> (${files.length} diagrams)</summary>\n\n`;
+              for (const { rel, content } of files) {
+                // Truncate very large diagrams to keep the comment readable
+                const truncated = content.length > 4000
+                  ? content.substring(0, 4000) + '\n... (truncated — see full artifact)'
+                  : content;
+                body += `#### \`${rel}\`\n\n\`\`\`plantuml\n${truncated}\n\`\`\`\n\n`;
+              }
+              body += `</details>\n\n`;
+            }
+
+            // Find existing comment to update (idempotent)
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const existing = comments.find(c => c.body && c.body.includes(marker));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+              console.log(`Updated existing comment ${existing.id}`);
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+              console.log('Created new PR comment with diagram previews');
+            }
+
+  # =========================================================================
+  # STAGE 7 — Publish to GitHub Pages
+  # =========================================================================
+  # Only runs on push to main (i.e., after a PR is merged).
+  # Deploys the generated microsite to the gh-pages branch.
+  # =========================================================================
+  publish:
+    name: "Publish to GitHub Pages"
+    runs-on: ubuntu-latest
+    needs: build-docs
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - name: "Download documentation artifact"
+        uses: actions/download-artifact@v4
+        with:
+          name: microsite
+          path: site/
+
+      # ---------------------------------------------------------------------
+      # Deploy the static site to the gh-pages branch using the well-known
+      # peaceiris/actions-gh-pages action. This handles force-pushing the
+      # output directory, preserving CNAME, and setting the correct committer.
+      # ---------------------------------------------------------------------
+      - name: "Deploy to GitHub Pages"
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./site
+          # Keep a single commit on gh-pages (no history bloat)
+          force_orphan: true
+          commit_message: "docs: publish architecture site from ${{ github.sha }}"

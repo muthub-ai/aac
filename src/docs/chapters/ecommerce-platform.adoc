@@ -1,0 +1,13 @@
+= E-Commerce Platform
+
+== System Context
+
+[plantuml, target=ecommerce-platform-full, format=svg]
+----
+include::../diagrams/ecommerce-platform/full.puml[]
+----
+
+== Architecture Details
+
+The E-Commerce Platform system provides the core online retail and commerce capabilities.
+See the C4 model YAML source at `model/ecommerce-platform/system.yaml` for the full definition.

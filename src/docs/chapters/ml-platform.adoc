@@ -1,0 +1,13 @@
+= ML Platform
+
+== System Context
+
+[plantuml, target=ml-platform-full, format=svg]
+----
+include::../diagrams/ml-platform/full.puml[]
+----
+
+== Architecture Details
+
+The ML Platform system provides the foundational machine learning infrastructure and services.
+See the C4 model YAML source at `model/ml-platform/system.yaml` for the full definition.

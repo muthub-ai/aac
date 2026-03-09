@@ -1,0 +1,19 @@
+= Architecture as Code — Enterprise Architecture Documentation
+:toc: left
+:toclevels: 3
+:sectnums:
+:icons: font
+:source-highlighter: highlight.js
+
+== Overview
+
+This documentation is auto-generated from our Architecture-as-Code (AaC) YAML models
+using the C4 model. Each system is defined declaratively and validated through our CI/CD pipeline.
+
+include::chapters/demand-forecasting.adoc[leveloffset=+1]
+
+include::chapters/ecommerce-platform.adoc[leveloffset=+1]
+
+include::chapters/image-categorization.adoc[leveloffset=+1]
+
+include::chapters/ml-platform.adoc[leveloffset=+1]

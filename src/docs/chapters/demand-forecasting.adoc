@@ -1,0 +1,13 @@
+= Demand Forecasting
+
+== System Context
+
+[plantuml, target=demand-forecasting-full, format=svg]
+----
+include::../diagrams/demand-forecasting/full.puml[]
+----
+
+== Architecture Details
+
+The Demand Forecasting system provides ML-powered demand prediction capabilities.
+See the C4 model YAML source at `model/demand-forecasting/system.yaml` for the full definition.

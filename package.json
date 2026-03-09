@@ -9,7 +9,10 @@
     "lint": "eslint",
     "test": "vitest",
     "test:run": "vitest run",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "validate:models": "tsx scripts/validate-models.ts",
+    "lint:architecture": "tsx scripts/lint-architecture.ts",
+    "build:diagrams": "tsx scripts/build-diagrams.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.2.0",
@@ -39,12 +42,15 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^5.1.4",
+    "ajv": "^8.18.0",
+    "ajv-formats": "^3.0.1",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "jsdom": "^27.0.1",
     "playwright": "^1.58.2",
     "shadcn": "^4.0.0",
     "tailwindcss": "^4",
+    "tsx": "^4.21.0",
     "typescript": "^5",
     "vite-tsconfig-paths": "^6.1.1",
     "vitest": "^3.2.4"
