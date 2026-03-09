@@ -313,6 +313,7 @@ function nav(activePage: string, prefix: string): string {
       <a href="${prefix}index.html" class="nav-link ${activePage === 'home' ? 'active' : ''}">Overview</a>
       <a href="${prefix}index.html#systems" class="nav-link">Systems</a>
       <a href="${prefix}patterns/index.html" class="nav-link ${activePage === 'patterns' ? 'active' : ''}">Patterns</a>
+      <a href="${prefix}standards/index.html" class="nav-link ${activePage === 'standards' ? 'active' : ''}">Standards</a>
       <a href="${prefix}index.html#pipeline" class="nav-link">Pipeline</a>
       <a href="https://github.com/muthub-ai/aac" class="nav-link" target="_blank" rel="noopener">GitHub &nearr;</a>
     </div>

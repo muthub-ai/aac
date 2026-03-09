@@ -174,6 +174,23 @@ jobs:
           cp -r build/patterns/* build/microsite/output/patterns/
 
       # ---------------------------------------------------------------------
+      # 5c. Standards Catalog Pages — generate static HTML pages for each
+      #     architecture standard with requirements, guidelines, solutions,
+      #     authoritative sources, definitions, and FAQs.
+      #     Output lands in build/standards/.
+      # ---------------------------------------------------------------------
+      - name: "Generate standards catalog pages"
+        run: npx tsx scripts/build-standard-pages.ts
+
+      # ---------------------------------------------------------------------
+      # Copy standards pages into the microsite output for unified deployment
+      # ---------------------------------------------------------------------
+      - name: "Merge standards pages into microsite"
+        run: |
+          mkdir -p build/microsite/output/standards
+          cp -r build/standards/* build/microsite/output/standards/
+
+      # ---------------------------------------------------------------------
       # Upload the generated site as a build artifact. This is used by both
       # the PR feedback job and the publish job.
       # ---------------------------------------------------------------------

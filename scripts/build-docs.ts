@@ -535,6 +535,7 @@ function nav(activePage: string, isSubpage = false): string {
       <a href="${prefix}index.html" class="nav-link ${activePage === 'home' ? 'active' : ''}">Overview</a>
       <a href="${prefix}index.html#systems" class="nav-link ${activePage === 'systems' ? 'active' : ''}">Systems</a>
       <a href="${prefix}patterns/index.html" class="nav-link ${activePage === 'patterns' ? 'active' : ''}">Patterns</a>
+      <a href="${prefix}standards/index.html" class="nav-link ${activePage === 'standards' ? 'active' : ''}">Standards</a>
       <a href="${prefix}index.html#pipeline" class="nav-link">Pipeline</a>
       <a href="https://github.com/muthub-ai/aac" class="nav-link" target="_blank" rel="noopener">GitHub &nearr;</a>
     </div>
@@ -750,11 +751,11 @@ ${nav('home')}
     <p>Enterprise architecture standards &mdash; governance policies, compliance rules, and best practices across 7 domains.</p>
   </div>
   <div class="system-grid">
-    <div class="system-card" style="cursor:default">
+    <a href="standards/index.html" class="system-card">
       <div class="system-card-header">
         <div>
           <span class="group-badge">All Standards</span>
-          <h3 style="margin-top:6px">Architecture Standards</h3>
+          <h3 style="margin-top:6px">Browse Standards Catalog</h3>
         </div>
         <span class="badge" style="background:var(--success-subtle);color:var(--success);border-color:var(--success)">9 standards</span>
       </div>
@@ -767,7 +768,7 @@ ${nav('home')}
         <div class="system-card-stat"><div class="val">7</div><div class="lbl">Domains</div></div>
         <div class="system-card-stat"><div class="val">57</div><div class="lbl">Requirements</div></div>
       </div>
-    </div>
+    </a>
   </div>
 </section>
 
