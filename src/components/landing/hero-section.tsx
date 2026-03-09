@@ -127,7 +127,7 @@ export function HeroSection({ hero, trendHistory }: HeroSectionProps) {
   ];
 
   return (
-    <section className="relative overflow-hidden py-24 md:py-32 lg:py-36">
+    <section className="relative overflow-hidden pb-24 pt-16 md:pb-32 md:pt-20 lg:pb-36 lg:pt-24">
       {/* Background glow */}
       <div className="pointer-events-none absolute inset-0 opacity-40 dark:opacity-100">
         <div className="absolute left-1/2 top-0 h-[600px] w-[800px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(ellipse,var(--ring)_0%,transparent_70%)] opacity-[0.08]" />
@@ -141,7 +141,7 @@ export function HeroSection({ hero, trendHistory }: HeroSectionProps) {
       >
         <motion.h1
           variants={item}
-          className="mt-6 text-4xl font-bold tracking-tight text-foreground sm:text-5xl lg:text-6xl"
+          className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl lg:text-6xl"
         >
           Architecture as Code{' '}
           <span className="text-ring">(AaC)</span>{' '}
