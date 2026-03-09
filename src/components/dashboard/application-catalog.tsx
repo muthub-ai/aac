@@ -6,6 +6,7 @@ import { Plus, Search, X, ChevronDown } from 'lucide-react';
 import { SystemCard } from '@/components/dashboard/system-card';
 import type { SystemData } from '@/types/system';
 import { cn } from '@/lib/utils';
+import { PipelineVisualization } from './pipeline-visualization';
 
 interface ApplicationCatalogProps {
   systems: SystemData[];
@@ -91,6 +92,11 @@ export function ApplicationCatalog({ systems }: ApplicationCatalogProps) {
 
   return (
     <div>
+      {/* Pipeline Visualization */}
+      <div className="mb-6">
+        <PipelineVisualization />
+      </div>
+
       {/* Search + Filters Bar */}
       <div className="mb-6 space-y-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
