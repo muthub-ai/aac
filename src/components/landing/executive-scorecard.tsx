@@ -179,7 +179,7 @@ export function ExecutiveScorecard({ scorecard, trendHistory }: ExecutiveScoreca
   ];
 
   return (
-    <section id="scorecard" className="py-20 md:py-28">
+    <section id="scorecard" className="bg-muted/30 py-20 md:py-28">
       <div className="mx-auto max-w-6xl px-6 sm:px-10">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">

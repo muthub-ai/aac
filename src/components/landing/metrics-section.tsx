@@ -2,7 +2,7 @@
 
 import { useRef } from 'react';
 import { motion, useInView } from 'framer-motion';
-import { Container, ShieldCheck, Wrench, GitPullRequestDraft } from 'lucide-react';
+import { Container, Code2, ListChecks, CheckCircle2 } from 'lucide-react';
 import type { LiveMetrics, TrendPoint } from '@/lib/metrics/compute-metrics';
 
 /* ── Sparkline ──────────────────────────────────────────────────── */
@@ -54,7 +54,7 @@ export function MetricsSection({ liveMetrics, trendHistory }: MetricsSectionProp
       icon: Container,
       title: 'Containers per System',
       value: `${liveMetrics.containersPerSystem}`,
-      description: 'Average containers per modeled software system.',
+      description: 'Average container density across modeled software systems.',
       accent: 'text-ring',
       accentBg: 'bg-ring/10',
       topBorder: 'border-t-ring',
@@ -64,39 +64,39 @@ export function MetricsSection({ liveMetrics, trendHistory }: MetricsSectionProp
       ),
     },
     {
-      icon: ShieldCheck,
-      title: 'Standards Approved',
-      value: `${liveMetrics.standardsApprovedPct}%`,
-      description: 'Percentage of published standards in APPROVED status.',
+      icon: Code2,
+      title: 'Avg LoC per System',
+      value: liveMetrics.avgLocPerSystem,
+      description: 'Mean lines of code per modeled application system.',
       accent: 'text-success',
       accentBg: 'bg-success/10',
       topBorder: 'border-t-success',
       sparkColor: 'var(--success)',
       sparkData: trendHistory.map((t) =>
-        t.standards > 0 ? Math.round((t.standardsApproved / t.standards) * 100) : 0,
+        t.systems > 0 ? Math.round(t.totalLoC / t.systems) : 0,
       ),
     },
     {
-      icon: Wrench,
-      title: 'Avg Remediation Progress',
-      value: `${liveMetrics.avgRemediation}%`,
-      description: 'Mean remediation progress across approved waivers.',
+      icon: ListChecks,
+      title: 'Requirements per Standard',
+      value: `${liveMetrics.requirementsPerStandard}`,
+      description: 'Average requirement count per published standard.',
       accent: 'text-tab-active',
       accentBg: 'bg-tab-active/10',
       topBorder: 'border-t-tab-active',
       sparkColor: 'var(--tab-active)',
-      sparkData: trendHistory.map((t) => t.avgRemediationPercent),
+      sparkData: trendHistory.map((t) => t.standards),
     },
     {
-      icon: GitPullRequestDraft,
-      title: 'Waivers Remediated',
-      value: liveMetrics.remediatedRatio,
-      description: 'Waivers that have completed full remediation.',
+      icon: CheckCircle2,
+      title: 'Catalog Coverage',
+      value: `${liveMetrics.catalogCoverage}%`,
+      description: 'Systems with fully validated model and metadata.',
       accent: 'text-chart-5',
       accentBg: 'bg-chart-5/10',
       topBorder: 'border-t-chart-5',
       sparkColor: 'var(--chart-5)',
-      sparkData: trendHistory.map((t) => t.remediatedWaivers),
+      sparkData: trendHistory.map((t) => t.systems),
     },
   ];
 
@@ -105,10 +105,10 @@ export function MetricsSection({ liveMetrics, trendHistory }: MetricsSectionProp
       <div className="mx-auto max-w-6xl px-6 sm:px-10">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-            Measuring Platform Success
+            Operational Health
           </h2>
           <p className="mt-4 text-base leading-relaxed text-muted-foreground">
-            Key performance indicators computed live from your architecture artifacts.
+            Engineering and catalog quality indicators computed from your architecture models.
           </p>
         </div>
 

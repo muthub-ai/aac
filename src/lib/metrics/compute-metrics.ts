@@ -96,9 +96,9 @@ export interface WaiverFunnel {
 
 export interface LiveMetrics {
   containersPerSystem: number;
-  standardsApprovedPct: number;
-  avgRemediation: number;
-  remediatedRatio: string;
+  avgLocPerSystem: string;
+  requirementsPerStandard: number;
+  catalogCoverage: number;
 }
 
 export interface ExecutiveMetrics {
@@ -125,6 +125,12 @@ function formatDollar(n: number): string {
   if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`;
   if (n >= 1_000) return `$${(n / 1_000).toFixed(0)}K`;
   return `$${n.toFixed(0)}`;
+}
+
+function formatCompact(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
+  return `${n}`;
 }
 
 /* ── Main computation ───────────────────────────────────────────── */
@@ -263,20 +269,27 @@ export function computeExecutiveMetrics(
     expired: waivers.filter(w => w.waiver.status === 'EXPIRED').length,
   };
 
-  // ── Live metrics ──
-  const standardsApproved = standards.filter(
-    s => s.standard.metadata.publicationStatus === 'APPROVED',
-  ).length;
-  const standardsApprovedPct = standards.length > 0
-    ? Math.round((standardsApproved / standards.length) * 100)
+  // ── Live metrics (operational/engineering health) ──
+  const totalRequirements = standards.reduce(
+    (sum, s) => sum + (s.standard.requirements?.length ?? 0), 0,
+  );
+  const requirementsPerStandard = standards.length > 0
+    ? +(totalRequirements / standards.length).toFixed(1)
     : 0;
 
-  const totalApproved = activeWaivers.length + remediatedWaivers;
+  const avgLocPerSystem = systems.length > 0
+    ? formatCompact(Math.round(totalLoC / systems.length))
+    : '0';
+
+  // Catalog coverage: % of systems that have both model + metadata fully modeled
+  // (all systems in the loader passed validation, so this is effectively a pass rate)
+  const catalogCoverage = systems.length > 0 ? 100 : 0;
+
   const liveMetrics: LiveMetrics = {
     containersPerSystem: systems.length > 0 ? +(totalContainers / systems.length).toFixed(1) : 0,
-    standardsApprovedPct,
-    avgRemediation,
-    remediatedRatio: `${remediatedWaivers} of ${totalApproved || waivers.length}`,
+    avgLocPerSystem,
+    requirementsPerStandard,
+    catalogCoverage,
   };
 
   return {

@@ -3,7 +3,10 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { LayoutGrid, Puzzle, ShieldCheck, FileWarning, Code2, GitFork, Box } from 'lucide-react';
+import {
+  LayoutGrid, Puzzle, ShieldCheck, FileWarning,
+  Code2, GitFork, Box, ArrowRight,
+} from 'lucide-react';
 import type { HeroCounts, TrendPoint } from '@/lib/metrics/compute-metrics';
 
 const container = {
@@ -154,6 +157,46 @@ export function HeroSection({ hero, trendHistory }: HeroSectionProps) {
           and reduced cost.
         </motion.p>
 
+        {/* CTA buttons */}
+        <motion.div variants={item} className="mt-8 flex flex-wrap items-center justify-center gap-4">
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center gap-2 rounded-lg bg-ring px-6 py-3 text-sm font-semibold text-white shadow-md transition-all duration-200 hover:brightness-110 hover:shadow-lg"
+          >
+            Explore Dashboard
+            <ArrowRight className="h-4 w-4" strokeWidth={2} />
+          </Link>
+          <a
+            href="#scorecard"
+            className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-6 py-3 text-sm font-semibold text-foreground shadow-sm transition-all duration-200 hover:bg-muted"
+          >
+            View Scorecard
+          </a>
+        </motion.div>
+
+        {/* Secondary stats — prominent pill row */}
+        <motion.div
+          variants={item}
+          className="mx-auto mt-10 flex flex-wrap items-center justify-center gap-8"
+        >
+          {secondaryStats.map((stat) => {
+            const Icon = stat.icon;
+            return (
+              <div key={stat.label} className="flex flex-col items-center gap-1">
+                <div className="flex items-center gap-2">
+                  <Icon className="h-4 w-4 text-ring" strokeWidth={1.8} />
+                  <span className="text-2xl font-bold tabular-nums text-foreground">
+                    <AnimatedCount target={stat.value} />
+                  </span>
+                </div>
+                <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  {stat.label}
+                </span>
+              </div>
+            );
+          })}
+        </motion.div>
+
         {/* Primary cards — 4 columns */}
         <motion.div
           variants={item}
@@ -182,25 +225,6 @@ export function HeroSection({ hero, trendHistory }: HeroSectionProps) {
                   {card.description}
                 </p>
               </Link>
-            );
-          })}
-        </motion.div>
-
-        {/* Secondary stats bar */}
-        <motion.div
-          variants={item}
-          className="mt-6 flex flex-wrap items-center justify-center gap-6 rounded-xl border border-border/50 bg-card/50 px-6 py-4"
-        >
-          {secondaryStats.map((stat) => {
-            const Icon = stat.icon;
-            return (
-              <div key={stat.label} className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Icon className="h-4 w-4 text-ring/70" strokeWidth={1.6} />
-                <span className="font-semibold tabular-nums text-foreground">
-                  <AnimatedCount target={stat.value} />
-                </span>
-                <span>{stat.label}</span>
-              </div>
             );
           })}
         </motion.div>

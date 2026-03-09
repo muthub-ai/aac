@@ -1,10 +1,10 @@
 import { LandingNav } from '@/components/landing/landing-nav';
 import { HeroSection } from '@/components/landing/hero-section';
-import { ValuePropsSection } from '@/components/landing/value-props-section';
-import { LifecycleSection } from '@/components/landing/lifecycle-section';
 import { ExecutiveScorecard } from '@/components/landing/executive-scorecard';
 import { RiskCompliance } from '@/components/landing/risk-compliance';
 import { PortfolioSummary } from '@/components/landing/portfolio-summary';
+import { ValuePropsSection } from '@/components/landing/value-props-section';
+import { LifecycleSection } from '@/components/landing/lifecycle-section';
 import { MetricsSection } from '@/components/landing/metrics-section';
 import { LandingFooter } from '@/components/landing/landing-footer';
 import type { ExecutiveMetrics } from '@/lib/metrics/compute-metrics';
@@ -18,7 +18,6 @@ export function LandingPage({ metrics }: LandingPageProps) {
     <div className="min-h-dvh bg-background">
       <LandingNav />
       <HeroSection hero={metrics.hero} trendHistory={metrics.trendHistory} />
-      <ValuePropsSection />
       <ExecutiveScorecard scorecard={metrics.scorecard} trendHistory={metrics.trendHistory} />
       <RiskCompliance riskByDomain={metrics.riskByDomain} standardsByDomain={metrics.standardsByDomain} />
       <PortfolioSummary
@@ -26,6 +25,7 @@ export function LandingPage({ metrics }: LandingPageProps) {
         patternMaturity={metrics.patternMaturity}
         waiverFunnel={metrics.waiverFunnel}
       />
+      <ValuePropsSection />
       <LifecycleSection />
       <MetricsSection liveMetrics={metrics.liveMetrics} trendHistory={metrics.trendHistory} />
       <LandingFooter />

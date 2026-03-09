@@ -94,7 +94,7 @@ export function PortfolioSummary({ systemRows, patternMaturity, waiverFunnel }: 
   const totalWaivers = waiverFunnel.pendingReview + waiverFunnel.approved + waiverFunnel.remediated + waiverFunnel.rejected + waiverFunnel.expired;
 
   return (
-    <section id="portfolio" className="py-20 md:py-28">
+    <section id="portfolio" className="bg-muted/30 py-20 md:py-28">
       <div className="mx-auto max-w-6xl px-6 sm:px-10">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
