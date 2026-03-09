@@ -599,8 +599,9 @@ export const MOCK_PATTERNS: PatternData[] = [
 ];
 
 // ── Generate yamlContent for every pattern ───────────────────────────
-// Serializes the architecture-relevant fields into a clean YAML document
-// matching the on-disk pattern.yaml schema.
+// Serializes pattern data into a schema-compliant YAML document matching
+// the patterns-schema.json contract (camelCase field names, all required
+// fields at top level).
 
 function generatePatternYaml(p: PatternData): string {
   const doc = {
@@ -610,31 +611,32 @@ function generatePatternYaml(p: PatternData): string {
       name: p.name,
       description: p.description,
       category: p.category,
+      tags: p.tags,
       exposure: p.exposure,
-      metadata: {
-        owner_team: p.maintainerTeam,
-        tags: p.tags,
-      },
-      products_used: p.productsUsed.map((pu) => ({
-        name: pu.name,
-        role: pu.role,
-      })),
-      non_functional_requirements: p.nonFunctionalRequirements.map((n) => ({
-        metric: n.metric,
-        target: n.target,
-      })),
-      design_considerations: p.designConsiderations.map((dc) => ({
-        title: dc.title,
-        description: dc.description,
-      })),
+      maturity: p.maturity,
+      maintainerTeam: p.maintainerTeam,
+      docsUrl: p.docsUrl,
       advantages: p.advantages,
       considerations: p.considerations,
-      constraints: p.constraints,
-      cost_profile: p.costProfile,
-      getting_started: p.gettingStarted.map((gs) => ({
+      gettingStarted: p.gettingStarted.map((gs) => ({
         step: gs.step,
         title: gs.title,
       })),
+      productsUsed: p.productsUsed.map((pu) => ({
+        name: pu.name,
+        role: pu.role,
+      })),
+      nonFunctionalRequirements: p.nonFunctionalRequirements.map((n) => ({
+        metric: n.metric,
+        target: n.target,
+      })),
+      designConsiderations: p.designConsiderations.map((dc) => ({
+        title: dc.title,
+        description: dc.description,
+      })),
+      constraints: p.constraints,
+      costProfile: p.costProfile,
+      architectureOverview: p.architectureOverview,
     },
   };
   return yaml.dump(doc, { lineWidth: 100, noRefs: true, sortKeys: false });
