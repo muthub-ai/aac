@@ -172,6 +172,8 @@ jobs:
       #    microsite. Output lands in build/microsite/output/.
       # ---------------------------------------------------------------------
       - name: "Install docToolchain"
+        continue-on-error: true
+        timeout-minutes: 3
         env:
           DTC_HEADLESS: "true"
         run: |
@@ -180,6 +182,7 @@ jobs:
 
       - name: "Generate documentation site"
         continue-on-error: true
+        timeout-minutes: 5
         env:
           DTC_HEADLESS: "true"
         run: ./dtcw local generateSite
