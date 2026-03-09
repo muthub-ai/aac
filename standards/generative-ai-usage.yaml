@@ -1,0 +1,228 @@
+metadata:
+  schemaVersion: 2
+  standardId: "STD-AIML-002"
+  name: "Enterprise Generative AI Usage Standard"
+  architectureDomain: "AI/ML"
+  architecturePrinciple:
+    - "AI-First Mindset"
+    - "Responsible AI by Design"
+    - "Human-AI Collaboration"
+  l4Domain: "Artificial Intelligence"
+  l3Domain: "Generative AI"
+  l2Domain: "LLM Operations"
+  standardOwner: "Chief AI Officer"
+  assignedArchitect: "GenAI Platform Architect"
+  lifecycleCategory: "DRAFT"
+  publicationStatus: "DRAFT"
+  version: "0.1"
+  approvalDate: "2025-03-01"
+  communicationDate: "2025-03-05"
+  plannedActiveDate: null
+  conformanceMetric: "Percentage of GenAI applications with approved guardrails and content filtering"
+  tags:
+    - "generative-ai"
+    - "llm"
+    - "prompt-engineering"
+    - "guardrails"
+    - "rag"
+    - "responsible-ai"
+  versionControl:
+    repository: "github.com/org/architecture-standards"
+    path: "standards/generative-ai-usage.yaml"
+    semver: "0.1.0"
+  revisionHistory:
+    - date: "2025-03-01T09:00:00Z"
+      version: "0.1"
+      changeType: "Initial Draft"
+      summary: "Initial draft of the Enterprise Generative AI Usage Standard covering LLM guardrails, data privacy, cost management, and responsible AI requirements"
+      changedBy: "GenAI Platform Architect"
+      approvedBy: "Chief AI Officer"
+
+scope:
+  inScope:
+    - "Large Language Model selection and deployment guidelines"
+    - "Prompt engineering and retrieval-augmented generation patterns"
+    - "Content filtering, guardrails, and output validation"
+    - "Cost management for LLM inference workloads"
+    - "Data privacy and intellectual property protection in AI interactions"
+  outOfScope:
+    - "Traditional ML model governance (covered by STD-AIML-001)"
+    - "Computer vision and image generation models"
+    - "AI hardware procurement and GPU cluster management"
+
+requirements:
+  - id: "REQ-001"
+    statement: "GenAI applications MUST implement content filtering and guardrail layers to prevent harmful, biased, or inappropriate output."
+    severity: "MUST"
+    rationale: "Content filtering and guardrails are essential to prevent reputational damage, legal liability, and harm to users from uncontrolled LLM outputs."
+    verification: "Guardrail configuration is validated during application deployment; automated red team tests confirm filtering effectiveness for known attack patterns."
+    appliesTo:
+      platforms:
+        - "AWS"
+        - "Azure"
+        - "GCP"
+      tiers:
+        - "Tier 1"
+        - "Tier 2"
+  - id: "REQ-002"
+    statement: "Prompts containing PII or confidential data MUST NOT be sent to external LLM providers without approved data loss prevention controls."
+    severity: "MUST NOT"
+    rationale: "Sending PII or confidential data to external LLM providers risks data leakage, regulatory non-compliance, and violation of customer data protection agreements."
+    verification: "DLP scanning is enforced at the API gateway layer for all outbound LLM requests; audit logs are reviewed for policy violations."
+    appliesTo:
+      platforms:
+        - "AWS"
+        - "Azure"
+        - "GCP"
+      tiers:
+        - "Tier 1"
+        - "Tier 2"
+  - id: "REQ-003"
+    statement: "Applications SHOULD use retrieval-augmented generation (RAG) patterns with enterprise knowledge bases instead of fine-tuning proprietary models."
+    severity: "SHOULD"
+    rationale: "RAG patterns provide up-to-date, auditable responses grounded in enterprise data without the cost and complexity of fine-tuning, while maintaining clear data provenance."
+    verification: "Architecture review confirms RAG implementation with approved vector databases; response attribution to source documents is validated."
+    appliesTo:
+      platforms:
+        - "AWS"
+        - "Azure"
+        - "GCP"
+      tiers:
+        - "Tier 1"
+        - "Tier 2"
+  - id: "REQ-004"
+    statement: "LLM responses presented to customers MUST include disclosure that content is AI-generated."
+    severity: "MUST"
+    rationale: "Transparency about AI-generated content builds customer trust, meets emerging regulatory requirements, and enables informed decision-making by end users."
+    verification: "UI/UX review confirms AI disclosure labels are present; automated testing validates disclosure in all customer-facing response templates."
+    appliesTo:
+      platforms:
+        - "AWS"
+        - "Azure"
+        - "GCP"
+      tiers:
+        - "Tier 1"
+        - "Tier 2"
+  - id: "REQ-005"
+    statement: "Token usage and inference costs MUST be tracked per application and business unit with configurable budget alerts."
+    severity: "MUST"
+    rationale: "LLM inference costs can scale unpredictably. Per-application cost tracking enables budget accountability, identifies optimization opportunities, and prevents cost overruns."
+    verification: "Cost monitoring dashboards display per-application token usage; budget alert configurations are validated in the cloud cost management platform."
+    appliesTo:
+      platforms:
+        - "AWS"
+        - "Azure"
+        - "GCP"
+      tiers:
+        - "Tier 1"
+        - "Tier 2"
+  - id: "REQ-006"
+    statement: "Applications SHOULD implement human-in-the-loop review for high-stakes decisions informed by LLM outputs."
+    severity: "SHOULD"
+    rationale: "Human oversight for consequential decisions mitigates the risk of LLM hallucinations, biases, and errors that could lead to significant business or customer impact."
+    verification: "Workflow configuration confirms human review gates for high-stakes use cases; approval logs demonstrate human sign-off on critical outputs."
+    appliesTo:
+      platforms:
+        - "AWS"
+        - "Azure"
+        - "GCP"
+      tiers:
+        - "Tier 1"
+        - "Tier 2"
+  - id: "REQ-007"
+    statement: "Model selection SHOULD prefer self-hosted or private endpoints over shared multi-tenant APIs for sensitive workloads."
+    severity: "SHOULD"
+    rationale: "Self-hosted or private endpoints provide greater control over data residency, reduce exposure to multi-tenant data leakage risks, and enable customized security configurations."
+    verification: "Architecture review confirms deployment model selection rationale; sensitive workloads are validated against the approved private endpoint inventory."
+    appliesTo:
+      platforms:
+        - "AWS"
+        - "Azure"
+        - "GCP"
+      tiers:
+        - "Tier 1"
+        - "Tier 2"
+  - id: "REQ-008"
+    statement: "All GenAI applications MUST maintain audit logs of prompts and responses for compliance and forensic analysis."
+    severity: "MUST"
+    rationale: "Comprehensive audit logs enable compliance reporting, incident investigation, model behavior analysis, and demonstration of responsible AI practices to regulators."
+    verification: "Audit logging configuration is validated during deployment; log completeness and retention are verified through automated compliance checks."
+    appliesTo:
+      platforms:
+        - "AWS"
+        - "Azure"
+        - "GCP"
+      tiers:
+        - "Tier 1"
+        - "Tier 2"
+
+guidelines:
+  - id: "GUIDE-001"
+    text: "Prompt engineering best practices: Use system prompts to establish clear behavioral boundaries. Implement few-shot examples for consistent output formatting. Apply chain-of-thought prompting for complex reasoning tasks. Version control all prompt templates alongside application code."
+  - id: "GUIDE-002"
+    text: "RAG architecture should use a chunking strategy appropriate to the content type (e.g., semantic chunking for documents, fixed-size for code). Implement hybrid search combining dense vector similarity with sparse keyword matching. Maintain metadata for source attribution and freshness tracking."
+  - id: "GUIDE-003"
+    text: "Cost optimization strategies: Implement prompt caching for repeated queries. Use smaller models for classification and routing tasks before escalating to larger models. Set maximum token limits per request. Batch non-real-time requests during off-peak hours for lower pricing tiers."
+  - id: "GUIDE-004"
+    text: "Red teaming and adversarial testing should be conducted before any GenAI application is deployed to production. Test for prompt injection, jailbreaking, data extraction attacks, and hallucination rates. Document findings and remediation actions in the application security review."
+
+solutions:
+  - id: "SOL-001"
+    name: "Azure OpenAI Service"
+    description: "Enterprise-grade access to OpenAI models (GPT-4, GPT-4o) with built-in content filtering, private networking, and data residency controls. Integrates with Azure Active Directory for identity management."
+    link: "https://azure.microsoft.com/en-us/products/ai-services/openai-service"
+  - id: "SOL-002"
+    name: "AWS Bedrock"
+    description: "Fully managed service for accessing foundation models from multiple providers (Anthropic Claude, Amazon Titan, Meta Llama) with guardrails, knowledge bases for RAG, and fine-tuning capabilities."
+    link: "https://aws.amazon.com/bedrock/"
+  - id: "SOL-003"
+    name: "LangChain and LlamaIndex Frameworks"
+    description: "Open-source frameworks for building LLM-powered applications with support for RAG pipelines, agent workflows, prompt management, and integration with multiple model providers and vector databases."
+    link: "https://www.langchain.com/"
+
+authoritativeSources:
+  - id: "AUTH-001"
+    source: "NIST AI 600-1 - Artificial Intelligence Risk Management Framework: Generative AI Profile"
+    issuingAgency: "National Institute of Standards and Technology (NIST)"
+    link: "https://airc.nist.gov/Docs/1"
+  - id: "AUTH-002"
+    source: "OWASP Top 10 for Large Language Model Applications"
+    issuingAgency: "Open Worldwide Application Security Project (OWASP)"
+    link: "https://owasp.org/www-project-top-10-for-large-language-model-applications/"
+  - id: "AUTH-003"
+    source: "Executive Order on the Safe, Secure, and Trustworthy Development and Use of Artificial Intelligence"
+    issuingAgency: "The White House"
+    link: "https://www.whitehouse.gov/briefing-room/presidential-actions/2023/10/30/executive-order-on-the-safe-secure-and-trustworthy-development-and-use-of-artificial-intelligence/"
+
+definitions:
+  - id: "DEF-001"
+    term: "Retrieval-Augmented Generation (RAG)"
+    definition: "A pattern that enhances LLM responses by retrieving relevant documents from an external knowledge base and including them as context in the prompt, grounding outputs in factual enterprise data."
+  - id: "DEF-002"
+    term: "Guardrails"
+    definition: "Safety mechanisms implemented around LLM inputs and outputs to filter harmful content, enforce topic boundaries, prevent data leakage, and ensure responses comply with organizational policies."
+  - id: "DEF-003"
+    term: "Prompt Injection"
+    definition: "An adversarial attack where malicious instructions are embedded in user input to manipulate an LLM into ignoring its system prompt, bypassing safety controls, or revealing confidential information."
+  - id: "DEF-004"
+    term: "Token"
+    definition: "The fundamental unit of text processing for LLMs. A token typically represents 3-4 characters of English text. Token counts determine both the context window limits and the cost of LLM API calls."
+
+faq:
+  - id: "FAQ-001"
+    question: "Can we use public LLM APIs like ChatGPT for internal business applications?"
+    answer: "Public LLM APIs may only be used for non-sensitive, non-confidential use cases after completing a risk assessment. For any workload involving PII, proprietary data, or customer information, you must use approved private endpoints (Azure OpenAI Service or AWS Bedrock) with enterprise data protection controls."
+  - id: "FAQ-002"
+    question: "What is the process for getting a new GenAI use case approved?"
+    answer: "Submit a GenAI Use Case Proposal through the AI Center of Excellence. The proposal must include a data classification assessment, risk evaluation, cost estimate, guardrail implementation plan, and human oversight design. The AI Review Board evaluates proposals within 10 business days."
+  - id: "FAQ-003"
+    question: "How do we handle hallucinations in customer-facing GenAI applications?"
+    answer: "Implement RAG patterns to ground responses in verified enterprise data. Add confidence scoring and citation of source documents. Use output validation rules to detect and filter unsupported claims. For high-stakes interactions, implement human-in-the-loop review before responses are delivered to customers."
+
+references:
+  - id: "REF-001"
+    description: "Anthropic - Responsible Scaling Policy and AI Safety Research"
+    link: "https://www.anthropic.com/research"
+  - id: "REF-002"
+    description: "Google - Responsible AI Practices and Model Cards"
+    link: "https://ai.google/responsibility/responsible-ai-practices/"

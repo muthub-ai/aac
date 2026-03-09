@@ -1,0 +1,204 @@
+metadata:
+  schemaVersion: 2
+  standardId: "STD-SEC-001"
+  name: "Application Cryptography and Key Management Standard"
+  architectureDomain: "Security"
+  architecturePrinciple:
+    - "Security by Design"
+  l4Domain: "Information Security"
+  l3Domain: "Cryptographic Services"
+  l2Domain: "Key Lifecycle Management"
+  standardOwner: "Chief Information Security Officer"
+  assignedArchitect: "Security Architecture Lead"
+  lifecycleCategory: "STANDARD"
+  publicationStatus: "APPROVED"
+  version: "2.0"
+  approvalDate: "2024-11-01"
+  communicationDate: "2024-11-10"
+  plannedActiveDate: "2025-01-01"
+  conformanceMetric: "Percentage of applications using approved cryptographic libraries and key management services"
+  tags:
+    - "cryptography"
+    - "key-management"
+    - "encryption"
+    - "tls"
+    - "secrets-management"
+    - "hsm"
+  versionControl:
+    repository: "github.com/org/architecture-standards"
+    path: "standards/cryptography-key-management.yaml"
+    semver: "2.0.0"
+  revisionHistory:
+    - date: "2024-03-15T09:00:00Z"
+      version: "1.0"
+      changeType: "Initial Release"
+      summary: "First approved version establishing baseline cryptographic standards and key management requirements"
+      changedBy: "Security Architecture Lead"
+      approvedBy: "Chief Information Security Officer"
+    - date: "2024-11-01T14:00:00Z"
+      version: "2.0"
+      changeType: "Major Update"
+      summary: "Added post-quantum cryptography readiness requirements and updated minimum TLS version to 1.3"
+      changedBy: "Security Architecture Lead"
+      approvedBy: "Chief Information Security Officer"
+
+scope:
+  inScope:
+    - "Symmetric and asymmetric encryption for data at rest and in transit"
+    - "TLS certificate lifecycle management"
+    - "Secrets management for application credentials and API keys"
+    - "Hardware Security Module (HSM) integration"
+    - "Key rotation policies and crypto-agility preparation"
+  outOfScope:
+    - "Physical security of data centers"
+    - "Network-level encryption managed by infrastructure teams"
+    - "Blockchain or distributed ledger cryptographic protocols"
+
+requirements:
+  - id: "REQ-001"
+    statement: "All external-facing and internal service-to-service communications MUST use TLS 1.3 or higher for data in transit."
+    severity: "MUST"
+    rationale: "TLS 1.3 eliminates known vulnerabilities in prior versions including downgrade attacks and weak cipher suites, providing stronger confidentiality and integrity guarantees."
+    verification: "Automated TLS version scan across all endpoints using network security scanner integrated into CI/CD pipeline"
+    appliesTo:
+      platforms:
+        - "AWS"
+        - "Azure"
+        - "GCP"
+      tiers:
+        - "Tier 1"
+        - "Tier 2"
+        - "Tier 3"
+      exceptionsProcess: "Submit exception request to Security Architecture Review Board"
+  - id: "REQ-002"
+    statement: "Cryptographic keys MUST be rotated according to defined schedules: symmetric keys every 90 days, asymmetric keys every 365 days."
+    severity: "MUST"
+    rationale: "Regular key rotation limits the window of exposure if a key is compromised and satisfies regulatory requirements for cryptographic hygiene."
+    verification: "Key management service audit report showing rotation compliance rates and alerting on overdue rotations"
+    appliesTo:
+      platforms:
+        - "AWS"
+        - "Azure"
+        - "GCP"
+      tiers:
+        - "Tier 1"
+        - "Tier 2"
+        - "Tier 3"
+      exceptionsProcess: "Submit exception request to Security Architecture Review Board"
+  - id: "REQ-003"
+    statement: "Applications MUST use only approved cryptographic algorithms: AES-256 for symmetric encryption, RSA-2048 or higher and ECDSA P-256 or higher for asymmetric operations."
+    severity: "MUST"
+    rationale: "Using approved algorithms ensures adequate security strength and interoperability while avoiding deprecated or weak ciphers that may be exploited."
+    verification: "Static code analysis rules detecting usage of non-approved algorithms and cipher suites"
+    appliesTo:
+      platforms:
+        - "AWS"
+        - "Azure"
+        - "GCP"
+      tiers:
+        - "Tier 1"
+        - "Tier 2"
+        - "Tier 3"
+      exceptionsProcess: "Submit exception request to Security Architecture Review Board"
+  - id: "REQ-004"
+    statement: "Tier 1 applications MUST store cryptographic keys in Hardware Security Modules (HSMs) or cloud-native HSM-backed key management services."
+    severity: "MUST"
+    rationale: "HSMs provide tamper-resistant hardware protection for key material, meeting the highest security requirements for critical business applications and regulatory compliance."
+    verification: "Architecture review checklist confirming HSM integration for all Tier 1 application key storage"
+    appliesTo:
+      platforms:
+        - "AWS"
+        - "Azure"
+        - "GCP"
+      tiers:
+        - "Tier 1"
+      exceptionsProcess: "Submit exception request to Security Architecture Review Board"
+  - id: "REQ-005"
+    statement: "Applications MUST NOT store secrets, credentials, or cryptographic keys in source code, configuration files, or environment variables in plain text."
+    severity: "MUST NOT"
+    rationale: "Hardcoded secrets are a leading cause of security breaches; secrets in code repositories persist in version history even after removal and are easily discovered by attackers."
+    verification: "Pre-commit hooks and CI/CD secret scanning tools detecting hardcoded credentials and keys in repositories"
+    appliesTo:
+      platforms:
+        - "AWS"
+        - "Azure"
+        - "GCP"
+      tiers:
+        - "Tier 1"
+        - "Tier 2"
+        - "Tier 3"
+      exceptionsProcess: "Submit exception request to Security Architecture Review Board"
+  - id: "REQ-006"
+    statement: "Application architectures SHOULD incorporate crypto-agility patterns to enable rapid migration to post-quantum cryptographic algorithms when standards are finalized."
+    severity: "SHOULD"
+    rationale: "Quantum computing advances threaten current asymmetric algorithms; crypto-agile architectures enable faster migration to quantum-resistant algorithms without major refactoring."
+    verification: "Architecture review assessment of cryptographic abstraction layers and algorithm configurability"
+    appliesTo:
+      platforms:
+        - "AWS"
+        - "Azure"
+        - "GCP"
+      tiers:
+        - "Tier 1"
+        - "Tier 2"
+      exceptionsProcess: "Submit exception request to Security Architecture Review Board"
+
+guidelines:
+  - id: "GL-001"
+    text: "Use well-established and vetted cryptographic libraries (e.g., OpenSSL, BoringSSL, libsodium) rather than implementing custom cryptographic functions"
+  - id: "GL-002"
+    text: "Automate secret rotation using native integration between secret management services and application deployment pipelines"
+  - id: "GL-003"
+    text: "Implement automated certificate lifecycle management using ACME protocol to prevent certificate expiration outages"
+
+solutions:
+  - id: "SOL-001"
+    name: "HashiCorp Vault"
+    description: "Enterprise secrets management and encryption-as-a-service platform with dynamic secret generation and lease management"
+  - id: "SOL-002"
+    name: "AWS Key Management Service"
+    description: "Managed key management service with HSM-backed key storage and integrated audit logging via CloudTrail"
+  - id: "SOL-003"
+    name: "Let's Encrypt"
+    description: "Free, automated, open certificate authority providing TLS certificates via ACME protocol"
+
+authoritativeSources:
+  - id: "SRC-001"
+    source: "NIST Special Publication 800-57"
+    issuingAgency: "NIST"
+    controlName: "Recommendation for Key Management - Part 1"
+  - id: "SRC-002"
+    source: "OWASP Cryptographic Failures"
+    issuingAgency: "OWASP"
+    controlName: "OWASP Top 10 2021 - A02 Cryptographic Failures"
+  - id: "SRC-003"
+    source: "PCI DSS 4.0"
+    issuingAgency: "PCI Security Standards Council"
+    controlName: "Requirement 3 - Protect Stored Account Data"
+
+definitions:
+  - id: "DEF-001"
+    term: "Key Rotation"
+    definition: "The process of retiring an active cryptographic key and replacing it with a new key, limiting the amount of data encrypted under a single key and reducing the impact of key compromise."
+  - id: "DEF-002"
+    term: "Crypto-Agility"
+    definition: "The ability of an information system to rapidly switch between cryptographic algorithms, key sizes, and protocols without significant changes to the system architecture or application code."
+  - id: "DEF-003"
+    term: "Hardware Security Module (HSM)"
+    definition: "A dedicated, tamper-resistant hardware device that provides secure generation, storage, and management of cryptographic keys and performs cryptographic operations within a protected boundary."
+
+faq:
+  - id: "FAQ-001"
+    question: "Can we use AWS Secrets Manager instead of HashiCorp Vault for secrets management?"
+    answer: "Yes. AWS Secrets Manager is an approved alternative for workloads running on AWS. The key requirement is that secrets are stored in an approved secrets management service rather than in code or plain-text configuration files."
+  - id: "FAQ-002"
+    question: "When will post-quantum cryptographic algorithms become mandatory?"
+    answer: "Post-quantum algorithms are currently a SHOULD recommendation while NIST finalizes standards. Once NIST publishes final post-quantum standards and our approved algorithm list is updated, a transition timeline will be communicated with a target migration window of 18-24 months."
+
+references:
+  - id: "REF-001"
+    description: "NIST Post-Quantum Cryptography Standardization Project"
+    link: "https://csrc.nist.gov/projects/post-quantum-cryptography"
+  - id: "REF-002"
+    description: "Cloud Security Alliance - Key Management Lifecycle Best Practices"
+    link: "https://cloudsecurityalliance.org/research/topics/key-management"

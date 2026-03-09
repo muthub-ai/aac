@@ -744,6 +744,33 @@ ${nav('home')}
   </div>
 </section>
 
+<section class="container systems-section" id="standards">
+  <div class="section-header">
+    <h2>Standards Catalog</h2>
+    <p>Enterprise architecture standards &mdash; governance policies, compliance rules, and best practices across 7 domains.</p>
+  </div>
+  <div class="system-grid">
+    <div class="system-card" style="cursor:default">
+      <div class="system-card-header">
+        <div>
+          <span class="group-badge">All Standards</span>
+          <h3 style="margin-top:6px">Architecture Standards</h3>
+        </div>
+        <span class="badge" style="background:var(--success-subtle);color:var(--success);border-color:var(--success)">9 standards</span>
+      </div>
+      <p class="system-card-desc">Organization-wide architecture standards covering AI/ML governance, security, data platforms, resiliency, API integration, DevOps, FinOps, and identity management. Each standard includes requirements with RFC 2119 severity levels, guidelines, and authoritative sources.</p>
+      <div class="system-card-tags">
+        <span class="tag">AI/ML</span><span class="tag">Security</span><span class="tag">Data</span><span class="tag">Infrastructure</span><span class="tag">Integration</span><span class="tag">DevOps</span><span class="tag">FinOps</span>
+      </div>
+      <div class="system-card-footer">
+        <div class="system-card-stat"><div class="val">9</div><div class="lbl">Standards</div></div>
+        <div class="system-card-stat"><div class="val">7</div><div class="lbl">Domains</div></div>
+        <div class="system-card-stat"><div class="val">57</div><div class="lbl">Requirements</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <section class="container" id="pipeline" style="padding-bottom:80px">
   <div class="section-header">
     <h2>CI/CD Pipeline</h2>

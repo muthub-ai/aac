@@ -1,0 +1,210 @@
+metadata:
+  schemaVersion: 2
+  standardId: "STD-INT-001"
+  name: "Internal API and Microservices Integration Standard"
+  architectureDomain: "Integration"
+  architecturePrinciple:
+    - "Modular and Composable Architecture"
+  l4Domain: "Application Architecture"
+  l3Domain: "API Management"
+  l2Domain: "Service Integration"
+  standardOwner: "VP of Engineering"
+  assignedArchitect: "API Platform Architect"
+  lifecycleCategory: "STANDARD"
+  publicationStatus: "APPROVED"
+  version: "2.1"
+  approvalDate: "2024-07-10"
+  communicationDate: "2024-07-15"
+  plannedActiveDate: "2024-08-01"
+  conformanceMetric: "Percentage of internal APIs registered in the API gateway with OpenAPI specs"
+  tags:
+    - "api"
+    - "microservices"
+    - "rest"
+    - "grpc"
+    - "api-gateway"
+    - "service-mesh"
+    - "openapi"
+  versionControl:
+    repository: "github.com/org/architecture-standards"
+    path: "standards/api-microservices-integration.yaml"
+    semver: "2.1.0"
+  revisionHistory:
+    - date: "2023-06-01T09:00:00Z"
+      version: "1.0"
+      changeType: "Initial Release"
+      summary: "Initial API integration standard covering RESTful API design, versioning, and gateway patterns"
+      changedBy: "API Platform Architect"
+      approvedBy: "VP of Engineering"
+    - date: "2024-02-15T11:00:00Z"
+      version: "2.0"
+      changeType: "Major Update"
+      summary: "Added gRPC service-to-service communication standards, service mesh requirements, and mTLS mandates"
+      changedBy: "API Platform Architect"
+      approvedBy: "VP of Engineering"
+    - date: "2024-07-10T14:00:00Z"
+      version: "2.1"
+      changeType: "Minor Update"
+      summary: "Added asynchronous messaging patterns, event-driven architecture guidelines, and schema registry requirements"
+      changedBy: "API Platform Architect"
+      approvedBy: "VP of Engineering"
+
+scope:
+  inScope:
+    - "RESTful API design and versioning standards"
+    - "gRPC service-to-service communication"
+    - "API gateway configuration and rate limiting"
+    - "Asynchronous messaging patterns (event-driven)"
+    - "Service mesh observability and mTLS"
+  outOfScope:
+    - "External partner/public API monetization"
+    - "Legacy SOAP/XML integration (covered by migration standard)"
+    - "Database-to-database replication"
+
+requirements:
+  - id: "REQ-001"
+    statement: "All internal APIs MUST be documented with an OpenAPI 3.x specification and registered in the central API catalog."
+    severity: "MUST"
+    rationale: "A centralized API catalog with OpenAPI specs enables automated code generation, consistent documentation, and API discoverability across teams."
+    verification: "CI/CD pipeline validates presence of OpenAPI spec; API gateway registration is confirmed via automated catalog audit."
+    appliesTo:
+      platforms:
+        - "AWS"
+        - "Azure"
+        - "GCP"
+      tiers:
+        - "Tier 1"
+        - "Tier 2"
+  - id: "REQ-002"
+    statement: "API versioning MUST use URI path versioning (e.g., /v1/resource) for RESTful APIs."
+    severity: "MUST"
+    rationale: "URI path versioning provides explicit, visible version management that is easy to route, cache, and monitor at the API gateway level."
+    verification: "API gateway routing rules enforce version prefix patterns; automated linting checks API paths during code review."
+    appliesTo:
+      platforms:
+        - "AWS"
+        - "Azure"
+        - "GCP"
+      tiers:
+        - "Tier 1"
+        - "Tier 2"
+  - id: "REQ-003"
+    statement: "API gateway MUST enforce rate limiting on all registered endpoints with configurable thresholds per consumer."
+    severity: "MUST"
+    rationale: "Rate limiting protects backend services from traffic spikes, prevents abuse, and ensures fair resource allocation across API consumers."
+    verification: "API gateway configuration audit confirms rate limit policies; load testing validates rate limiting behavior under stress."
+    appliesTo:
+      platforms:
+        - "AWS"
+        - "Azure"
+        - "GCP"
+      tiers:
+        - "Tier 1"
+        - "Tier 2"
+  - id: "REQ-004"
+    statement: "Services SHOULD implement circuit breaker patterns for all synchronous downstream dependencies."
+    severity: "SHOULD"
+    rationale: "Circuit breakers prevent cascading failures by stopping requests to unhealthy downstream services, allowing them to recover without being overwhelmed."
+    verification: "Service configuration review confirms circuit breaker settings; chaos engineering tests validate circuit breaker activation under failure conditions."
+    appliesTo:
+      platforms:
+        - "AWS"
+        - "Azure"
+        - "GCP"
+      tiers:
+        - "Tier 1"
+        - "Tier 2"
+  - id: "REQ-005"
+    statement: "All service-to-service communication MUST use mutual TLS (mTLS) encryption within the service mesh."
+    severity: "MUST"
+    rationale: "mTLS ensures both authentication and encryption of inter-service traffic, preventing man-in-the-middle attacks and unauthorized service impersonation."
+    verification: "Service mesh configuration audit confirms mTLS enforcement; network traffic analysis validates encrypted communication between services."
+    appliesTo:
+      platforms:
+        - "AWS"
+        - "Azure"
+        - "GCP"
+      tiers:
+        - "Tier 1"
+        - "Tier 2"
+  - id: "REQ-006"
+    statement: "Asynchronous event schemas MUST be registered in a centralized schema registry with backward compatibility validation."
+    severity: "MUST"
+    rationale: "A schema registry with compatibility checks prevents breaking changes to event contracts, ensuring reliable event-driven communication between decoupled services."
+    verification: "Schema registry audit confirms all event topics have registered schemas; CI/CD pipeline rejects schema changes that break backward compatibility."
+    appliesTo:
+      platforms:
+        - "AWS"
+        - "Azure"
+        - "GCP"
+      tiers:
+        - "Tier 1"
+        - "Tier 2"
+
+guidelines:
+  - id: "GUIDE-001"
+    text: "API naming conventions should follow kebab-case for URI paths (e.g., /user-profiles) and camelCase for JSON property names. Resource names should be plural nouns. Avoid verbs in URIs; use HTTP methods to convey actions."
+  - id: "GUIDE-002"
+    text: "Pagination should be implemented using cursor-based pagination for large datasets. Responses should include next and previous cursor tokens. Offset-based pagination is acceptable for small, stable datasets but should include total count headers."
+  - id: "GUIDE-003"
+    text: "Error responses should follow RFC 7807 Problem Details format with type, title, status, detail, and instance fields. Include a correlation ID header (X-Correlation-ID) in all requests and responses for distributed tracing."
+  - id: "GUIDE-004"
+    text: "Event-driven patterns should use CloudEvents specification for event envelope format. Design events as immutable facts using past-tense naming (e.g., OrderPlaced, PaymentProcessed). Consumers should be idempotent and handle out-of-order delivery."
+
+solutions:
+  - id: "SOL-001"
+    name: "Kong API Gateway"
+    description: "Cloud-native API gateway providing rate limiting, authentication, load balancing, and observability for RESTful and gRPC APIs. Supports plugin-based extensibility and declarative configuration."
+    link: "https://konghq.com/"
+  - id: "SOL-002"
+    name: "Envoy Proxy with Istio Service Mesh"
+    description: "Service mesh platform providing mTLS, traffic management, observability, and circuit breaking for microservices. Envoy sidecars handle service-to-service communication transparently."
+    link: "https://istio.io/"
+  - id: "SOL-003"
+    name: "Apache Kafka with Confluent Schema Registry"
+    description: "Distributed event streaming platform for asynchronous messaging with schema registry for Avro, Protobuf, and JSON Schema validation. Supports exactly-once semantics and cross-datacenter replication."
+    link: "https://kafka.apache.org/"
+
+authoritativeSources:
+  - id: "AUTH-001"
+    source: "OpenAPI Specification 3.1"
+    issuingAgency: "OpenAPI Initiative"
+    link: "https://spec.openapis.org/oas/v3.1.0"
+  - id: "AUTH-002"
+    source: "gRPC Best Practices and Design Patterns"
+    issuingAgency: "Google"
+    link: "https://grpc.io/docs/guides/"
+  - id: "AUTH-003"
+    source: "REST API Design Guidelines"
+    issuingAgency: "Microsoft"
+    link: "https://learn.microsoft.com/en-us/azure/architecture/best-practices/api-design"
+
+definitions:
+  - id: "DEF-001"
+    term: "API Gateway"
+    definition: "A server that acts as a single entry point for API consumers, providing cross-cutting concerns such as authentication, rate limiting, request routing, and protocol translation."
+  - id: "DEF-002"
+    term: "Service Mesh"
+    definition: "A dedicated infrastructure layer for managing service-to-service communication within a microservices architecture, typically implemented via sidecar proxies that handle traffic management, security, and observability."
+  - id: "DEF-003"
+    term: "Circuit Breaker"
+    definition: "A design pattern that detects failures in downstream services and stops sending requests to them when a failure threshold is exceeded, allowing the failing service to recover and preventing cascading failures."
+
+faq:
+  - id: "FAQ-001"
+    question: "When should we use gRPC versus REST for service-to-service communication?"
+    answer: "Use gRPC for high-performance, low-latency internal service communication where strong typing and bidirectional streaming are beneficial. Use REST for external-facing APIs, browser-based clients, and services that benefit from human-readable payloads and broader tooling ecosystem support."
+  - id: "FAQ-002"
+    question: "How do we handle API versioning for breaking changes?"
+    answer: "Deploy the new API version (e.g., /v2/resource) alongside the existing version. Communicate a deprecation timeline of at least 90 days. Monitor usage of the old version and work with consumers to migrate. Only retire the old version after all consumers have transitioned."
+  - id: "FAQ-003"
+    question: "Is the schema registry mandatory for all event-driven communication?"
+    answer: "Yes, all asynchronous event schemas must be registered in the schema registry. This applies to Kafka topics, message queues, and event bus channels. The registry enforces backward compatibility and provides a single source of truth for event contracts across teams."
+
+references:
+  - id: "REF-001"
+    description: "Cloud Native Computing Foundation - Service Mesh Interface Specification"
+    link: "https://smi-spec.io/"
+  - id: "REF-002"
+    description: "CloudEvents Specification - CNCF"
+    link: "https://cloudevents.io/"

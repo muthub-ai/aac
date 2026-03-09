@@ -11,6 +11,7 @@
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
     "validate:models": "tsx scripts/validate-models.ts",
+    "validate:standards": "tsx scripts/validate-standards.ts",
     "lint:architecture": "tsx scripts/lint-architecture.ts",
     "build:diagrams": "tsx scripts/build-diagrams.ts",
     "build:docs": "tsx scripts/build-docs.ts",

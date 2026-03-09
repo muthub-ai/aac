@@ -86,6 +86,13 @@ jobs:
         run: npx tsx scripts/validate-models.ts
 
       # ---------------------------------------------------------------------
+      # 2a-2. Standards Validation — validate all standards YAML files
+      #       against the architecture-standard JSON Schema.
+      # ---------------------------------------------------------------------
+      - name: "Validate architecture standards"
+        run: npx tsx scripts/validate-standards.ts
+
+      # ---------------------------------------------------------------------
       # 2b. Unit Tests — run the full Vitest test suite in single-run mode.
       #     Covers: YAML parsing, graph transforms, validation logic,
       #     layout algorithms, export modules, and utility functions.

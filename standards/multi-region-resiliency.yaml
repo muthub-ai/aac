@@ -1,0 +1,214 @@
+metadata:
+  schemaVersion: 2
+  standardId: "STD-INFRA-001"
+  name: "Multi-Region Active-Active Resiliency Standard"
+  architectureDomain: "Infrastructure"
+  architecturePrinciple:
+    - "Resilient and Scalable infrastructure"
+  l4Domain: "Infrastructure Architecture"
+  l3Domain: "Resilience Engineering"
+  l2Domain: "Multi-Region Deployment"
+  standardOwner: "VP of Platform Engineering"
+  assignedArchitect: "Resilience Engineering Lead"
+  lifecycleCategory: "STANDARD"
+  publicationStatus: "APPROVED"
+  version: "1.1"
+  approvalDate: "2024-08-20"
+  communicationDate: "2024-08-25"
+  plannedActiveDate: "2024-10-01"
+  conformanceMetric: "Percentage of Tier 1 services meeting RTO/RPO targets in disaster recovery tests"
+  tags:
+    - "resiliency"
+    - "active-active"
+    - "disaster-recovery"
+    - "multi-region"
+    - "chaos-engineering"
+    - "failover"
+  versionControl:
+    repository: "github.com/org/architecture-standards"
+    path: "standards/multi-region-resiliency.yaml"
+    semver: "1.1.0"
+  revisionHistory:
+    - date: "2024-03-15T10:00:00Z"
+      version: "1.0"
+      changeType: "Initial Release"
+      summary: "Initial multi-region resiliency standard covering active-active deployment and disaster recovery requirements"
+      changedBy: "Resilience Engineering Lead"
+      approvedBy: "VP of Platform Engineering"
+    - date: "2024-08-20T14:30:00Z"
+      version: "1.1"
+      changeType: "Minor Update"
+      summary: "Added chaos engineering requirements and quarterly testing mandates"
+      changedBy: "Resilience Engineering Lead"
+      approvedBy: "VP of Platform Engineering"
+
+scope:
+  inScope:
+    - "Multi-region active-active deployment architectures"
+    - "Disaster recovery and business continuity planning"
+    - "Chaos engineering and resilience testing practices"
+    - "Data replication and consistency across regions"
+    - "Automated failover and traffic management"
+  outOfScope:
+    - "Single-region high availability within a cloud zone"
+    - "Application-level retry and circuit breaker patterns (covered by API Standard)"
+    - "Physical disaster recovery for on-premises infrastructure"
+
+requirements:
+  - id: "REQ-001"
+    statement: "Tier 1 services MUST deploy in active-active configuration across a minimum of 2 geographic regions."
+    severity: "MUST"
+    rationale: "Active-active multi-region deployment eliminates single points of failure at the regional level, ensuring service continuity during regional outages or disasters."
+    verification: "Architecture review confirms multi-region deployment topology; monitoring dashboards validate traffic distribution across regions."
+    appliesTo:
+      platforms:
+        - "AWS"
+        - "Azure"
+        - "GCP"
+      tiers:
+        - "Tier 1"
+        - "Tier 2"
+  - id: "REQ-002"
+    statement: "Recovery Time Objective (RTO) MUST NOT exceed 15 minutes for Tier 1 services."
+    severity: "MUST NOT"
+    rationale: "An RTO of 15 minutes or less minimizes business impact during regional failures and meets enterprise SLA commitments to customers."
+    verification: "Quarterly disaster recovery tests measure actual recovery time; results are recorded and tracked against the 15-minute threshold."
+    appliesTo:
+      platforms:
+        - "AWS"
+        - "Azure"
+        - "GCP"
+      tiers:
+        - "Tier 1"
+        - "Tier 2"
+  - id: "REQ-003"
+    statement: "Automated failover MUST be tested quarterly via chaos engineering exercises."
+    severity: "MUST"
+    rationale: "Regular chaos engineering exercises validate that failover mechanisms work as designed and identify weaknesses before real incidents occur."
+    verification: "Chaos engineering exercise reports are submitted quarterly; automated failover success rate is tracked per service."
+    appliesTo:
+      platforms:
+        - "AWS"
+        - "Azure"
+        - "GCP"
+      tiers:
+        - "Tier 1"
+        - "Tier 2"
+  - id: "REQ-004"
+    statement: "Data replication MUST achieve a Recovery Point Objective (RPO) of less than 1 minute for Tier 1 services."
+    severity: "MUST"
+    rationale: "Sub-minute RPO ensures minimal data loss during regional failures, protecting critical business transactions and maintaining data integrity."
+    verification: "Replication lag monitoring alerts when RPO exceeds threshold; disaster recovery tests validate actual data loss window."
+    appliesTo:
+      platforms:
+        - "AWS"
+        - "Azure"
+        - "GCP"
+      tiers:
+        - "Tier 1"
+        - "Tier 2"
+  - id: "REQ-005"
+    statement: "Health check endpoints SHOULD implement standardized liveness and readiness probes."
+    severity: "SHOULD"
+    rationale: "Standardized health checks enable consistent monitoring, automated traffic routing decisions, and faster incident detection across all regions."
+    verification: "Service health check endpoints are validated against the standardized schema during deployment pipeline checks."
+    appliesTo:
+      platforms:
+        - "AWS"
+        - "Azure"
+        - "GCP"
+      tiers:
+        - "Tier 1"
+        - "Tier 2"
+  - id: "REQ-006"
+    statement: "Services SHOULD implement graceful degradation patterns for non-critical dependencies."
+    severity: "SHOULD"
+    rationale: "Graceful degradation ensures that failures in non-critical downstream services do not cascade and cause complete service outages."
+    verification: "Chaos engineering tests inject failures in non-critical dependencies and verify that core service functionality remains available."
+    appliesTo:
+      platforms:
+        - "AWS"
+        - "Azure"
+        - "GCP"
+      tiers:
+        - "Tier 1"
+        - "Tier 2"
+  - id: "REQ-007"
+    statement: "Disaster recovery runbooks MUST be maintained and reviewed after each incident."
+    severity: "MUST"
+    rationale: "Up-to-date runbooks reduce mean time to recovery by providing clear, tested procedures for incident response teams."
+    verification: "Runbook review timestamps are checked post-incident; runbook completeness is audited during quarterly resilience reviews."
+    appliesTo:
+      platforms:
+        - "AWS"
+        - "Azure"
+        - "GCP"
+      tiers:
+        - "Tier 1"
+        - "Tier 2"
+
+guidelines:
+  - id: "GUIDE-001"
+    text: "Chaos engineering exercises should follow the principles of progressive blast radius expansion. Start with small-scale fault injections in non-production environments before advancing to production. Use tools like Chaos Monkey or Litmus to automate experiments and ensure reproducibility."
+  - id: "GUIDE-002"
+    text: "Circuit breaker patterns should be configured with appropriate thresholds for failure rate, slow call rate, and recovery timeout. Recommended defaults are 50% failure rate threshold, 10-second sliding window, and 30-second half-open recovery period."
+  - id: "GUIDE-003"
+    text: "Disaster recovery runbooks should be stored alongside service documentation and include step-by-step failover procedures, rollback instructions, communication templates, and escalation paths. Runbooks should be tested during each quarterly chaos engineering exercise."
+
+solutions:
+  - id: "SOL-001"
+    name: "AWS Route 53 Global Accelerator"
+    description: "DNS-based global traffic management with health checking and automated failover across AWS regions. Supports weighted routing, latency-based routing, and geolocation policies."
+    link: "https://aws.amazon.com/route53/"
+  - id: "SOL-002"
+    name: "Chaos Monkey and Litmus Chaos"
+    description: "Chaos engineering platforms for automated fault injection and resilience testing. Chaos Monkey (Netflix) targets AWS instances; Litmus provides Kubernetes-native chaos experiments across cloud providers."
+    link: "https://github.com/Netflix/chaosmonkey"
+  - id: "SOL-003"
+    name: "HashiCorp Consul Service Mesh"
+    description: "Service mesh providing service discovery, health checking, and traffic management across multi-region deployments. Supports automatic failover with prepared queries and WAN federation."
+    link: "https://www.consul.io/"
+
+authoritativeSources:
+  - id: "AUTH-001"
+    source: "NIST SP 800-34 Rev. 1 - Contingency Planning Guide for Federal Information Systems"
+    issuingAgency: "National Institute of Standards and Technology (NIST)"
+    link: "https://csrc.nist.gov/publications/detail/sp/800-34/rev-1/final"
+  - id: "AUTH-002"
+    source: "ISO 22301:2019 - Business Continuity Management Systems"
+    issuingAgency: "International Organization for Standardization (ISO)"
+    link: "https://www.iso.org/standard/75106.html"
+  - id: "AUTH-003"
+    source: "DORA - Digital Operational Resilience Act"
+    issuingAgency: "European Union"
+    link: "https://www.digital-operational-resilience-act.com/"
+
+definitions:
+  - id: "DEF-001"
+    term: "Recovery Time Objective (RTO)"
+    definition: "The maximum acceptable amount of time that a service can be offline or unavailable after a failure or disaster before business impact becomes unacceptable."
+  - id: "DEF-002"
+    term: "Recovery Point Objective (RPO)"
+    definition: "The maximum acceptable amount of data loss measured in time. An RPO of 1 minute means at most 1 minute of data may be lost during a failure event."
+  - id: "DEF-003"
+    term: "Active-Active"
+    definition: "A deployment topology where two or more regions simultaneously serve production traffic, with each region capable of handling the full workload independently if other regions become unavailable."
+
+faq:
+  - id: "FAQ-001"
+    question: "What is the difference between active-active and active-passive multi-region deployment?"
+    answer: "In active-active, all regions serve live traffic simultaneously, providing lower latency and immediate failover. In active-passive, the secondary region is on standby and only activated during a failover event, resulting in higher RTO but potentially simpler data consistency management."
+  - id: "FAQ-002"
+    question: "How do we handle data consistency across regions in an active-active setup?"
+    answer: "Use conflict-free replicated data types (CRDTs) or last-writer-wins strategies for eventually consistent data. For strong consistency requirements, designate a primary region for writes and use synchronous replication with consensus protocols. The choice depends on the service's CAP theorem trade-offs."
+  - id: "FAQ-003"
+    question: "Are Tier 2 services required to implement active-active multi-region deployment?"
+    answer: "Tier 2 services are not required to implement active-active deployment but SHOULD follow the standard where feasible. At minimum, Tier 2 services must have a documented disaster recovery plan with defined RTO and RPO targets appropriate to their business criticality."
+
+references:
+  - id: "REF-001"
+    description: "AWS Well-Architected Framework - Reliability Pillar"
+    link: "https://docs.aws.amazon.com/wellarchitected/latest/reliability-pillar/welcome.html"
+  - id: "REF-002"
+    description: "Google Cloud Architecture Framework - Reliability"
+    link: "https://cloud.google.com/architecture/framework/reliability"
