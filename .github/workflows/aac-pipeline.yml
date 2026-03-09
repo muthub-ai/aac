@@ -6,7 +6,7 @@
 #   2. Verify         — JSON Schema validation + Zod checks + unit tests
 #   3. Compliance     — enterprise architecture policy linting
 #   4. Artifacts      — PlantUML + Draw.io diagram generation
-#   5. Documentation  — docToolchain static site generation
+#   5. Documentation  — Asciidoctor.js static site generation
 #   6. PR Feedback    — post diagram previews to pull request comments
 #   7. Publish        — deploy microsite to GitHub Pages on merge to main
 #
