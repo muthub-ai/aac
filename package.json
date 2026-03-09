@@ -13,7 +13,8 @@
     "validate:models": "tsx scripts/validate-models.ts",
     "lint:architecture": "tsx scripts/lint-architecture.ts",
     "build:diagrams": "tsx scripts/build-diagrams.ts",
-    "build:docs": "tsx scripts/build-docs.ts"
+    "build:docs": "tsx scripts/build-docs.ts",
+    "build:patterns": "tsx scripts/build-pattern-pages.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.2.0",

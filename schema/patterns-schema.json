@@ -1,0 +1,130 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aac.muthub.org/schemas/pattern-catalog/1.0.0",
+  "title": "Architecture Pattern Catalog Entry",
+  "description": "Schema for UI-facing architecture pattern catalog entries displayed in the AaC Pattern Catalog.",
+  "type": "object",
+  "required": [
+    "id",
+    "version",
+    "name",
+    "description",
+    "category",
+    "tags",
+    "exposure",
+    "advantages",
+    "considerations",
+    "gettingStarted",
+    "maturity",
+    "maintainerTeam"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+$",
+      "description": "Unique identifier (lowercase, hyphens allowed)"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Semantic version (major.minor.patch)"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 5,
+      "description": "Human-readable pattern name"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 10,
+      "description": "Brief description of the pattern's purpose and architecture"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "ai-ml",
+        "analytics",
+        "api",
+        "compute",
+        "database",
+        "messaging",
+        "networking",
+        "security",
+        "storage"
+      ],
+      "description": "Pattern category for sidebar grouping"
+    },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1,
+      "description": "Searchable tags displayed as interactive pills"
+    },
+    "exposure": {
+      "type": "string",
+      "enum": ["internal", "external"],
+      "description": "Whether the pattern is for internal or external-facing workloads"
+    },
+    "icon": {
+      "type": "string",
+      "description": "Lucide icon name for the card header"
+    },
+    "color": {
+      "type": "string",
+      "description": "CSS color token for the card header background"
+    },
+    "advantages": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1,
+      "description": "List of advantages / benefits (displayed with green checkmark icons)"
+    },
+    "considerations": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1,
+      "description": "List of considerations / trade-offs (displayed with amber warning icons)"
+    },
+    "gettingStarted": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["step", "title"],
+        "properties": {
+          "step": { "type": "integer", "minimum": 1 },
+          "title": { "type": "string" }
+        }
+      },
+      "minItems": 1,
+      "description": "Ordered implementation steps for the vertical stepper"
+    },
+    "maturity": {
+      "type": "string",
+      "enum": ["Draft", "Beta", "Production Ready", "Deprecated"],
+      "description": "Current maturity level of the pattern"
+    },
+    "maintainerTeam": {
+      "type": "string",
+      "description": "Team responsible for maintaining the pattern"
+    },
+    "docsUrl": {
+      "type": "string",
+      "format": "uri",
+      "description": "Link to full documentation"
+    },
+    "downloads": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 0,
+      "description": "Number of deployments / downloads"
+    },
+    "stars": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 5,
+      "default": 0,
+      "description": "Average star rating (0-5)"
+    }
+  },
+  "additionalProperties": false
+}

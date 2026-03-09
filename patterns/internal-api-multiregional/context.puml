@@ -1,0 +1,27 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+LAYOUT_WITH_LEGEND()
+
+title System Context — Internal API Multi-regional VMs
+
+Person(api_consumer, "Internal API Consumer", "Backend services and microservices that consume internal APIs")
+Person(platform_eng, "Platform Engineer", "Provisions and manages infrastructure")
+Person(sre, "SRE Team", "Monitors reliability and incident response")
+
+System(internal_api, "Internal API Platform", "Multi-regional API deployment using Compute Engine MIGs with Internal HTTP(S) Load Balancing for HA and low latency")
+
+System_Ext(cloud_iam, "Cloud IAM", "Identity and access management for service-to-service auth")
+System_Ext(cloud_monitoring, "Cloud Monitoring", "Metrics, dashboards, and alerting")
+System_Ext(cloud_logging, "Cloud Logging", "Centralized log aggregation and analysis")
+System_Ext(secret_manager, "Secret Manager", "API keys, certificates, and credentials")
+
+Rel(api_consumer, internal_api, "Sends API requests", "gRPC / REST over Internal LB")
+Rel(platform_eng, internal_api, "Provisions and configures", "Terraform / gcloud CLI")
+Rel(sre, cloud_monitoring, "Monitors SLIs/SLOs", "Dashboards & Alerts")
+Rel(internal_api, cloud_iam, "Authenticates requests", "OAuth 2.0 / mTLS")
+Rel(internal_api, cloud_monitoring, "Exports metrics", "OpenTelemetry")
+Rel(internal_api, cloud_logging, "Streams logs", "Structured JSON logs")
+Rel(internal_api, secret_manager, "Fetches secrets", "Secret Manager API")
+
+@enduml

@@ -1,0 +1,12 @@
+{
+  "id": "data-platform-bq",
+  "name": "Enterprise Data Warehouse with BigQuery",
+  "version": "1.4.0",
+  "category": "database",
+  "maturity": "Production Ready",
+  "maintainerTeam": "Data Engineering",
+  "downloads": 3215,
+  "stars": 4.9,
+  "lastUpdated": "2025-02-05T09:15:00Z",
+  "docsUrl": "https://aac.muthub.org/patterns/data-platform-bq"
+}

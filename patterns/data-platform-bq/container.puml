@@ -1,0 +1,54 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+LAYOUT_WITH_LEGEND()
+
+title Container Diagram — Enterprise Data Warehouse with BigQuery
+
+Person(data_eng, "Data Engineer", "Pipeline development")
+Person(analyst, "Data Analyst", "SQL queries & reports")
+Person(business, "Business User", "Dashboard consumer")
+
+System_Boundary(dwh, "Enterprise Data Warehouse Platform") {
+
+  Boundary(ingestion, "Ingestion Layer") {
+    Container(pubsub, "Cloud Pub/Sub", "Messaging", "Real-time event streaming at 100K msgs/sec with exactly-once delivery")
+    Container(gcs_raw, "Cloud Storage — Raw Zone", "Object Storage", "Landing zone for batch files and streaming micro-batches")
+  }
+
+  Boundary(processing, "Processing Layer") {
+    Container(dataflow, "Cloud Dataflow", "Apache Beam", "Managed ETL/ELT pipelines with autoscaling up to 50 workers")
+    Container(dbt, "dbt Transformations", "dbt Core", "SQL-based data models, tests, and documentation")
+  }
+
+  Boundary(serving, "Serving Layer") {
+    ContainerDb(bq_warehouse, "BigQuery Datasets", "BigQuery", "Partitioned by ingestion_time, clustered by customer_id and region")
+    Container(bq_ml, "BigQuery ML", "BigQuery", "In-warehouse ML model training (linear regression, XGBoost, deep learning)")
+    Container(gcs_staged, "Cloud Storage — Curated Zone", "Object Storage", "Processed Parquet/Avro files for external consumption")
+  }
+
+  Boundary(consumption, "Consumption Layer") {
+    Container(looker, "Looker", "BI Platform", "Self-service dashboards, explores, and scheduled reports")
+    Container(iam_security, "IAM Column-level Security", "Cloud IAM + Policy Tags", "Fine-grained access control on PII and sensitive columns")
+  }
+}
+
+System_Ext(sources, "Source Systems", "PostgreSQL, MySQL, Salesforce, SAP")
+
+Rel(sources, pubsub, "Streams change events", "CDC / Pub/Sub")
+Rel(sources, gcs_raw, "Batch exports", "CSV, JSON, Avro")
+Rel(pubsub, dataflow, "Triggers processing", "Streaming pipeline")
+Rel(gcs_raw, dataflow, "Reads raw files", "Batch pipeline")
+Rel(dataflow, bq_warehouse, "Loads transformed data", "BigQuery Write API")
+Rel(dataflow, gcs_staged, "Writes curated files", "Parquet/Avro")
+Rel(dbt, bq_warehouse, "Transforms & models", "SQL views & tables")
+Rel(data_eng, dataflow, "Develops pipelines", "Python / Java SDK")
+Rel(data_eng, dbt, "Authors models", "dbt CLI")
+Rel(analyst, bq_warehouse, "Queries datasets", "BigQuery SQL")
+Rel(analyst, looker, "Builds reports", "LookML")
+Rel(business, looker, "Views dashboards", "Browser")
+Rel(bq_warehouse, bq_ml, "Trains models on", "SQL ML queries")
+Rel(bq_warehouse, iam_security, "Enforces policies", "Policy Tags")
+Rel(looker, bq_warehouse, "Reads data", "BigQuery JDBC")
+
+@enduml

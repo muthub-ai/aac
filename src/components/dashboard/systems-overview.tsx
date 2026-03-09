@@ -25,7 +25,7 @@ export function SystemsOverview({ systems }: SystemsOverviewProps) {
 
   const tabs: CatalogTab[] = [
     { id: 'applications', label: 'Application Catalog', icon: LayoutGrid, count: systems.length },
-    { id: 'patterns', label: 'Pattern Catalog', icon: Puzzle },
+    { id: 'patterns', label: 'Pattern Catalog', icon: Puzzle, count: 3 },
     { id: 'standards', label: 'Standards Catalog', icon: ShieldCheck },
     { id: 'utilities', label: 'Utilities', icon: Wrench },
   ];

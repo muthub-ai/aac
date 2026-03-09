@@ -1,0 +1,564 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aac.muthub.org/schemas/pattern/1.0.0",
+  "title": "Application Architecture Pattern Definition",
+  "description": "Schema for defining application architecture patterns and constraints",
+  "type": "object",
+  "required": [
+    "pattern"
+  ],
+  "properties": {
+    "pattern": {
+      "type": "object",
+      "required": [
+        "id",
+        "version",
+        "name",
+        "description",
+        "category",
+        "validation",
+        "resiliency_patterns"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$",
+          "description": "Unique identifier for the pattern (lowercase, hyphens allowed)"
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "description": "Semantic version (major.minor.patch)"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 5,
+          "description": "Human-readable pattern name"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 10,
+          "description": "Detailed description of the pattern's purpose and use cases"
+        },
+        "category": {
+          "type": "string",
+          "description": "Pattern category for grouping",
+          "examples": [
+            "compute",
+            "database",
+            "messaging"
+          ]
+        },
+        "metadata": {
+          "type": "object",
+          "properties": {
+            "owner_team": {
+              "type": "string",
+              "description": "Team responsible for maintaining the pattern"
+            },
+            "approved_date": {
+              "type": "string",
+              "format": "date",
+              "description": "Date pattern was approved (YYYY-MM-DD)"
+            },
+            "deprecated": {
+              "type": "boolean",
+              "default": false,
+              "description": "Whether this pattern version is deprecated"
+            },
+            "successor_version": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "pattern": "^\\d+\\.\\d+\\.\\d+$",
+              "description": "Version to migrate to if deprecated"
+            },
+            "tags": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Classification tags"
+            }
+          }
+        },
+        "componentCatalogRef": {
+          "type": "string",
+          "description": "Reference (path or URI) to the shared component catalog."
+        },
+        "exposure": {
+          "type": "string",
+          "description": "Pattern-level exposure classification",
+          "enum": [
+            "internal",
+            "external"
+          ]
+        },
+        "deploymentModel": {
+          "type": "object",
+          "description": "High-level deployment model metadata to help interpret constraints and entry points.",
+          "properties": {
+            "platforms": {
+              "type": "array",
+              "description": "Platforms supported by this pattern",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "components": {
+          "type": "array",
+          "description": "Components required/allowed by this pattern.",
+          "items": {
+            "type": "object",
+            "required": [
+              "componentId"
+            ],
+            "properties": {
+              "componentId": {
+                "type": "string",
+                "description": "ID from the shared component catalog"
+              },
+              "tags": {
+                "type": "array",
+                "description": "Optional tags for mapping to Structurizr elements",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "constraints": {
+                "type": "object",
+                "description": "Component-specific constraints"
+              }
+            }
+          }
+        },
+        "validation": {
+          "type": "object",
+          "description": "YAML-driven validation rules that can be enforced against codified architecture models.",
+          "additionalProperties": false,
+          "properties": {
+            "rules": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "description": "One validation rule. The fields required depend on 'type'.",
+                "required": [
+                  "id",
+                  "type"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "Unique rule id within this pattern."
+                  },
+                  "type": {
+                    "type": "string",
+                    "description": "Rule type.",
+                    "enum": [
+                      "required_components",
+                      "required-components",
+                      "relationship",
+                      "relationship_constraint",
+                      "allowed_resource_types",
+                      "resource_policy",
+                      "resiliency_topology",
+                      "topology",
+                      "required_component_in_scope"
+                    ]
+                  },
+                  "appliesTo": {
+                    "type": "object",
+                    "description": "Condition under which this rule applies.",
+                    "properties": {
+                      "resiliency_patterns": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "enum": [
+                            "active-active",
+                            "active-passive"
+                          ]
+                        }
+                      },
+                      "exposure": {
+                        "type": "string",
+                        "enum": [
+                          "internal",
+                          "external"
+                        ]
+                      },
+                      "platforms": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "componentIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "minItems": 1
+                  },
+                  "mode": {
+                    "type": "string",
+                    "enum": [
+                      "required",
+                      "forbidden"
+                    ]
+                  },
+                  "from": {
+                    "type": "object",
+                    "description": "Selector for the source component(s).",
+                    "properties": {
+                      "componentIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "minItems": 1
+                      },
+                      "componentKinds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "minItems": 1
+                      },
+                      "tags": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "minItems": 1
+                      }
+                    },
+                    "anyOf": [
+                      {
+                        "required": [
+                          "componentIds"
+                        ]
+                      },
+                      {
+                        "required": [
+                          "componentKinds"
+                        ]
+                      },
+                      {
+                        "required": [
+                          "tags"
+                        ]
+                      }
+                    ]
+                  },
+                  "to": {
+                    "type": "object",
+                    "description": "Selector for the destination component(s).",
+                    "properties": {
+                      "componentIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "minItems": 1
+                      },
+                      "componentKinds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "minItems": 1
+                      },
+                      "tags": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "minItems": 1
+                      }
+                    },
+                    "anyOf": [
+                      {
+                        "required": [
+                          "componentIds"
+                        ]
+                      },
+                      {
+                        "required": [
+                          "componentKinds"
+                        ]
+                      },
+                      {
+                        "required": [
+                          "tags"
+                        ]
+                      }
+                    ]
+                  },
+                  "sameTag": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Require the relationship endpoints to share the same tag."
+                  },
+                  "sameProperty": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Require the relationship endpoints to have equal values for this Structurizr properties key."
+                  },
+                  "selector": {
+                    "type": "object",
+                    "description": "Selector for which components this resource rule applies to.",
+                    "properties": {
+                      "componentIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "minItems": 1
+                      },
+                      "componentKinds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "minItems": 1
+                      },
+                      "tags": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "minItems": 1
+                      }
+                    },
+                    "anyOf": [
+                      {
+                        "required": [
+                          "componentIds"
+                        ]
+                      },
+                      {
+                        "required": [
+                          "componentKinds"
+                        ]
+                      },
+                      {
+                        "required": [
+                          "tags"
+                        ]
+                      }
+                    ]
+                  },
+                  "allowedResourceTypes": {
+                    "type": "array",
+                    "description": "Neutral classifications for allowed resources.",
+                    "examples": [
+                      "compute",
+                      "database",
+                      "storage"
+                    ],
+                    "items": {
+                      "type": "string"
+                    },
+                    "minItems": 1
+                  },
+                  "childComponentId": {
+                    "type": "string",
+                    "description": "Component ID that must have at least one deployed instance within each matched scope."
+                  },
+                  "scope": {
+                    "type": "object",
+                    "description": "How to define the parent scope(s) that must contain the child component instance(s).",
+                    "additionalProperties": false,
+                    "properties": {
+                      "nodeType": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "Match deploymentNode elements with properties aac.nodeType == nodeType"
+                      },
+                      "parentComponentId": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "Match scopes using elements mapped to this componentId"
+                      }
+                    },
+                    "anyOf": [
+                      {
+                        "required": [
+                          "nodeType"
+                        ]
+                      },
+                      {
+                        "required": [
+                          "parentComponentId"
+                        ]
+                      }
+                    ]
+                  },
+                  "instanceSelector": {
+                    "type": "object",
+                    "description": "Optional: how to detect the deployed instance in Structurizr DSL.",
+                    "additionalProperties": false,
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "containerInstance"
+                        ]
+                      }
+                    }
+                  }
+                },
+                "allOf": [
+                  {
+                    "if": {
+                      "properties": {
+                        "type": {
+                          "enum": [
+                            "required_components",
+                            "required-components"
+                          ]
+                        }
+                      }
+                    },
+                    "then": {
+                      "required": [
+                        "componentIds"
+                      ]
+                    }
+                  },
+                  {
+                    "if": {
+                      "properties": {
+                        "type": {
+                          "enum": [
+                            "relationship",
+                            "relationship_constraint"
+                          ]
+                        }
+                      }
+                    },
+                    "then": {
+                      "required": [
+                        "mode",
+                        "from",
+                        "to"
+                      ]
+                    }
+                  },
+                  {
+                    "if": {
+                      "properties": {
+                        "type": {
+                          "enum": [
+                            "allowed_resource_types",
+                            "resource_policy"
+                          ]
+                        }
+                      }
+                    },
+                    "then": {
+                      "required": [
+                        "selector",
+                        "allowedResourceTypes"
+                      ]
+                    }
+                  },
+                  {
+                    "if": {
+                      "properties": {
+                        "type": {
+                          "enum": [
+                            "required_component_in_scope"
+                          ]
+                        }
+                      }
+                    },
+                    "then": {
+                      "required": [
+                        "scope",
+                        "childComponentId"
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "resiliency_patterns": {
+          "type": "array",
+          "minItems": 1,
+          "description": "Resiliency patterns supported by this architecture pattern",
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "regions"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string",
+                "enum": [
+                  "active-active",
+                  "active-passive"
+                ],
+                "description": "Resiliency pattern name"
+              },
+              "description": {
+                "type": "string",
+                "description": "Pattern description"
+              },
+              "regions": {
+                "type": "object",
+                "required": [
+                  "datacenters_per_region"
+                ],
+                "properties": {
+                  "active": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "minItems": 1,
+                    "description": "Active regions for this pattern"
+                  },
+                  "passive": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Passive regions (for active-passive pattern)"
+                  },
+                  "datacenters_per_region": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 4,
+                    "description": "Number of datacenters required per region"
+                  },
+                  "minimum_regions": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "default": 2
+                  },
+                  "maximum_regions": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "default": 2
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

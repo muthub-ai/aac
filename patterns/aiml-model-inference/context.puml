@@ -1,0 +1,29 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+LAYOUT_WITH_LEGEND()
+
+title System Context — AI-ML Model Deployment & Inferencing
+
+Person(ml_eng, "ML Engineer", "Trains models, deploys to endpoints, monitors performance")
+Person(data_scientist, "Data Scientist", "Experiments with models, evaluates metrics, publishes to registry")
+Person(api_consumer, "API Consumer", "Internal services that call prediction endpoints")
+
+System(ml_platform, "ML Model Serving Platform", "Production-ready model serving using Vertex AI for real-time inference, autoscaling, traffic splitting, and model monitoring")
+
+System_Ext(ci_cd, "CI/CD Pipeline", "Automated model training, validation, and deployment via Cloud Build")
+System_Ext(cloud_iam, "Cloud IAM", "Service account auth and prediction route access control")
+System_Ext(feature_store, "Feature Store", "Low-latency online feature serving for real-time model inputs")
+System_Ext(cloud_monitoring, "Cloud Monitoring", "Endpoint latency, throughput, and error rate dashboards")
+System_Ext(cloud_logging, "Cloud Logging", "Prediction request/response logging and audit trail")
+
+Rel(ml_eng, ml_platform, "Deploys & monitors models", "Vertex AI SDK, gcloud")
+Rel(data_scientist, ml_platform, "Publishes trained models", "Vertex AI Model Registry")
+Rel(api_consumer, ml_platform, "Sends prediction requests", "REST / gRPC")
+Rel(ci_cd, ml_platform, "Triggers automated deployments", "Cloud Build + Vertex Pipelines")
+Rel(ml_platform, cloud_iam, "Authenticates callers", "OAuth 2.0 / Service Account")
+Rel(ml_platform, feature_store, "Fetches features at inference time", "Feature Store Online API")
+Rel(ml_platform, cloud_monitoring, "Exports endpoint metrics", "OpenTelemetry")
+Rel(ml_platform, cloud_logging, "Logs predictions", "Structured JSON")
+
+@enduml

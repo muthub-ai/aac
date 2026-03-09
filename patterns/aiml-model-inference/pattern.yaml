@@ -1,0 +1,114 @@
+pattern:
+  id: aiml-model-inference
+  version: "1.0.0"
+  name: "AI-ML Model Deployment & Inferencing"
+  description: >-
+    Production-ready machine learning model serving using Vertex AI
+    for real-time online inference, autoscaling, and A/B testing.
+
+  category: ai-ml
+  exposure: internal
+
+  metadata:
+    owner_team: ML Platform
+    approved_date: "2025-01-08"
+    tags:
+      - Vertex AI
+      - MLOps
+      - Inference
+      - Model Serving
+
+  components:
+    - id: model-registry
+      name: Vertex AI Model Registry
+      type: ai-ml
+      description: Centralized versioned model artifact repository
+      technology: Vertex AI Model Registry
+
+    - id: model-artifacts
+      name: Model Artifact Storage
+      type: storage
+      description: Trained model binaries and serving containers
+      technology: Cloud Storage
+      properties:
+        bucket_class: Standard
+        versioning: enabled
+
+    - id: vertex-endpoint
+      name: Vertex AI Endpoint
+      type: ai-ml
+      description: Managed prediction endpoint with traffic splitting
+      technology: Vertex AI Endpoint
+      properties:
+        traffic_split:
+          model-v2: 90
+          model-v3-canary: 10
+
+    - id: prediction-service
+      name: Prediction Service
+      type: compute
+      description: Autoscaled model serving replicas
+      technology: Vertex AI Prediction
+      properties:
+        machine_type: n1-standard-4
+        accelerator: nvidia-tesla-t4
+        min_replicas: 1
+        max_replicas: 20
+
+    - id: model-monitoring
+      name: Model Monitoring
+      type: monitoring
+      description: Continuous monitoring for data drift, feature skew, and prediction quality
+      technology: Vertex AI Model Monitoring
+
+    - id: feature-store
+      name: Feature Store
+      type: database
+      description: Low-latency online feature serving for model inputs
+      technology: Vertex AI Feature Store
+
+    - id: ci-cd-pipeline
+      name: ML CI/CD Pipeline
+      type: automation
+      description: Automated model training, evaluation, and deployment pipeline
+      technology: Cloud Build + Vertex AI Pipelines
+
+  validation:
+    rules:
+      - type: required_components
+        components:
+          - model-registry
+          - vertex-endpoint
+          - model-monitoring
+      - type: resource_policy
+        resource: ai-ml
+        constraint: model_monitoring.enabled == true
+        message: All production endpoints must have model monitoring enabled
+
+  resiliency_patterns:
+    type: active-passive
+    regions:
+      primary: us-central1
+      secondary: us-east1
+    rpo: "< 30min"
+    rto: "< 5min"
+
+  advantages:
+    - Fully managed endpoints with automatic scaling
+    - Built-in traffic splitting for canary deployments
+    - Integrated model monitoring for data drift
+
+  considerations:
+    - Cold start latency for large models
+    - Endpoint compute costs (especially with GPUs)
+    - Strict IAM access controls for prediction routes
+
+  gettingStarted:
+    - step: 1
+      title: Upload the trained ML model artifact to the Vertex AI Model Registry.
+    - step: 2
+      title: Create a dedicated Vertex AI Endpoint.
+    - step: 3
+      title: Deploy the model to the endpoint, specifying the target machine type and accelerators (e.g., NVIDIA GPUs).
+    - step: 4
+      title: Configure performance monitoring, logging, and establish operational runbooks.

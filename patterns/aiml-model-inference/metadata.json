@@ -1,0 +1,12 @@
+{
+  "id": "aiml-model-inference",
+  "name": "AI-ML Model Deployment & Inferencing",
+  "version": "1.0.0",
+  "category": "ai-ml",
+  "maturity": "Beta",
+  "maintainerTeam": "ML Platform",
+  "downloads": 726,
+  "stars": 4.3,
+  "lastUpdated": "2025-03-01T11:45:00Z",
+  "docsUrl": "https://aac.muthub.org/patterns/aiml-model-inference"
+}
