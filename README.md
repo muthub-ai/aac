@@ -6,7 +6,7 @@
 
 <p align="center">
   Define, validate, visualize, and publish enterprise system architectures from declarative YAML.<br />
-  A full-lifecycle platform: interactive C4 diagram editor, pattern catalog, CI/CD governance pipeline, and auto-generated documentation site.
+  A full-lifecycle platform: interactive C4 diagram editor, pattern catalog, standards catalog, CI/CD governance pipeline, and auto-generated documentation site.
 </p>
 
 <p align="center">
@@ -35,8 +35,9 @@ The result is a single source of truth that stays in sync with the codebase, enf
 | **Interactive Diagram Editor** | Bidirectional sync between a Monaco YAML editor and a React Flow canvas. Edit YAML and the diagram updates; drag a node and the YAML updates. |
 | **C4 Model Support** | Full C4 hierarchy: Persons, Software Systems, Containers, Components, Deployment Nodes, and Infrastructure Nodes with boundary classification. |
 | **Pattern Catalog** | 6 reusable enterprise architecture patterns with C4 diagrams, design considerations, NFR targets, cost profiles, and getting-started guides. |
-| **Governance Pipeline** | 7-stage CI/CD pipeline: schema validation, test suite, ESLint, architecture policy linting, diagram generation, documentation build, and GitHub Pages deployment. |
-| **Published Documentation** | Auto-generated static site with system detail pages, pattern catalog, pipeline visualization, and lightbox diagram zoom. Deployed to GitHub Pages on every merge to `main`. |
+| **Standards Catalog** | 9 enterprise architecture standards covering AI/ML governance, cryptography, data platforms, resiliency, API integration, IaC, FinOps, and IAM -- each with RFC 2119 requirements, guidelines, solutions, and authoritative sources. |
+| **Governance Pipeline** | 7-job CI/CD pipeline with parallel domain stages: quality gate, then App Architecture / Patterns / Standards in parallel, assembly, PR feedback, and GitHub Pages deployment. |
+| **Published Documentation** | Auto-generated static site with system detail pages, pattern catalog, standards catalog, pipeline visualization, and lightbox diagram zoom. Deployed to GitHub Pages on every merge to `main`. |
 | **Multi-Format Export** | Export diagrams to PlantUML (`.puml`) and Draw.io XML (`.drawio.xml`) with correct C4 styling. |
 
 ---
@@ -53,6 +54,8 @@ The documentation site is auto-published on every push to `main`:
 | System detail (per-system diagrams, containers, actors) | [`/systems/{id}.html`](https://aac.muthub.org/systems/ecommerce-platform.html) |
 | Pattern catalog index | [`/patterns/`](https://aac.muthub.org/patterns/) |
 | Pattern detail (diagrams, NFRs, cost, getting started) | [`/patterns/{id}.html`](https://aac.muthub.org/patterns/public-web-application.html) |
+| Standards catalog index | [`/standards/`](https://aac.muthub.org/standards/) |
+| Standard detail (requirements, guidelines, solutions) | [`/standards/{id}.html`](https://aac.muthub.org/standards/ml-model-governance.html) |
 
 ---
 
@@ -66,7 +69,7 @@ The documentation site is auto-published on every push to `main`:
 | **Code Editor** | [Monaco Editor](https://microsoft.github.io/monaco-editor/) (`@monaco-editor/react`) |
 | **Graph Layout** | [Dagre](https://github.com/dagrejs/dagre) (`@dagrejs/dagre`) |
 | **State** | [Zustand 5](https://zustand-demo.pmnd.rs/) |
-| **Validation** | [Zod v4](https://zod.dev) + [Ajv](https://ajv.js.org) (JSON Schema draft-07) |
+| **Validation** | [Zod v4](https://zod.dev) + [Ajv](https://ajv.js.org) (JSON Schema draft-07 & draft 2020-12) |
 | **YAML** | [js-yaml](https://github.com/nodeca/js-yaml) |
 | **Diagram Export** | [plantuml-encoder](https://github.com/markushedvall/plantuml-encoder), custom Draw.io XML generator |
 | **Animation** | [Framer Motion](https://www.framer.com/motion/) |
@@ -83,7 +86,7 @@ The documentation site is auto-published on every push to `main`:
 ```
 aac/
 ├── .github/workflows/
-│   └── aac-pipeline.yml              # 7-stage CI/CD pipeline
+│   └── aac-pipeline.yml              # 7-job CI/CD pipeline (parallel domain stages)
 ├── model/                             # System architecture definitions (YAML + metadata)
 │   ├── demand-forecasting/
 │   ├── ecommerce-platform/
@@ -93,25 +96,33 @@ aac/
 │   ├── internal-api-multiregional/
 │   ├── data-platform-bq/
 │   └── aiml-model-inference/
+├── standards/                         # Architecture standard definitions (9 YAML files)
+│   ├── ml-model-governance.yaml
+│   ├── cryptography-key-management.yaml
+│   ├── api-microservices-integration.yaml
+│   └── ... (9 total)
 ├── schema/                            # JSON Schema definitions
-│   ├── application-schema.json        #   C4 model YAML validation
-│   ├── pattern-schema.json            #   Pattern definition validation
-│   └── patterns-schema.json           #   Pattern catalog entry validation
+│   ├── application-schema.json        #   C4 model YAML validation (draft-07)
+│   ├── pattern-schema.json            #   Pattern definition validation (draft-07)
+│   ├── patterns-schema.json           #   Pattern catalog entry validation (draft-07)
+│   └── standards.json                 #   Architecture standard validation (draft 2020-12)
 ├── scripts/                           # Build & governance scripts
-│   ├── validate-models.ts             #   Schema validation (Ajv + Zod)
+│   ├── validate-models.ts             #   Model schema validation (Ajv + Zod)
+│   ├── validate-standards.ts          #   Standards schema validation (Ajv 2020-12)
 │   ├── lint-architecture.ts           #   Enterprise policy linter (5 rules)
 │   ├── build-diagrams.ts              #   PlantUML + Draw.io generation
 │   ├── build-docs.ts                  #   Documentation site generator
-│   └── build-pattern-pages.ts         #   Pattern catalog page generator
+│   ├── build-pattern-pages.ts         #   Pattern catalog page generator
+│   └── build-standard-pages.ts        #   Standards catalog page generator
 ├── src/
 │   ├── app/                           # Next.js App Router
 │   │   ├── page.tsx                   #   Landing page (/)
 │   │   ├── dashboard/page.tsx         #   System & pattern catalog (/dashboard)
 │   │   ├── systems/[id]/page.tsx      #   Interactive diagram editor (/systems/:id)
 │   │   └── globals.css                #   Design tokens (light/dark themes)
-│   ├── components/                    # 40 React components
+│   ├── components/                    # 40+ React components
 │   │   ├── canvas/                    #   React Flow canvas with minimap
-│   │   ├── dashboard/                 #   Catalog tabs, pattern catalog, system cards
+│   │   ├── dashboard/                 #   Catalog tabs, pattern/standards catalogs, system cards
 │   │   ├── editor/                    #   Monaco YAML editor
 │   │   ├── landing/                   #   Landing page sections
 │   │   ├── nodes/                     #   C4 node renderers (6 types)
@@ -124,12 +135,13 @@ aac/
 │   │   ├── layout/                    #   Dagre auto-layout engine
 │   │   ├── export/                    #   Draw.io XML + PlantUML export
 │   │   ├── data/                      #   Pattern catalog data
-│   │   └── model/                     #   Filesystem model loader
+│   │   └── model/                     #   Filesystem model & standards loader
 │   ├── store/                         # Zustand store (bidirectional graph state)
-│   └── types/                         # TypeScript types (C4, system, pattern, YAML schema)
+│   └── types/                         # TypeScript types (C4, system, pattern, standard, YAML schema)
 └── build/                             # Generated artifacts (gitignored)
     ├── microsite/output/              #   Documentation site (HTML)
-    └── patterns/                      #   Pattern pages (HTML)
+    ├── patterns/                      #   Pattern pages (HTML)
+    └── standards/                     #   Standards pages (HTML)
 ```
 
 ---
@@ -190,10 +202,12 @@ npm start
 | Script | Description |
 |--------|-------------|
 | `npm run validate:models` | Validate all YAML models against JSON Schema + Zod |
+| `npm run validate:standards` | Validate all standards YAML against JSON Schema (draft 2020-12) |
 | `npm run lint:architecture` | Enterprise architecture policy compliance checks |
 | `npm run build:diagrams` | Generate PlantUML + Draw.io diagrams from models |
 | `npm run build:docs` | Generate documentation site to `build/microsite/output/` |
 | `npm run build:patterns` | Generate pattern catalog pages to `build/patterns/` |
+| `npm run build:standards` | Generate standards catalog pages to `build/standards/` |
 
 ---
 
@@ -233,31 +247,46 @@ Each level maps to a custom React Flow node type with C4-standard colors and sty
 
 ### CI/CD Pipeline
 
-Every push triggers a 7-stage governance pipeline:
+Every push triggers a 7-job governance pipeline organized into 4 phases. The three domain-specific build stages run **in parallel** after the quality gate:
 
 ```
- ┌──────────────┐   ┌──────────────┐   ┌──────────────┐   ┌──────────────┐
- │ 1. Model     │──>│ 2. Test      │──>│ 3. Arch      │──>│ 4. Diagram   │
- │    Validation│   │    Suite     │   │    Lint      │   │    Generation│
- └──────────────┘   └──────────────┘   └──────────────┘   └──────────────┘
-                                                                 │
- ┌──────────────┐   ┌──────────────┐   ┌──────────────┐         │
- │ 7. Publish   │<──│ 6. PR        │<──│ 5. Docs &    │<────────┘
- │    to Pages  │   │    Feedback  │   │    Patterns  │
- └──────────────┘   └──────────────┘   └──────────────┘
+                ┌─────────────────┐
+                │   Lint & Test    │   ← Quality Gate
+                └────────┬────────┘
+          ┌──────────────┼──────────────┐
+          ▼              ▼              ▼      ← Parallel Build
+   ┌────────────┐  ┌──────────┐  ┌───────────┐
+   │    App     │  │ Patterns │  │ Standards │
+   │Architecture│  │          │  │           │
+   │            │  │ Catalog  │  │ Schema    │
+   │ Schema     │  │ 10 pages │  │ Validation│
+   │ Compliance │  │          │  │ Catalog   │
+   │ Diagrams   │  │          │  │ 10 pages  │
+   │ Docs       │  │          │  │           │
+   └─────┬──────┘  └────┬─────┘  └─────┬─────┘
+         └───────────────┼──────────────┘
+                ┌────────▼────────┐
+                │    Assemble     │   ← Merge Artifacts
+                └────────┬────────┘
+                ┌────────┴────────┐
+                ▼                 ▼
+         ┌────────────┐   ┌────────────┐
+         │  PR Review  │   │  Publish   │   ← Deploy
+         │ (PRs only)  │   │ (main only)│
+         └────────────┘   └────────────┘
 ```
 
-| Stage | What It Does |
-|-------|--------------|
-| **1. Model Validation** | Validates every `system.yaml` against JSON Schema (Ajv) + Zod, checks cross-references |
-| **2. Test Suite** | Runs 288 Vitest tests across 10 suites |
-| **3. Architecture Lint** | 5 enterprise policy rules (no DB bypass, no orphaned systems, containers must have technology, etc.) |
-| **4. Diagram Generation** | Produces PlantUML `.puml` and Draw.io `.drawio.xml` for every system and view |
-| **5. Docs & Patterns** | Generates static HTML documentation site + pattern catalog pages |
-| **6. PR Feedback** | Posts PlantUML diagram previews as collapsible sections in PR comments |
-| **7. Publish** | Deploys to GitHub Pages via `gh-pages` branch (force orphan) |
+| Phase | Job | Sub-stages | Impact |
+|-------|-----|------------|--------|
+| **Quality Gate** | **Lint & Test** | ESLint, Vitest (288 tests) | Blocks merge |
+| **Build** | **App Architecture** | Schema validation (Ajv + Zod), Architecture compliance (5 policy rules), Diagram generation (PlantUML + Draw.io), Documentation rendering (Asciidoctor.js) | Blocks merge |
+| **Build** | **Patterns** | Pattern catalog generation (10 HTML pages) | Required |
+| **Build** | **Standards** | Schema validation (Ajv 2020-12), Standards catalog generation (10 HTML pages) | Blocks merge |
+| **Assembly** | **Assemble** | Merge docs + patterns + standards into unified microsite | Required |
+| **Deploy** | **PR Review** | Post diagram previews to PR comments | PRs only |
+| **Deploy** | **Publish** | Deploy to GitHub Pages via `gh-pages` branch | Main only |
 
-Architecture policy rules enforced in Stage 3:
+Architecture policy rules enforced in the App Architecture stage:
 
 1. No frontend container may connect directly to a database (must go through an API layer)
 2. Every system must define at least one container
@@ -293,6 +322,37 @@ Each pattern includes:
 - **Getting Started** -- step-by-step onboarding
 
 Patterns are browsable in the [Next.js dashboard](http://localhost:3000/dashboard?tab=patterns) and on the [published documentation site](https://muthub-ai.github.io/aac/patterns/).
+
+---
+
+## Standards Catalog
+
+The platform ships with 9 enterprise architecture standards, each validated against a JSON Schema (draft 2020-12) and published as static HTML pages:
+
+| Standard | ID | Domain | Status | Lifecycle |
+|----------|-----|--------|--------|-----------|
+| ML Model Governance | STD-AIML-001 | AI / ML | Approved | Standard |
+| Cryptography & Key Management | STD-SEC-001 | Security | Approved | Standard |
+| Data Platform & Warehousing | STD-DATA-001 | Data | Approved | Provisional |
+| Multi-Region Resiliency | STD-INFRA-001 | Infrastructure | Approved | Standard |
+| API & Microservices Integration | STD-INT-001 | Integration | Approved | Standard |
+| Generative AI Usage | STD-AIML-002 | AI / ML | Draft | Draft |
+| Infrastructure as Code | STD-DEVOPS-001 | DevOps | Approved | Provisional |
+| Cloud Rightsizing & FinOps | STD-FINOPS-001 | FinOps | Approved | Provisional |
+| Customer IAM (CIAM) | STD-IAM-001 | Identity | Approved | Retired |
+
+Each standard includes:
+
+- **Scope** -- in-scope and out-of-scope boundaries
+- **Requirements** -- RFC 2119 severity levels (MUST, SHOULD, MUST NOT) with rationale, verification method, and platform applicability
+- **Guidelines** -- recommended practices and implementation advice
+- **Solutions** -- approved technology solutions with context
+- **Authoritative Sources** -- links to governing standards and regulations
+- **Definitions** -- glossary of domain-specific terms
+- **FAQs** -- frequently asked questions
+- **Revision History** -- change log with authors and reviewers
+
+Standards are browsable in the [Next.js dashboard](http://localhost:3000/dashboard?tab=standards) and on the [published documentation site](https://muthub-ai.github.io/aac/standards/).
 
 ---
 
@@ -371,13 +431,14 @@ relationships:
 
 ## JSON Schemas
 
-Three JSON Schema (draft-07) files in `schema/` define the contract for all architecture data:
+Four JSON Schema files in `schema/` define the contract for all architecture data:
 
-| Schema | Validates | Key Structures |
-|--------|-----------|----------------|
-| `application-schema.json` | `model/*/system.yaml` | C4 hierarchy (System -> Container -> Component), People, Relationships, Deployment Nodes, Views |
-| `pattern-schema.json` | `patterns/*/pattern.yaml` | Pattern definitions with validation rules, resiliency patterns, components, deployment model |
-| `patterns-schema.json` | Pattern catalog entries | UI-facing metadata: id, version, name, category, maturity, exposure, tags |
+| Schema | Draft | Validates | Key Structures |
+|--------|-------|-----------|----------------|
+| `application-schema.json` | draft-07 | `model/*/system.yaml` | C4 hierarchy (System -> Container -> Component), People, Relationships, Deployment Nodes, Views |
+| `pattern-schema.json` | draft-07 | `patterns/*/pattern.yaml` | Pattern definitions with validation rules, resiliency patterns, components, deployment model |
+| `patterns-schema.json` | draft-07 | Pattern catalog entries | UI-facing metadata: id, version, name, category, maturity, exposure, tags |
+| `standards.json` | 2020-12 | `standards/*.yaml` | Architecture standards with metadata, scope, requirements (RFC 2119), guidelines, solutions, authoritative sources, definitions, FAQs |
 
 ---
 
