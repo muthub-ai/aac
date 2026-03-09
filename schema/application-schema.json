@@ -1,0 +1,596 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://enterpirse.arc-code/aac/schema/v1",
+  "title": "Architecture-as-Code (AaC) Schema",
+  "description": "JSON Schema for validating Architecture-as-Code YAML/JSON artifacts. Models the C4 hierarchy (System -> Container -> Component) with people, relationships, deployment topology, and filter able views.",
+  "type": "object",
+  "required": [
+    "name",
+    "model"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Application or system short identifier (e.g., MYAPP)."
+    },
+    "description": {
+      "type": "string",
+      "description": "Human-readable description of the architecture artifact."
+    },
+    "model": {
+      "$ref": "#/definitions/Model"
+    },
+    "views": {
+      "$ref": "#/definitions/Views"
+    }
+  },
+  "definitions": {
+    "Model": {
+      "type": "object",
+      "description": "The architecture model containing systems, people, and deployment topology.",
+      "additionalProperties": false,
+      "properties": {
+        "softwareSystems": {
+          "type": "array",
+          "description": "All software systems in scope (primary + external).",
+          "items": {
+            "$ref": "#/definitions/SoftwareSystem"
+          }
+        },
+        "people": {
+          "type": "array",
+          "description": "Human actors / personas that interact with the system.",
+          "items": {
+            "$ref": "#/definitions/Person"
+          }
+        },
+        "deploymentNodes": {
+          "type": "array",
+          "description": "Physical / logical deployment topology (data centers, clusters, instances).",
+          "items": {
+            "$ref": "#/definitions/DeploymentNode"
+          }
+        }
+      }
+    },
+    "SoftwareSystem": {
+      "type": "object",
+      "description": "A software system - either the primary system with containers or an external dependency.",
+      "required": [
+        "id",
+        "name"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique system identifier (e.g., MYAPP, EXT-SYS-01).",
+          "pattern": "^[A-Za-z0-9_-]+$"
+        },
+        "name": {
+          "type": "string",
+          "description": "Display name of the system."
+        },
+        "description": {
+          "type": "string",
+          "description": "What the system does."
+        },
+        "group": {
+          "type": "string",
+          "description": "Capability grouping (e.g., Payments, Identity, Observability)."
+        },
+        "tags": {
+          "type": "string",
+          "description": "Comma-separated tags for filtering and categorization."
+        },
+        "properties": {
+          "$ref": "#/definitions/SystemProperties"
+        },
+        "containers": {
+          "type": "array",
+          "description": "Internal components of the primary software system.",
+          "items": {
+            "$ref": "#/definitions/Container"
+          }
+        },
+        "relationships": {
+          "type": "array",
+          "description": "System-level outbound dependencies.",
+          "items": {
+            "$ref": "#/definitions/Relationship"
+          }
+        },
+        "disposition": {
+          "type": "string",
+          "description": "Strategic disposition of the system.",
+          "enum": [
+            "Invest",
+            "Migrate",
+            "Tolerate",
+            "Eliminate"
+          ]
+        },
+        "dataClassification": {
+          "type": "string",
+          "description": "Data classification level.",
+          "enum": [
+            "Public",
+            "Internal Use",
+            "Confidential",
+            "Restricted"
+          ]
+        }
+      }
+    },
+    "SystemProperties": {
+      "type": "object",
+      "description": "Key-value metadata for a software system.",
+      "additionalProperties": true,
+      "properties": {
+        "capabilitiy": {
+          "type": "string",
+          "description": "Business capability the system supports."
+        },
+        "risk": {
+          "type": "string",
+          "description": "Technology Risk Taxonomy Code."
+        },
+        "pci": {
+          "type": "string",
+          "description": "PCI applicability (Yes/No).",
+          "enum": [
+            "Yes",
+            "No"
+          ]
+        }
+      }
+    },
+    "Container": {
+      "type": "object",
+      "description": "An internal component of a software system (UI, API, database, batch job, etc.).",
+      "required": [
+        "id",
+        "name"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique container identifier (e.g., MYAPP-web-ui).",
+          "pattern": "^[A-Za-z0-9_-]+$"
+        },
+        "name": {
+          "type": "string",
+          "description": "Display name of the container."
+        },
+        "description": {
+          "type": "string",
+          "description": "Purpose and responsibility of the container."
+        },
+        "technology": {
+          "type": "string",
+          "description": "Technology stack (e.g., Java/Spring Boot, PostgreSQL 13, Python/FastAPI)."
+        },
+        "tags": {
+          "type": "string",
+          "description": "Comma-separated tags (e.g., API, UI, Batch, Database)."
+        },
+        "properties": {
+          "$ref": "#/definitions/ContainerProperties"
+        },
+        "relationships": {
+          "type": "array",
+          "description": "Outbound dependencies from this container.",
+          "items": {
+            "$ref": "#/definitions/Relationship"
+          }
+        }
+      }
+    },
+    "ContainerProperties": {
+      "type": "object",
+      "description": "Key-value metadata for a container.",
+      "additionalProperties": true,
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "Container archetype.",
+          "enum": [
+            "UI",
+            "API",
+            "database",
+            "batch",
+            "messaging",
+            "cache",
+            "other"
+          ]
+        },
+        "softwreType": {
+          "type": "string",
+          "description": "Whether the software is custom-built or commercial off-the-shelf.",
+          "enum": [
+            "custom",
+            "COTS",
+            "SaaS",
+            "open-source"
+          ]
+        },
+        "primaryLanguage": {
+          "type": "string",
+          "description": "Primary programming language (e.g., java, python, javascript)."
+        },
+        "deploymentType": {
+          "type": "string",
+          "description": "Deployment / availability pattern.",
+          "enum": [
+            "active-active",
+            "active-passive",
+            "single",
+            "other"
+          ]
+        },
+        "hostingPlatform": {
+          "type": "string",
+          "description": "Where the container runs (e.g., Kubernetes, EC2, VM, Serverless)."
+        },
+        "operatingSystem": {
+          "type": "string",
+          "description": "Target OS (e.g., linux, windows)."
+        },
+        "dataClassification": {
+          "type": "string",
+          "description": "Data classification level.",
+          "enum": [
+            "Public",
+            "Internal Use",
+            "Confidential",
+            "Restricted"
+          ]
+        },
+        "unencryptedPAN": {
+          "type": "string",
+          "description": "Whether unencrypted PAN data is present (true/false).",
+          "enum": [
+            "true",
+            "false"
+          ]
+        },
+        "vendor": {
+          "type": "string",
+          "description": "Vendor name for COTS/SaaS software."
+        },
+        "version": {
+          "type": "string",
+          "description": "Software version."
+        }
+      }
+    },
+    "Relationship": {
+      "type": "object",
+      "description": "A directed dependency between two elements.",
+      "required": [
+        "destinationId",
+        "description"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "destinationId": {
+          "type": "string",
+          "description": "Target element ID. Use dot-notation for containers within a system (e.g., MYAPP-api.db), plain ID for external systems (e.g., EXT-SYS-01)."
+        },
+        "description": {
+          "type": "string",
+          "description": "What the relationship does / data exchanged."
+        },
+        "technology": {
+          "type": "string",
+          "description": "Communication protocol or technology (e.g., REST, gRPC, ODBC, HTTP, Web Sockets)."
+        }
+      }
+    },
+    "Person": {
+      "type": "object",
+      "description": "A human actor or persona that interacts with the system.",
+      "required": [
+        "id",
+        "name"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique persona identifier.",
+          "pattern": "^[A-Za-z0-9_-]+$"
+        },
+        "name": {
+          "type": "string",
+          "description": "Role or persona name."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the person."
+        },
+        "relationships": {
+          "type": "array",
+          "description": "How the person interacts with the systems.",
+          "items": {
+            "$ref": "#/definitions/Relationship"
+          }
+        }
+      }
+    },
+    "DeploymentNode": {
+      "type": "object",
+      "description": "A physical or logical deployment node (data center, cluster, instance).",
+      "required": [
+        "id",
+        "name"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique deployment node identifier.",
+          "pattern": "^[A-Za-z0-9_-]+$"
+        },
+        "name": {
+          "type": "string",
+          "description": "Location or node display name."
+        },
+        "environment": {
+          "type": "string",
+          "description": "Target environment (e.g., Production, Staging, Development)."
+        },
+        "technology": {
+          "type": "string",
+          "description": "Infrastructure technology (e.g., AWS Data Center, Global Traffic Manager, Cloud Region)."
+        },
+        "tags": {
+          "type": "string",
+          "description": "Comma-separated tags."
+        },
+        "infrastructureNodes": {
+          "type": "array",
+          "description": "Infrastructure-level elements within this node (load balancers, network appliances).",
+          "items": {
+            "$ref": "#/definitions/InfrastructureNode"
+          }
+        },
+        "children": {
+          "type": "array",
+          "description": "Nested deployment nodes (compute clusters, database clusters).",
+          "items": {
+            "$ref": "#/definitions/DeploymentNodeChild"
+          }
+        }
+      }
+    },
+    "InfrastructureNode": {
+      "type": "object",
+      "description": "An infrastructure element such as a load balancer or network appliance.",
+      "required": [
+        "id",
+        "name"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique infrastructure node identifier.",
+          "pattern": "^[A-Za-z0-9_-]+$"
+        },
+        "name": {
+          "type": "string",
+          "description": "Display name."
+        },
+        "technology": {
+          "type": "string",
+          "description": "Technology (e.g., Load Balancer, Global Traffic Manager, CDN)."
+        },
+        "tags": {
+          "type": "string",
+          "description": "Comma-separated tags."
+        },
+        "properties": {
+          "type": "object",
+          "description": "Additional key-value metadata.",
+          "additionalProperties": true,
+          "properties": {
+            "type": {
+              "type": "string",
+              "description": "Infrastructure type (e.g., load-balancer, firewall, dns)."
+            }
+          }
+        },
+        "relationships": {
+          "type": "array",
+          "description": "Relationships to other deployment elements.",
+          "items": {
+            "$ref": "#/definitions/Relationship"
+          }
+        }
+      }
+    },
+    "DeploymentNodeChild": {
+      "type": "object",
+      "description": "A nested deployment node (e.g., a Kubernetes cluster or database cluster within a data center).",
+      "required": [
+        "id",
+        "name"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique child node identifier.",
+          "pattern": "^[A-Za-z0-9_-]+$"
+        },
+        "name": {
+          "type": "string",
+          "description": "Display name."
+        },
+        "technology": {
+          "type": "string",
+          "description": "Technology (e.g., Kubernetes 1.2, Database Cluster, VM Pool)."
+        },
+        "tags": {
+          "type": "string",
+          "description": "Comma-separated tags."
+        },
+        "containerInstances": {
+          "type": "array",
+          "description": "Container instances deployed to this node.",
+          "items": {
+            "$ref": "#/definitions/ContainerInstance"
+          }
+        }
+      }
+    },
+    "ContainerInstance": {
+      "type": "object",
+      "description": "An instance of a container deployed to a specific deployment node.",
+      "required": [
+        "containerId",
+        "instanceId"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "containerId": {
+          "type": "string",
+          "description": "Reference to the container using dot notation (e.g., MYAPP-frontend.ui)."
+        },
+        "instanceId": {
+          "type": "integer",
+          "description": "Instance number, unique per data center / deployment node.",
+          "minimum": 1
+        }
+      }
+    },
+    "Views": {
+      "type": "object",
+      "description": "Diagram / view definitions for rendering architecture perspectives.",
+      "additionalProperties": false,
+      "properties": {
+        "systemContextViews": {
+          "type": "array",
+          "description": "System context level views (C4 Level 1).",
+          "items": {
+            "$ref": "#/definitions/View"
+          }
+        },
+        "containerViews": {
+          "type": "array",
+          "description": "Container level views (C4 Level 2).",
+          "items": {
+            "$ref": "#/definitions/View"
+          }
+        },
+        "deploymentViews": {
+          "type": "array",
+          "description": "Deployment / Infrastructure views.",
+          "items": {
+            "$ref": "#/definitions/DeploymentView"
+          }
+        }
+      }
+    },
+    "View": {
+      "type": "object",
+      "description": "A viewable architecture view definition.",
+      "required": [
+        "key",
+        "softwareSystemId"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "key": {
+          "type": "string",
+          "description": "Unique view identifier."
+        },
+        "softwareSystemId": {
+          "type": "string",
+          "description": "The root software system for this view."
+        },
+        "title": {
+          "type": "string",
+          "description": "View title for display."
+        },
+        "description": {
+          "type": "string",
+          "description": "Purpose and scope of the view."
+        },
+        "filters": {
+          "type": "array",
+          "description": "Ordered include/exclude filter rules.",
+          "items": {
+            "$ref": "#/definitions/ViewFilter"
+          }
+        },
+        "exclude": {
+          "type": "array",
+          "description": "Short-hand exclusion list (legacy format).",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "DeploymentView": {
+      "type": "object",
+      "description": "A deployment-specific view definition.",
+      "required": [
+        "key",
+        "softwareSystemId",
+        "environment"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "key": {
+          "type": "string",
+          "description": "Unique view identifier."
+        },
+        "softwareSystemId": {
+          "type": "string",
+          "description": "The root software system."
+        },
+        "environment": {
+          "type": "string",
+          "description": "Target environment to render (e.g., Production)."
+        },
+        "title": {
+          "type": "string",
+          "description": "View title for display."
+        },
+        "description": {
+          "type": "string",
+          "description": "Purpose and scope of the view."
+        },
+        "filters": {
+          "type": "array",
+          "description": "Ordered include/exclude filter rules.",
+          "items": {
+            "$ref": "#/definitions/ViewFilter"
+          }
+        }
+      }
+    },
+    "ViewFilter": {
+      "type": "object",
+      "description": "A single include or exclude filter rule for a view.",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "maxProperties": 1,
+      "properties": {
+        "include": {
+          "type": "string",
+          "description": "Element, relationship, or wildcard to include (e.g., 'A', 'MYAPP-frontend.ui', 'element.tags=Batch', 'persons_and_systems')."
+        },
+        "exclude": {
+          "type": "string",
+          "description": "Element, relationship, or wildcard to exclude (e.g., 'E', '->MYAPP', 'element.tags=Batch', 'ex_asset_01')."
+        }
+      }
+    }
+  }
+}

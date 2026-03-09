@@ -323,6 +323,12 @@ All components use semantic Tailwind classes (`bg-card`, `text-foreground`, `bor
 
 ---
 
+## Acknowledgements
+
+- Inspired by the [C4 Model](https://c4model.com/)
+
+---
+
 ## License
 
 This project is licensed under the [MIT License](LICENSE).

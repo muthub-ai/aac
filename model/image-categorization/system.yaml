@@ -1,137 +1,210 @@
-actors:
-  Customer:
-    type: Person
-    label: Customer
+name: ImageCategorizationSystem
+description: Architecture for an ML-based image categorization system deployed on Google Cloud Platform
+model:
+  people:
+  - id: Customer
+    name: Customer
     description: Person wanting to sell second hand clothes
-    boundary: External
-  DataScientist:
-    type: Person
-    label: Data Scientist
+    relationships:
+    - destinationId: BrowserApp
+      description: Uses
+    - destinationId: MobileApp
+      description: Uses
+  - id: DataScientist
+    name: Data Scientist
     description: Person involved in developing the machine learning model
-    boundary: External
-
-softwareSystems:
-  ImageCategorization:
-    label: Image Categorization
+    relationships:
+    - destinationId: ImageCategorization
+      description: Develops
+    - destinationId: LogAggregator
+      description: Browses logs
+    - destinationId: MonitoringService
+      description: Views dashboard
+    - destinationId: DataExploration
+      description: Uses
+  softwareSystems:
+  - id: ImageCategorization
+    name: Image Categorization
     description: ML model predicting product category for images uploaded by customers
-    boundary: Internal
+    group: ML Platform
+    tags: ml, internal
+    disposition: Invest
+    dataClassification: Confidential
     containers:
-      ModelApi:
-        label: Model API
-        technology: FastAPI
-        description: Web application serving predictions
-      ModelTrainingPipeline:
-        label: Model Training Pipeline
-        technology: Python, DAG
-        description: Loads and preprocesses data, and trains a model
-      CiCdPipeline:
-        label: CI/CD Pipeline
-        technology: GitHub Actions
-        description: Runs automated tests and controls model version deployment
-
-  LogAggregator:
-    label: Log Aggregator
+    - id: ModelApi
+      name: Model API
+      technology: Cloud Run (FastAPI)
+      description: Web application serving predictions
+      tags: api, ml
+      properties:
+        type: API
+        softwreType: custom
+        primaryLanguage: Python
+        hostingPlatform: GCP
+        operatingSystem: Linux
+        deploymentType: active-active
+        dataClassification: Confidential
+      relationships:
+      - destinationId: LogAggregator
+        description: Sends logs
+        technology: Cloud Pub/Sub
+    - id: ModelTrainingPipeline
+      name: Model Training Pipeline
+      technology: Vertex AI Pipelines (Python)
+      description: Loads and preprocesses data, and trains a model
+      tags: ml, batch
+      properties:
+        type: batch
+        softwreType: custom
+        primaryLanguage: Python
+        hostingPlatform: GCP
+        operatingSystem: Linux
+        deploymentType: single
+        dataClassification: Confidential
+      relationships:
+      - destinationId: LogAggregator
+        description: Sends logs
+        technology: Cloud Pub/Sub
+      - destinationId: ModelRegistry
+        description: Stores trained model and metadata
+      - destinationId: DataWarehouse
+        description: Loads images and labels
+    - id: CiCdPipeline
+      name: CI/CD Pipeline
+      technology: Cloud Build
+      description: Runs automated tests and controls model version deployment
+      tags: ci-cd
+      properties:
+        type: batch
+        softwreType: SaaS
+        primaryLanguage: Python
+        hostingPlatform: GCP
+        operatingSystem: Linux
+        deploymentType: single
+        dataClassification: Internal Use
+      relationships:
+      - destinationId: ImageCategorization.ModelApi
+        description: Deploys
+      - destinationId: ModelRegistry
+        description: Downloads model artifact
+  - id: LogAggregator
+    name: Cloud Logging
     description: Receives, aggregates, and allows browsing of logs
-    boundary: External
-
-  MonitoringService:
-    label: Monitoring Service
-    description: Prometheus metric collector with Grafana dashboards
-    boundary: External
-
-  ModelRegistry:
-    label: Model Registry
+    group: Infrastructure Services
+    tags: logging, gcp-managed
+    disposition: Tolerate
+    dataClassification: Internal Use
+  - id: MonitoringService
+    name: Cloud Monitoring
+    description: Metric collector and dashboards for system observability
+    group: Infrastructure Services
+    tags: monitoring, gcp-managed
+    disposition: Tolerate
+    dataClassification: Internal Use
+    relationships:
+    - destinationId: ImageCategorization.ModelApi
+      description: Scrapes metrics
+      technology: HTTP
+  - id: ModelRegistry
+    name: Vertex AI Model Registry
     description: Tracks experiments and stores versioned model artifacts
-    boundary: External
-
-  BrowserApp:
-    label: Browser Application
+    group: ML Platform
+    tags: ml, gcp-managed
+    disposition: Tolerate
+    dataClassification: Confidential
+  - id: BrowserApp
+    name: Browser Application
     description: Client browser web application
-    boundary: External
-
-  MobileApp:
-    label: Mobile Application
+    group: Client Applications
+    tags: frontend, external
+    disposition: Invest
+    dataClassification: Public
+    relationships:
+    - destinationId: BackendSystem
+      description: Uploads image
+      technology: HTTP
+  - id: MobileApp
+    name: Mobile Application
     description: Client mobile application
-    boundary: External
-
-  BackendSystem:
-    label: Backend System
+    group: Client Applications
+    tags: frontend, external
+    disposition: Invest
+    dataClassification: Public
+    relationships:
+    - destinationId: BackendSystem
+      description: Uploads image
+      technology: HTTP
+  - id: BackendSystem
+    name: Backend System
     description: Backend application for uploading images
-    boundary: External
+    group: Backend Services
+    tags: backend, external
+    disposition: Invest
+    dataClassification: Confidential
     containers:
-      ImageDatabase:
-        label: Image Database
-        technology: PostgreSQL
-        description: Database containing images with product category labels
-
-  DataWarehouse:
-    label: Data Warehouse
+    - id: ImageDatabase
+      name: Image Database
+      technology: Cloud SQL for PostgreSQL
+      description: Database containing images with product category labels
+      tags: database
+      properties:
+        type: database
+        softwreType: open-source
+        primaryLanguage: SQL
+        hostingPlatform: GCP
+        operatingSystem: Linux
+        deploymentType: active-passive
+        dataClassification: Confidential
+      relationships:
+      - destinationId: DataWarehouse
+        description: Stores images and labels
+    relationships:
+    - destinationId: ImageCategorization.ModelApi
+      description: Sends image data
+      technology: HTTP
+  - id: DataWarehouse
+    name: BigQuery
     description: Company-wide data warehouse for analytical purposes
-    boundary: External
-
-  DataExploration:
-    label: Data Exploration Service
-    description: Jupyter notebook environment for exploratory analysis
-    boundary: External
-
-relationships:
-  - from: Customer
-    to: BrowserApp
-    label: Uses
-  - from: Customer
-    to: MobileApp
-    label: Uses
-  - from: DataScientist
-    to: ImageCategorization
-    label: Develops
-  - from: DataScientist
-    to: LogAggregator
-    label: Browses logs
-  - from: DataScientist
-    to: MonitoringService
-    label: Views dashboard
-  - from: DataScientist
-    to: DataExploration
-    label: Uses
-  - from: ImageCategorization.CiCdPipeline
-    to: ImageCategorization.ModelApi
-    label: Deploys
-  - from: ImageCategorization.ModelApi
-    to: LogAggregator
-    label: Sends logs
-    protocol: Kafka
-  - from: ImageCategorization.ModelTrainingPipeline
-    to: LogAggregator
-    label: Sends logs
-    protocol: Kafka
-  - from: MonitoringService
-    to: ImageCategorization.ModelApi
-    label: Scrapes metrics
-    protocol: HTTP
-  - from: ImageCategorization.ModelTrainingPipeline
-    to: ModelRegistry
-    label: Stores trained model and metadata
-  - from: ImageCategorization.CiCdPipeline
-    to: ModelRegistry
-    label: Downloads model artifact
-  - from: BrowserApp
-    to: BackendSystem
-    label: Uploads image
-    protocol: HTTP
-  - from: MobileApp
-    to: BackendSystem
-    label: Uploads image
-    protocol: HTTP
-  - from: BackendSystem
-    to: ImageCategorization.ModelApi
-    label: Sends image data
-    protocol: HTTP
-  - from: BackendSystem.ImageDatabase
-    to: DataWarehouse
-    label: Stores images and labels
-  - from: ImageCategorization.ModelTrainingPipeline
-    to: DataWarehouse
-    label: Loads images and labels
-  - from: DataExploration
-    to: DataWarehouse
-    label: Loads data from
+    group: Data Platform
+    tags: data, gcp-managed
+    disposition: Tolerate
+    dataClassification: Confidential
+  - id: DataExploration
+    name: Vertex AI Workbench
+    description: Notebook environment for exploratory analysis
+    group: Data Platform
+    tags: data, gcp-managed
+    disposition: Tolerate
+    dataClassification: Internal Use
+    relationships:
+    - destinationId: DataWarehouse
+      description: Loads data from
+  deploymentNodes:
+  - id: GCP
+    name: Google Cloud Platform
+    children:
+    - id: GCP-us-central1
+      name: us-central1
+      containerInstances:
+      - containerId: ImageCategorization.ModelApi
+        instanceId: 1
+      - containerId: ImageCategorization.ModelTrainingPipeline
+        instanceId: 2
+      - containerId: ImageCategorization.CiCdPipeline
+        instanceId: 3
+      - containerId: BackendSystem.ImageDatabase
+        instanceId: 4
+views:
+  systemContextViews:
+  - key: ImageCategorization-SystemContext
+    softwareSystemId: ImageCategorization
+    description: System context diagram for the Image Categorization system
+  containerViews:
+  - key: ImageCategorization-Containers
+    softwareSystemId: ImageCategorization
+    description: Container diagram for the Image Categorization system
+  deploymentViews:
+  - key: ImageCategorization-Deployment-Prod
+    softwareSystemId: ImageCategorization
+    environment: Production
+    description: GCP deployment diagram for the Image Categorization system

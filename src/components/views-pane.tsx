@@ -1,6 +1,13 @@
 'use client';
 
-import { Globe, Box, Cloud, Layers } from 'lucide-react';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { Globe, Box, Cloud, Layers, ChevronDown, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { useGraphStore } from '@/store/use-graph-store';
 import { cn } from '@/lib/utils';
 import type { ViewInfo } from '@/lib/parser/new-to-old-transform';
@@ -83,75 +90,147 @@ function ViewGroup({ type, views, activeViewKey, onSelect }: {
   );
 }
 
-export function ViewsPane() {
+export function ViewsDropdown() {
+  const [open, setOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const availableViews = useGraphStore((s) => s.availableViews);
   const activeViewKey = useGraphStore((s) => s.activeViewKey);
   const setActiveView = useGraphStore((s) => s.setActiveView);
+
+  const hasViews = availableViews.length > 0;
 
   const systemContextViews = availableViews.filter((v) => v.type === 'systemContext');
   const containerViews = availableViews.filter((v) => v.type === 'container');
   const deploymentViews = availableViews.filter((v) => v.type === 'deployment');
 
-  const hasViews = availableViews.length > 0;
+  const activeView = availableViews.find((v) => v.key === activeViewKey);
+
+  const handleSelect = useCallback((key: string | null) => {
+    setActiveView(key);
+    setOpen(false);
+  }, [setActiveView]);
+
+  // Close on click outside
+  useEffect(() => {
+    if (!open) return;
+    function handleClick(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [open]);
+
+  // Close on Escape
+  useEffect(() => {
+    if (!open) return;
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setOpen(false);
+    }
+    document.addEventListener('keydown', handleKey);
+    return () => document.removeEventListener('keydown', handleKey);
+  }, [open]);
 
   return (
-    <div className="flex h-full flex-col overflow-hidden border-r border-border bg-card">
-      <div className="flex items-center gap-2 border-b border-border px-3 py-2.5">
-        <Layers className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-        <h2 className="text-xs font-semibold tracking-tight">Views</h2>
-        {hasViews && (
-          <span className="ml-auto rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-            {availableViews.length}
+    <div className="relative" ref={dropdownRef}>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setOpen((o) => !o)}
+              className={cn(
+                'gap-1.5 cursor-pointer',
+                activeViewKey && 'border-primary/40 bg-primary/5',
+              )}
+              aria-label="Select architecture view"
+              aria-expanded={open}
+              aria-haspopup="listbox"
+            />
+          }
+        >
+          <Layers className="h-3.5 w-3.5" aria-hidden="true" />
+          <span className="hidden sm:inline">
+            {activeView ? (activeView.title || activeView.key) : 'Views'}
           </span>
-        )}
-      </div>
+          {hasViews && (
+            <span className="ml-0.5 rounded-full bg-muted px-1 py-0 text-[10px] font-medium text-muted-foreground">
+              {availableViews.length}
+            </span>
+          )}
+          <ChevronDown className={cn('h-3 w-3 transition-transform', open && 'rotate-180')} aria-hidden="true" />
+        </TooltipTrigger>
+        <TooltipContent>Select an architecture view</TooltipContent>
+      </Tooltip>
 
-      <div className="flex-1 overflow-y-auto">
-        {!hasViews ? (
-          <div className="flex flex-col items-center justify-center px-4 py-8 text-center">
-            <Layers className="mb-2 h-8 w-8 text-muted-foreground/30" aria-hidden="true" />
-            <p className="text-xs text-muted-foreground">
-              No views defined
-            </p>
-            <p className="mt-1 text-[10px] text-muted-foreground/60">
-              Add a views section to your YAML to see available views here
-            </p>
+      {open && (
+        <div
+          className={cn(
+            'absolute right-0 top-full z-50 mt-1.5 w-80 rounded-lg border border-border bg-card shadow-lg',
+            'animate-in fade-in-0 zoom-in-95 slide-in-from-top-2',
+          )}
+          role="listbox"
+          aria-label="Available views"
+        >
+          <div className="flex items-center justify-between border-b border-border px-3 py-2">
+            <span className="text-xs font-semibold">Architecture Views</span>
+            <button
+              onClick={() => setOpen(false)}
+              className="rounded-md p-0.5 text-muted-foreground hover:text-foreground"
+              aria-label="Close views dropdown"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
           </div>
-        ) : (
-          <div className="space-y-4 p-2">
-            {activeViewKey && (
-              <button
-                onClick={() => setActiveView(null)}
-                className={cn(
-                  'flex w-full items-center gap-2 rounded-md px-3 py-2 text-xs font-medium transition-colors',
-                  'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground',
+
+          <div className="max-h-80 overflow-y-auto p-2">
+            {!hasViews ? (
+              <div className="flex flex-col items-center px-4 py-6 text-center">
+                <Layers className="mb-2 h-6 w-6 text-muted-foreground/30" aria-hidden="true" />
+                <p className="text-xs text-muted-foreground">No views defined</p>
+                <p className="mt-1 text-[10px] text-muted-foreground/60">
+                  Add a views section to your YAML
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {activeViewKey && (
+                  <button
+                    onClick={() => handleSelect(null)}
+                    className={cn(
+                      'flex w-full items-center gap-2 rounded-md px-3 py-2 text-xs font-medium transition-colors',
+                      'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground',
+                    )}
+                  >
+                    <Layers className="h-3.5 w-3.5" aria-hidden="true" />
+                    Show All Elements
+                  </button>
                 )}
-              >
-                <Layers className="h-3.5 w-3.5" aria-hidden="true" />
-                Show All Elements
-              </button>
+                <ViewGroup
+                  type="systemContext"
+                  views={systemContextViews}
+                  activeViewKey={activeViewKey}
+                  onSelect={handleSelect}
+                />
+                <ViewGroup
+                  type="container"
+                  views={containerViews}
+                  activeViewKey={activeViewKey}
+                  onSelect={handleSelect}
+                />
+                <ViewGroup
+                  type="deployment"
+                  views={deploymentViews}
+                  activeViewKey={activeViewKey}
+                  onSelect={handleSelect}
+                />
+              </div>
             )}
-            <ViewGroup
-              type="systemContext"
-              views={systemContextViews}
-              activeViewKey={activeViewKey}
-              onSelect={setActiveView}
-            />
-            <ViewGroup
-              type="container"
-              views={containerViews}
-              activeViewKey={activeViewKey}
-              onSelect={setActiveView}
-            />
-            <ViewGroup
-              type="deployment"
-              views={deploymentViews}
-              activeViewKey={activeViewKey}
-              onSelect={setActiveView}
-            />
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

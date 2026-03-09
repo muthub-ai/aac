@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import {
   ReactFlow,
   Background,
@@ -14,6 +15,7 @@ import { useGraphStore } from '@/store/use-graph-store';
 import { nodeTypes } from '@/components/nodes/node-types';
 import { C4_COLORS } from '@/lib/constants/colors';
 import { useMounted } from '@/hooks/use-mounted';
+import { filterGraphByView } from '@/lib/graph/filter-by-view';
 
 const defaultEdgeOptions = {
   type: 'smoothstep' as const,
@@ -26,14 +28,22 @@ const defaultEdgeOptions = {
 };
 
 export function CanvasPane() {
-  const nodes = useGraphStore((s) => s.nodes);
-  const edges = useGraphStore((s) => s.edges);
+  const allNodes = useGraphStore((s) => s.nodes);
+  const allEdges = useGraphStore((s) => s.edges);
+  const activeViewKey = useGraphStore((s) => s.activeViewKey);
+  const availableViews = useGraphStore((s) => s.availableViews);
   const onNodesChange = useGraphStore((s) => s.onNodesChange);
   const onEdgesChange = useGraphStore((s) => s.onEdgesChange);
   const onConnect = useGraphStore((s) => s.onConnect);
   const updateFromCanvas = useGraphStore((s) => s.updateFromCanvas);
   const { resolvedTheme } = useTheme();
   const mounted = useMounted();
+
+  const activeView = availableViews.find((v) => v.key === activeViewKey);
+  const { nodes, edges } = useMemo(
+    () => filterGraphByView(allNodes, allEdges, activeView),
+    [allNodes, allEdges, activeView],
+  );
 
   const isDark = mounted ? resolvedTheme === 'dark' : true;
 

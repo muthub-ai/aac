@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
@@ -12,13 +13,23 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { ThemeToggle } from '@/components/providers/theme-toggle';
+import { ViewsDropdown } from '@/components/views-pane';
 import { useGraphStore } from '@/store/use-graph-store';
 import { downloadDrawioXml } from '@/lib/export/drawio-export';
+import { filterGraphByView } from '@/lib/graph/filter-by-view';
 
 export function AppToolbar() {
-  const nodes = useGraphStore((s) => s.nodes);
-  const edges = useGraphStore((s) => s.edges);
+  const allNodes = useGraphStore((s) => s.nodes);
+  const allEdges = useGraphStore((s) => s.edges);
+  const activeViewKey = useGraphStore((s) => s.activeViewKey);
+  const availableViews = useGraphStore((s) => s.availableViews);
   const runAutoLayout = useGraphStore((s) => s.runAutoLayout);
+
+  const activeView = availableViews.find((v) => v.key === activeViewKey);
+  const { nodes, edges } = useMemo(
+    () => filterGraphByView(allNodes, allEdges, activeView),
+    [allNodes, allEdges, activeView],
+  );
 
   return (
     <motion.header
@@ -82,6 +93,8 @@ export function AppToolbar() {
           </TooltipTrigger>
           <TooltipContent>Rearrange nodes automatically</TooltipContent>
         </Tooltip>
+
+        <ViewsDropdown />
 
         <Tooltip>
           <TooltipTrigger

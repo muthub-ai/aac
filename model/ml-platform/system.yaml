@@ -1,109 +1,144 @@
-actors:
-  Customer:
-    type: Person
-    label: Customer
+name: ML Platform
+description: Machine learning model serving platform architecture on Google Cloud Platform
+model:
+  people:
+  - id: Customer
+    name: Customer
     description: Customer using the app
-    boundary: External
-  DataScientist:
-    type: Person
-    label: Data Scientist
+    relationships:
+    - destinationId: FEApplication
+      description: Uses
+  - id: DataScientist
+    name: Data Scientist
     description: Data scientist developing a machine learning model
-    boundary: External
-
-softwareSystems:
-  MLPlatform:
-    label: ML Platform
-    description: Machine learning model serving platform exposing models over REST and Kafka
-    boundary: Internal
+    relationships:
+    - destinationId: MLPlatform.ModelContainer
+      description: Develops
+  softwareSystems:
+  - id: MLPlatform
+    name: ML Platform
+    description: Machine learning model serving platform exposing models over REST and Cloud Pub/Sub
+    group: ML Services
+    tags: ml, platform, gcp
+    disposition: Tolerate
+    dataClassification: Confidential
     containers:
-      Sidecar:
-        label: Model Sidecar Application
-        technology: Python
-        description: Ambassador sidecar for ML model
-        components:
-          StreamingModule:
-            label: Streaming Module
-            technology: Python, Kafka
-            description: Reads prediction requests from Kafka topic and returns predictions
-          RestModule:
-            label: REST Module
-            technology: Python, FastAPI
-            description: Receives prediction requests and returns response
-      ModelContainer:
-        label: Model
-        technology: Python
-        description: Machine learning model serving predictions
-        components:
-          ModelImplementation:
-            label: Python Model Implementation
-            technology: Python
-            description: Model class implementing __init__ and predict methods
-          ModelWrapper:
-            label: Model Wrapper
-            technology: Python
-            description: Wrapper serving predictions via Dataframe interface
-
-  LogAggregator:
-    label: Log Aggregator
-    description: Logging system based on ELK stack
-    boundary: External
-
-  MetricsCollector:
-    label: Metrics Collector
-    description: Reliability toolkit supporting web application monitoring
-    boundary: External
-
-  BackendAppA:
-    label: Backend Application A
+    - id: Sidecar
+      name: Model Sidecar Application
+      technology: Python
+      description: Ambassador sidecar for ML model; includes Streaming Module (Cloud Pub/Sub consumer) and REST Module (FastAPI
+        endpoint)
+      tags: sidecar, python, fastapi
+      properties:
+        type: API
+        softwreType: custom
+        primaryLanguage: Python
+        hostingPlatform: GKE
+        operatingSystem: Linux
+        deploymentType: active-active
+        dataClassification: Confidential
+      relationships:
+      - destinationId: MLPlatform.ModelContainer
+        description: Sends request to
+        technology: gRPC
+      - destinationId: LogAggregator
+        description: Sends logs to
+        technology: Cloud Pub/Sub
+      - destinationId: MetricsCollector
+        description: Exposes metrics to
+        technology: HTTP
+    - id: ModelContainer
+      name: Model
+      technology: Python
+      description: Machine learning model serving predictions; includes Python Model Implementation (model class with __init__
+        and predict methods) and Model Wrapper (serving predictions via Dataframe interface)
+      tags: model, python
+      properties:
+        type: API
+        softwreType: custom
+        primaryLanguage: Python
+        hostingPlatform: GKE
+        operatingSystem: Linux
+        deploymentType: active-active
+        dataClassification: Confidential
+      relationships:
+      - destinationId: LogAggregator
+        description: Sends logs to
+        technology: Cloud Logging agent
+  - id: LogAggregator
+    name: Log Aggregator
+    description: Centralized logging system based on Google Cloud Logging
+    group: Observability
+    tags: logging, gcp, cloud-logging
+    disposition: Tolerate
+    dataClassification: Internal Use
+  - id: MetricsCollector
+    name: Metrics Collector
+    description: Application monitoring and reliability toolkit based on Google Cloud Monitoring
+    group: Observability
+    tags: monitoring, gcp, cloud-monitoring
+    disposition: Tolerate
+    dataClassification: Internal Use
+  - id: BackendAppA
+    name: Backend Application A
     description: Application that uses a REST machine learning model
-    boundary: External
-
-  BackendAppB:
-    label: Backend Application B
+    group: Backend Services
+    tags: backend, rest
+    disposition: Tolerate
+    dataClassification: Confidential
+    relationships:
+    - destinationId: MLPlatform.Sidecar
+      description: Requests prediction from
+      technology: HTTP
+  - id: BackendAppB
+    name: Backend Application B
     description: Application that uses a streaming machine learning model
-    boundary: External
-
-  FEApplication:
-    label: FE Application
+    group: Backend Services
+    tags: backend, streaming
+    disposition: Tolerate
+    dataClassification: Confidential
+    relationships:
+    - destinationId: MLPlatform.Sidecar
+      description: Sends prediction request
+      technology: Cloud Pub/Sub
+  - id: FEApplication
+    name: FE Application
     description: Client frontend web application
-    boundary: External
-
-relationships:
-  - from: Customer
-    to: FEApplication
-    label: Uses
-  - from: DataScientist
-    to: MLPlatform.ModelContainer
-    label: Develops
-  - from: FEApplication
-    to: BackendAppA
-    label: Requests information from
-    protocol: HTTP
-  - from: FEApplication
-    to: BackendAppB
-    label: Requests information from
-    protocol: HTTP
-  - from: BackendAppA
-    to: MLPlatform.Sidecar
-    label: Requests prediction from
-    protocol: HTTP
-  - from: BackendAppB
-    to: MLPlatform.Sidecar
-    label: Sends prediction request
-    protocol: Kafka
-  - from: MLPlatform.Sidecar
-    to: MLPlatform.ModelContainer
-    label: Sends request to
-    protocol: gRPC
-  - from: MLPlatform.Sidecar
-    to: LogAggregator
-    label: Sends logs to
-    protocol: Kafka
-  - from: MLPlatform.ModelContainer
-    to: LogAggregator
-    label: Sends logs to
-    protocol: Filebeat
-  - from: MLPlatform.Sidecar
-    to: MetricsCollector
-    label: Exposes metrics to
-    protocol: HTTP
+    group: Frontend
+    tags: frontend, web
+    disposition: Tolerate
+    dataClassification: Public
+    relationships:
+    - destinationId: BackendAppA
+      description: Requests information from
+      technology: HTTP
+    - destinationId: BackendAppB
+      description: Requests information from
+      technology: HTTP
+  deploymentNodes:
+  - id: gcp-project
+    name: GCP Project
+    tags: gcp
+    children:
+    - id: us-central1
+      name: us-central1
+      tags: region
+      containerInstances:
+      - containerId: MLPlatform.Sidecar
+        instanceId: 1
+      - containerId: MLPlatform.ModelContainer
+        instanceId: 2
+views:
+  systemContextViews:
+  - key: MLPlatform-SystemContext
+    softwareSystemId: MLPlatform
+    description: System context view of the ML Platform showing all actors and external systems
+  containerViews:
+  - key: MLPlatform-Containers
+    softwareSystemId: MLPlatform
+    description: Container view of the ML Platform showing internal containers and external dependencies
+  deploymentViews:
+  - key: MLPlatform-Deployment-Prod
+    softwareSystemId: MLPlatform
+    environment: Production
+    description: GCP deployment view of the ML Platform on Google Kubernetes Engine

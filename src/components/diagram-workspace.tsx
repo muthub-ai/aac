@@ -7,16 +7,15 @@ import {
   Group,
   Separator,
 } from 'react-resizable-panels';
-import { Code2, Map, Layers } from 'lucide-react';
+import { Code2, Map } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AppToolbar } from '@/components/toolbar/app-toolbar';
 import { EditorPane } from '@/components/editor/editor-pane';
 import { CanvasPane } from '@/components/canvas/canvas-pane';
-import { ViewsPane } from '@/components/views-pane';
 import { useGraphStore } from '@/store/use-graph-store';
 import { cn } from '@/lib/utils';
 
-type MobileTab = 'views' | 'editor' | 'canvas';
+type MobileTab = 'editor' | 'canvas';
 
 interface DiagramWorkspaceProps {
   initialYaml?: string;
@@ -39,20 +38,9 @@ export function DiagramWorkspace({ initialYaml }: DiagramWorkspaceProps) {
         <Group
           orientation="horizontal"
           id="aac-panels"
-          defaultLayout={{ views: 12, editor: 13, canvas: 75 }}
+          defaultLayout={{ editor: 15, canvas: 85 }}
         >
-          <Panel id="views" defaultSize={12} minSize={8} maxSize={20}>
-            <ViewsPane />
-          </Panel>
-          <Separator
-            className={cn(
-              'relative w-1.5 bg-border transition-colors',
-              'hover:bg-primary/20 active:bg-primary/30',
-              'focus-visible:bg-primary/30 focus-visible:outline-none',
-            )}
-            aria-label="Resize views and editor panels"
-          />
-          <Panel id="editor" defaultSize={13} minSize={10}>
+          <Panel id="editor" defaultSize={15} minSize={10}>
             <EditorPane />
           </Panel>
           <Separator
@@ -63,7 +51,7 @@ export function DiagramWorkspace({ initialYaml }: DiagramWorkspaceProps) {
             )}
             aria-label="Resize editor and canvas panels"
           />
-          <Panel id="canvas" defaultSize={75} minSize={40}>
+          <Panel id="canvas" defaultSize={85} minSize={50}>
             <CanvasPane />
           </Panel>
         </Group>
@@ -76,22 +64,6 @@ export function DiagramWorkspace({ initialYaml }: DiagramWorkspaceProps) {
           role="tablist"
           aria-label="View selector"
         >
-          <Button
-            variant="ghost"
-            role="tab"
-            aria-selected={mobileTab === 'views'}
-            aria-controls="panel-views"
-            onClick={() => setMobileTab('views')}
-            className={cn(
-              'flex-1 gap-2 rounded-none border-b-2 cursor-pointer',
-              mobileTab === 'views'
-                ? 'border-primary text-foreground'
-                : 'border-transparent text-muted-foreground',
-            )}
-          >
-            <Layers className="h-4 w-4" aria-hidden="true" />
-            Views
-          </Button>
           <Button
             variant="ghost"
             role="tab"
@@ -127,21 +99,7 @@ export function DiagramWorkspace({ initialYaml }: DiagramWorkspaceProps) {
         </div>
 
         <AnimatePresence mode="wait">
-          {mobileTab === 'views' ? (
-            <motion.div
-              key="views"
-              id="panel-views"
-              role="tabpanel"
-              aria-label="Architecture Views"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.15 }}
-              className="min-h-0 flex-1"
-            >
-              <ViewsPane />
-            </motion.div>
-          ) : mobileTab === 'editor' ? (
+          {mobileTab === 'editor' ? (
             <motion.div
               key="editor"
               id="panel-editor"

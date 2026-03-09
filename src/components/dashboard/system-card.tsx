@@ -1,6 +1,14 @@
 'use client';
 
-import { GitBranch, Clock, Box, Layers, Hexagon, Zap } from 'lucide-react';
+import {
+  GitBranch,
+  Clock,
+  Users,
+  Server,
+  Container,
+  ArrowRightLeft,
+  ChevronRight,
+} from 'lucide-react';
 import type { SystemData } from '@/types/system';
 import { cn } from '@/lib/utils';
 
@@ -9,27 +17,25 @@ interface SystemCardProps {
   onClick: () => void;
 }
 
-function formatDate(iso: string): string {
-  const date = new Date(iso);
-  return date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+function timeAgo(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const days = Math.floor(diff / 86_400_000);
+  if (days === 0) return 'Today';
+  if (days === 1) return 'Yesterday';
+  if (days < 30) return `${days}d ago`;
+  const months = Math.floor(days / 30);
+  return months === 1 ? '1mo ago' : `${months}mo ago`;
 }
 
 function formatNumber(n: number): string {
+  if (n >= 1000) return `${(n / 1000).toFixed(n >= 10000 ? 0 : 1)}K`;
   return n.toLocaleString('en-US');
 }
 
-const statFields = [
-  { key: 'deployableUnits' as const, label: 'Deployable Units', icon: Box },
-  { key: 'domainModules' as const, label: 'Domain Modules', icon: Layers },
-  { key: 'domainObjects' as const, label: 'Domain Objects', icon: Hexagon },
-  { key: 'domainBehaviors' as const, label: 'Domain Behaviors', icon: Zap },
-];
+function truncateBranch(name: string, max = 12): string {
+  if (name.length <= max) return name;
+  return name.slice(0, max - 1) + '\u2026';
+}
 
 export function SystemCard({ system, onClick }: SystemCardProps) {
   return (
@@ -37,54 +43,83 @@ export function SystemCard({ system, onClick }: SystemCardProps) {
       type="button"
       onClick={onClick}
       className={cn(
-        'group w-full cursor-pointer rounded-xl border border-border p-6 text-left',
-        'bg-card',
-        'shadow-[0_4px_24px_rgba(0,0,0,0.12)]',
-        'transition-all duration-300 ease-out',
-        'hover:-translate-y-1 hover:border-ring/40 hover:bg-muted hover:shadow-[0_8px_40px_rgba(0,0,0,0.2)]',
+        'group flex w-full cursor-pointer flex-col rounded-xl border border-border text-left',
+        'bg-card p-5',
+        'shadow-sm',
+        'transition-all duration-200 ease-out',
+        'hover:border-ring/30 hover:shadow-md',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background',
       )}
       aria-label={`Open ${system.name}`}
     >
-      {/* Header */}
-      <div className="mb-5">
-        <h3 className="text-lg font-semibold text-foreground">{system.name}</h3>
-        <p className="mt-1.5 text-[13px] text-muted-foreground">
-          {system.repoCount} {system.repoCount === 1 ? 'repository' : 'repositories'}
-          <span className="mx-1.5 text-border">&middot;</span>
-          {formatNumber(system.linesOfCode)} lines of code
+      {/* Row 1: Group */}
+      {system.group && (
+        <div className="mb-2">
+          <span className="rounded-md bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+            {system.group}
+          </span>
+        </div>
+      )}
+
+      {/* Row 2: Title */}
+      <div className="mb-1 flex items-center gap-2">
+        <h3 className="truncate text-[15px] font-semibold text-foreground transition-colors group-hover:text-ring">
+          {system.name}
+        </h3>
+        <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground/40 transition-transform group-hover:translate-x-0.5 group-hover:text-ring" />
+      </div>
+
+      {/* Row 3: Description */}
+      {system.description && (
+        <p className="mb-3 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+          {system.description}
         </p>
-      </div>
+      )}
 
-      {/* Stats Grid */}
-      <div className="mb-6 grid grid-cols-2 gap-3">
-        {statFields.map((field) => {
-          const Icon = field.icon;
-          return (
-            <div
-              key={field.key}
-              className="flex items-center gap-2.5 rounded-lg bg-muted dark:bg-background px-3 py-2.5"
+      {/* Row 4: Tags */}
+      {system.tags.length > 0 && (
+        <div className="mb-3 flex flex-wrap gap-1">
+          {system.tags.map((tag) => (
+            <span
+              key={tag}
+              className="rounded bg-ring/8 px-1.5 py-0.5 text-[10px] font-medium text-ring/80"
             >
-              <Icon className="h-3.5 w-3.5 shrink-0 text-ring/70" strokeWidth={1.8} />
-              <div className="min-w-0">
-                <p className="text-[11px] leading-tight text-tertiary-foreground">{field.label}</p>
-                <p className="text-sm font-semibold text-foreground">{system[field.key]}</p>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+              {tag}
+            </span>
+          ))}
+        </div>
+      )}
 
-      {/* Footer */}
-      <div className="flex items-center justify-between border-t border-muted pt-4">
-        <div className="flex items-center gap-1.5 text-[12px] text-tertiary-foreground">
-          <Clock className="h-3 w-3" strokeWidth={1.8} />
-          <span>{formatDate(system.lastScan)}</span>
-        </div>
-        <div className="flex items-center gap-1.5 rounded-full bg-ring/15 px-2.5 py-1 text-[11px] font-medium text-ring">
-          <GitBranch className="h-3 w-3" strokeWidth={2} />
-          {system.branchName}
-        </div>
+      {/* Row 5: Architecture stats + meta — single line */}
+      <div className="mt-auto flex items-center gap-x-2.5 border-t border-border/50 pt-3 text-[11px] text-muted-foreground">
+        <span className="inline-flex items-center gap-1" title="People">
+          <Users className="h-3 w-3 shrink-0 text-blue-500/70" strokeWidth={1.8} />
+          {system.peopleCount}
+        </span>
+        <span className="inline-flex items-center gap-1" title="Software Systems">
+          <Server className="h-3 w-3 shrink-0 text-indigo-500/70" strokeWidth={1.8} />
+          {system.softwareSystemCount}
+        </span>
+        <span className="inline-flex items-center gap-1" title="Containers">
+          <Container className="h-3 w-3 shrink-0 text-emerald-500/70" strokeWidth={1.8} />
+          {system.containerCount}
+        </span>
+        <span className="inline-flex items-center gap-1" title="Relationships">
+          <ArrowRightLeft className="h-3 w-3 shrink-0 text-amber-500/70" strokeWidth={1.8} />
+          {system.relationshipCount}
+        </span>
+
+        <span className="ml-auto inline-flex shrink-0 items-center gap-2.5 text-[10px] text-muted-foreground/70">
+          <span>{formatNumber(system.linesOfCode)} LoC</span>
+          <span className="inline-flex items-center gap-0.5" title={system.branchName}>
+            <GitBranch className="h-2.5 w-2.5 shrink-0" strokeWidth={1.8} />
+            {truncateBranch(system.branchName)}
+          </span>
+          <span className="inline-flex items-center gap-0.5">
+            <Clock className="h-2.5 w-2.5 shrink-0" strokeWidth={1.8} />
+            {timeAgo(system.lastScan)}
+          </span>
+        </span>
       </div>
     </button>
   );

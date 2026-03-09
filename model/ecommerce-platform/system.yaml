@@ -1,206 +1,459 @@
-actors:
-  Customer:
-    type: Person
-    label: Customer
-    description: A registered customer of the e-commerce platform
-    boundary: External
-  Administrator:
-    type: Person
-    label: Administrator
-    description: System administrator with full access rights
-    boundary: Internal
-  ContentManager:
-    type: Person
-    label: Content Manager
-    description: Manages product listings and content
-    boundary: Internal
-
-softwareSystems:
-  ECommerce:
-    label: E-Commerce System
-    description: Allows customers to browse products and place orders
-    boundary: Internal
+name: ecommerce-platform
+description: Enterprise e-commerce platform deployed on Google Cloud Platform (GCP), enabling customers to browse products,
+  manage accounts, and place orders with integrated inventory management, content management, and third-party payment, email,
+  and shipping services.
+model:
+  people:
+  - id: Customer
+    name: Customer
+    description: A registered customer of the e-commerce platform who browses products, manages their account, and places
+      orders
+    relationships:
+    - destinationId: ECommerce.WebApp
+      description: Browses products and places orders using
+      technology: HTTPS
+    - destinationId: ECommerce.MobileApp
+      description: Uses on mobile device
+      technology: HTTPS
+  - id: Administrator
+    name: Administrator
+    description: System administrator with full access rights to the e-commerce and inventory management systems
+    relationships:
+    - destinationId: ECommerce
+      description: Administers
+    - destinationId: Inventory
+      description: Manages inventory using
+  - id: ContentManager
+    name: Content Manager
+    description: Manages product listings, descriptions, images, and marketing content
+    relationships:
+    - destinationId: CMS
+      description: Manages product content using
+  softwareSystems:
+  - id: ECommerce
+    name: E-Commerce System
+    description: Core e-commerce platform allowing customers to browse products, manage accounts, and place orders. Deployed
+      on GCP using GKE, Cloud SQL, Cloud Firestore, and Elastic Cloud.
+    group: E-Commerce
+    tags: core, customer-facing, internal
+    disposition: Invest
+    dataClassification: Confidential
+    relationships:
+    - destinationId: PaymentGateway
+      description: Processes payments via
+      technology: HTTPS/REST
+    - destinationId: EmailService
+      description: Sends emails using
+      technology: SMTP
+    - destinationId: Inventory
+      description: Checks inventory in
+      technology: HTTPS/REST
+    - destinationId: ShippingProvider
+      description: Creates shipments with
+      technology: HTTPS/REST
+    - destinationId: CMS
+      description: Retrieves content from
+      technology: HTTPS/REST
     containers:
-      WebApp:
-        label: Web Application
-        technology: React, TypeScript
-        description: Provides e-commerce functionality to customers
-        components:
-          ProductCatalog:
-            label: Product Catalog
-            technology: React Component
-            description: Displays products and allows filtering/search
-          ShoppingCart:
-            label: Shopping Cart
-            technology: React Component
-            description: Manages items in the user's cart
-          Checkout:
-            label: Checkout
-            technology: React Component
-            description: Handles the checkout process
-          AccountMgmt:
-            label: Account Management
-            technology: React Component
-            description: Allows users to manage their profile
-      MobileApp:
-        label: Mobile Application
-        technology: React Native
-        description: Provides e-commerce functionality to mobile users
-      ApiGateway:
-        label: API Gateway
-        technology: Node.js, Express
-        description: Provides an API for web and mobile clients
-        components:
-          AuthController:
-            label: Auth Controller
-            technology: Express Controller
-            description: Handles authentication and authorization
-          ProductController:
-            label: Product Controller
-            technology: Express Controller
-            description: Provides product data
-          OrderController:
-            label: Order Controller
-            technology: Express Controller
-            description: Manages order creation and retrieval
-          PaymentController:
-            label: Payment Controller
-            technology: Express Controller
-            description: Handles payment processing
-      ProductDB:
-        label: Product Database
-        technology: PostgreSQL
-        description: Stores product catalog information
-      CustomerDB:
-        label: Customer Database
-        technology: MongoDB
-        description: Stores customer information
-      OrderDB:
-        label: Order Database
-        technology: MongoDB
-        description: Stores order information
-      SearchService:
-        label: Search Service
-        technology: Elasticsearch, Node.js
-        description: Provides product search functionality
-
-  Inventory:
-    label: Inventory Management System
-    description: Manages product inventory and stock levels
-    boundary: Internal
+    - id: WebApp
+      name: Web Application
+      description: Single-page application providing e-commerce functionality to customers including product catalog with
+        filtering and search, shopping cart management, checkout process, and account management. Built with React and TypeScript,
+        served via Nginx on GKE.
+      technology: React, TypeScript
+      tags: frontend, web
+      properties:
+        type: UI
+        softwreType: custom
+        primaryLanguage: TypeScript
+        deploymentType: active-active
+        hostingPlatform: GKE
+        operatingSystem: Linux
+        dataClassification: Public
+      relationships:
+      - destinationId: ECommerce.ApiGateway
+        description: Makes API calls to
+        technology: JSON/HTTPS
+    - id: MobileApp
+      name: Mobile Application
+      description: Cross-platform mobile application providing e-commerce functionality to mobile users with native-like experience.
+        Built with React Native, distributed via App Store and Google Play. Mobile backend-for-frontend served from GKE.
+      technology: React Native
+      tags: frontend, mobile
+      properties:
+        type: UI
+        softwreType: custom
+        primaryLanguage: TypeScript
+        deploymentType: active-active
+        hostingPlatform: GKE
+        operatingSystem: Linux
+        dataClassification: Public
+      relationships:
+      - destinationId: ECommerce.ApiGateway
+        description: Makes API calls to
+        technology: JSON/HTTPS
+    - id: ApiGateway
+      name: API Gateway
+      description: Backend API serving web and mobile clients. Includes controllers for authentication and authorization,
+        product data retrieval, order creation and management, and payment processing. Deployed as a containerized Node.js
+        service on GKE.
+      technology: Node.js, Express
+      tags: backend, api
+      properties:
+        type: API
+        softwreType: custom
+        primaryLanguage: JavaScript
+        deploymentType: active-active
+        hostingPlatform: GKE
+        operatingSystem: Linux
+        dataClassification: Confidential
+      relationships:
+      - destinationId: ECommerce.ProductDB
+        description: Reads from and writes to
+        technology: Cloud SQL PostgreSQL Driver
+      - destinationId: ECommerce.CustomerDB
+        description: Reads from and writes to
+        technology: Cloud Firestore SDK
+      - destinationId: ECommerce.OrderDB
+        description: Reads from and writes to
+        technology: Cloud Firestore SDK
+      - destinationId: ECommerce.SearchService
+        description: Searches products using
+        technology: REST API
+    - id: ProductDB
+      name: Product Database
+      description: Stores product catalog information including pricing, descriptions, categories, and images metadata. Hosted
+        on Cloud SQL for PostgreSQL.
+      technology: Cloud SQL for PostgreSQL
+      tags: database, gcp-managed
+      properties:
+        type: database
+        softwreType: SaaS
+        primaryLanguage: SQL
+        deploymentType: active-active
+        hostingPlatform: Cloud SQL
+        operatingSystem: Linux
+        dataClassification: Confidential
+        vendor: Google
+        version: PostgreSQL 15
+    - id: CustomerDB
+      name: Customer Database
+      description: Stores customer profiles, preferences, addresses, and account information. Migrated from MongoDB to Cloud
+        Firestore for serverless scalability.
+      technology: Cloud Firestore
+      tags: database, gcp-managed, nosql
+      properties:
+        type: database
+        softwreType: SaaS
+        primaryLanguage: NoSQL
+        deploymentType: active-active
+        hostingPlatform: Cloud Firestore
+        operatingSystem: Linux
+        dataClassification: Confidential
+        unencryptedPAN: 'false'
+        vendor: Google
+    - id: OrderDB
+      name: Order Database
+      description: Stores order history, order line items, payment references, and fulfillment status. Migrated from MongoDB
+        to Cloud Firestore.
+      technology: Cloud Firestore
+      tags: database, gcp-managed, nosql
+      properties:
+        type: database
+        softwreType: SaaS
+        primaryLanguage: NoSQL
+        deploymentType: active-active
+        hostingPlatform: Cloud Firestore
+        operatingSystem: Linux
+        dataClassification: Confidential
+        vendor: Google
+    - id: SearchService
+      name: Search Service
+      description: Provides full-text product search with faceted filtering, autocomplete, and relevance ranking. Powered
+        by Elastic Cloud on GCP.
+      technology: Elastic Cloud on GCP
+      tags: search, gcp-marketplace
+      properties:
+        type: other
+        softwreType: SaaS
+        primaryLanguage: Java
+        deploymentType: active-active
+        hostingPlatform: Elastic Cloud
+        operatingSystem: Linux
+        dataClassification: Internal Use
+        vendor: Elastic
+  - id: Inventory
+    name: Inventory Management System
+    description: Manages product inventory, stock levels, warehouse locations, and replenishment workflows. Deployed on GCP
+      using GKE and Cloud SQL.
+    group: Operations
+    tags: internal, operations
+    disposition: Invest
+    dataClassification: Internal Use
     containers:
-      InventoryApp:
-        label: Inventory Application
-        technology: Angular
-        description: Used by staff to manage inventory
-      InventoryApi:
-        label: Inventory API
-        technology: Java, Spring Boot
-        description: Provides inventory management functionality
-      InventoryDB:
-        label: Inventory Database
-        technology: PostgreSQL
-        description: Stores inventory information
-
-  CMS:
-    label: Content Management System
-    description: Manages product content and descriptions
-    boundary: Internal
+    - id: InventoryApp
+      name: Inventory Application
+      description: Web application used by warehouse staff and the operations team to manage inventory levels, monitor stock,
+        and trigger replenishment.
+      technology: Angular
+      tags: frontend, web, internal
+      properties:
+        type: UI
+        softwreType: custom
+        primaryLanguage: TypeScript
+        deploymentType: active-active
+        hostingPlatform: GKE
+        operatingSystem: Linux
+        dataClassification: Internal Use
+      relationships:
+      - destinationId: Inventory.InventoryApi
+        description: Makes API calls to
+        technology: JSON/HTTPS
+    - id: InventoryApi
+      name: Inventory API
+      description: Backend service providing inventory management functionality including stock tracking, warehouse management,
+        and replenishment workflows.
+      technology: Java, Spring Boot
+      tags: backend, api
+      properties:
+        type: API
+        softwreType: custom
+        primaryLanguage: Java
+        deploymentType: active-active
+        hostingPlatform: GKE
+        operatingSystem: Linux
+        dataClassification: Internal Use
+      relationships:
+      - destinationId: Inventory.InventoryDB
+        description: Reads from and writes to
+        technology: JDBC
+    - id: InventoryDB
+      name: Inventory Database
+      description: Stores inventory levels, warehouse locations, stock movement history, and replenishment schedules. Hosted
+        on Cloud SQL for PostgreSQL.
+      technology: Cloud SQL for PostgreSQL
+      tags: database, gcp-managed
+      properties:
+        type: database
+        softwreType: SaaS
+        primaryLanguage: SQL
+        deploymentType: active-active
+        hostingPlatform: Cloud SQL
+        operatingSystem: Linux
+        dataClassification: Internal Use
+        vendor: Google
+        version: PostgreSQL 15
+  - id: CMS
+    name: Content Management System
+    description: Manages product content, descriptions, images, and marketing materials. Deployed on Cloud Run with Cloud
+      SQL for MySQL.
+    group: Content
+    tags: internal, content
+    disposition: Tolerate
+    dataClassification: Internal Use
     containers:
-      CMSApp:
-        label: CMS Application
-        technology: WordPress
-        description: Used by content managers
-      CMSDB:
-        label: CMS Database
-        technology: MySQL
-        description: Stores content
-
-  PaymentGateway:
-    label: Payment Gateway
-    description: Processes credit card payments
-    boundary: External
-
-  EmailService:
-    label: Email Service
-    description: Sends emails to customers
-    boundary: External
-
-  ShippingProvider:
-    label: Shipping Provider
-    description: Handles order fulfillment and shipping
-    boundary: External
-
-relationships:
-  - from: Customer
-    to: ECommerce.WebApp
-    label: Browses products and places orders using
-    protocol: HTTPS
-  - from: Customer
-    to: ECommerce.MobileApp
-    label: Uses on mobile device
-  - from: Administrator
-    to: ECommerce
-    label: Administers
-  - from: Administrator
-    to: Inventory
-    label: Manages inventory using
-  - from: ContentManager
-    to: CMS
-    label: Manages product content using
-  - from: ECommerce.WebApp
-    to: ECommerce.ApiGateway
-    label: Makes API calls to
-    protocol: JSON/HTTPS
-  - from: ECommerce.MobileApp
-    to: ECommerce.ApiGateway
-    label: Makes API calls to
-    protocol: JSON/HTTPS
-  - from: ECommerce.ApiGateway
-    to: ECommerce.ProductDB
-    label: Reads from and writes to
-    protocol: PostgreSQL Driver
-  - from: ECommerce.ApiGateway
-    to: ECommerce.CustomerDB
-    label: Reads from and writes to
-    protocol: MongoDB Driver
-  - from: ECommerce.ApiGateway
-    to: ECommerce.OrderDB
-    label: Reads from and writes to
-    protocol: MongoDB Driver
-  - from: ECommerce.ApiGateway
-    to: ECommerce.SearchService
-    label: Searches products using
-    protocol: REST API
-  - from: Inventory.InventoryApp
-    to: Inventory.InventoryApi
-    label: Makes API calls to
-    protocol: JSON/HTTPS
-  - from: Inventory.InventoryApi
-    to: Inventory.InventoryDB
-    label: Reads from and writes to
-    protocol: JDBC
-  - from: CMS.CMSApp
-    to: CMS.CMSDB
-    label: Reads from and writes to
-    protocol: SQL
-  - from: ECommerce
-    to: PaymentGateway
-    label: Processes payments via
-    protocol: HTTPS/REST
-  - from: ECommerce
-    to: EmailService
-    label: Sends emails using
-    protocol: SMTP
-  - from: ECommerce
-    to: Inventory
-    label: Checks inventory in
-    protocol: HTTPS/REST
-  - from: ECommerce
-    to: ShippingProvider
-    label: Creates shipments with
-    protocol: HTTPS/REST
-  - from: ECommerce
-    to: CMS
-    label: Retrieves content from
-    protocol: HTTPS/REST
+    - id: CMSApp
+      name: CMS Application
+      description: WordPress-based content management interface used by content managers to create and maintain product descriptions,
+        images, and marketing content. Containerized and deployed on Cloud Run.
+      technology: WordPress on Cloud Run
+      tags: frontend, cms
+      properties:
+        type: UI
+        softwreType: open-source
+        primaryLanguage: PHP
+        deploymentType: single
+        hostingPlatform: Cloud Run
+        operatingSystem: Linux
+        dataClassification: Internal Use
+        vendor: WordPress
+      relationships:
+      - destinationId: CMS.CMSDB
+        description: Reads from and writes to
+        technology: SQL
+    - id: CMSDB
+      name: CMS Database
+      description: Stores content pages, media metadata, and WordPress configuration. Hosted on Cloud SQL for MySQL.
+      technology: Cloud SQL for MySQL
+      tags: database, gcp-managed
+      properties:
+        type: database
+        softwreType: SaaS
+        primaryLanguage: SQL
+        deploymentType: active-active
+        hostingPlatform: Cloud SQL
+        operatingSystem: Linux
+        dataClassification: Internal Use
+        vendor: Google
+        version: MySQL 8.0
+  - id: PaymentGateway
+    name: Payment Gateway
+    description: External payment processing service (Stripe) for credit card and digital wallet transactions.
+    group: External
+    tags: external, payments
+    disposition: Invest
+    dataClassification: Restricted
+  - id: EmailService
+    name: Email Service
+    description: External email delivery service (SendGrid) for transactional emails such as order confirmations, shipping
+      notifications, and password resets.
+    group: External
+    tags: external, communications
+    disposition: Tolerate
+    dataClassification: Internal Use
+  - id: ShippingProvider
+    name: Shipping Provider
+    description: External shipping and logistics provider handling order fulfillment, package tracking, and last-mile delivery.
+    group: External
+    tags: external, logistics
+    disposition: Tolerate
+    dataClassification: Internal Use
+  deploymentNodes:
+  - id: GCP-us-central1
+    name: GCP us-central1 Region
+    environment: Production
+    technology: Google Cloud Platform
+    tags: gcp, production
+    infrastructureNodes:
+    - id: CloudLoadBalancer
+      name: Cloud Load Balancer
+      technology: Google Cloud External Application Load Balancer
+      tags: networking, gcp-managed
+    - id: CloudCDN
+      name: Cloud CDN
+      technology: Google Cloud CDN
+      tags: cdn, gcp-managed
+    - id: CloudArmor
+      name: Cloud Armor
+      technology: Google Cloud Armor WAF
+      tags: security, gcp-managed
+    - id: CloudIAM
+      name: Cloud IAM
+      technology: Google Cloud Identity and Access Management
+      tags: security, gcp-managed
+    - id: CloudMonitoring
+      name: Cloud Operations Suite
+      technology: Google Cloud Monitoring and Logging
+      tags: observability, gcp-managed
+    - id: SecretManager
+      name: Secret Manager
+      technology: Google Cloud Secret Manager
+      tags: security, gcp-managed
+    - id: VPCNetwork
+      name: VPC Network
+      technology: Google Cloud VPC
+      tags: networking, gcp-managed
+    children:
+    - id: GKE-Cluster
+      name: GKE Autopilot Cluster
+      technology: Google Kubernetes Engine Autopilot
+      tags: kubernetes, gcp-managed, compute
+      containerInstances:
+      - containerId: ECommerce.WebApp
+        instanceId: 1
+      - containerId: ECommerce.MobileApp
+        instanceId: 1
+      - containerId: ECommerce.ApiGateway
+        instanceId: 1
+      - containerId: Inventory.InventoryApp
+        instanceId: 1
+      - containerId: Inventory.InventoryApi
+        instanceId: 1
+    - id: CloudSQL-PostgreSQL
+      name: Cloud SQL PostgreSQL Instances
+      technology: Cloud SQL for PostgreSQL 15
+      tags: database, gcp-managed, postgresql
+      containerInstances:
+      - containerId: ECommerce.ProductDB
+        instanceId: 1
+      - containerId: Inventory.InventoryDB
+        instanceId: 1
+    - id: CloudFirestore-Cluster
+      name: Cloud Firestore
+      technology: Google Cloud Firestore (Native Mode)
+      tags: database, gcp-managed, nosql
+      containerInstances:
+      - containerId: ECommerce.CustomerDB
+        instanceId: 1
+      - containerId: ECommerce.OrderDB
+        instanceId: 1
+    - id: ElasticCloud-GCP
+      name: Elastic Cloud on GCP
+      technology: Elastic Cloud (Elasticsearch 8.x)
+      tags: search, gcp-marketplace
+      containerInstances:
+      - containerId: ECommerce.SearchService
+        instanceId: 1
+    - id: CloudRun-CMS
+      name: Cloud Run CMS Service
+      technology: Google Cloud Run
+      tags: serverless, gcp-managed
+      containerInstances:
+      - containerId: CMS.CMSApp
+        instanceId: 1
+    - id: CloudSQL-MySQL
+      name: Cloud SQL MySQL Instance
+      technology: Cloud SQL for MySQL 8.0
+      tags: database, gcp-managed, mysql
+      containerInstances:
+      - containerId: CMS.CMSDB
+        instanceId: 1
+views:
+  systemContextViews:
+  - key: ECommerce-SystemContext
+    softwareSystemId: ECommerce
+    title: E-Commerce System - System Context
+    description: Shows the E-Commerce System in context with its users and external dependencies including payment processing,
+      email delivery, shipping, inventory management, and content management systems.
+  - key: Inventory-SystemContext
+    softwareSystemId: Inventory
+    title: Inventory Management System - System Context
+    description: Shows the Inventory Management System and its interactions with administrators and the E-Commerce System.
+  - key: CMS-SystemContext
+    softwareSystemId: CMS
+    title: Content Management System - System Context
+    description: Shows the Content Management System and its interactions with content managers and the E-Commerce System.
+  containerViews:
+  - key: ECommerce-Containers
+    softwareSystemId: ECommerce
+    title: E-Commerce System - Container View
+    description: Shows the internal containers of the E-Commerce System including the React web application, React Native
+      mobile app, Node.js API gateway, Cloud SQL product database, Cloud Firestore customer and order databases, and Elastic
+      Cloud search service on GCP.
+  - key: Inventory-Containers
+    softwareSystemId: Inventory
+    title: Inventory Management System - Container View
+    description: Shows the internal containers of the Inventory Management System including the Angular frontend, Spring Boot
+      API, and Cloud SQL for PostgreSQL database on GCP.
+  - key: CMS-Containers
+    softwareSystemId: CMS
+    title: Content Management System - Container View
+    description: Shows the internal containers of the CMS including the WordPress application on Cloud Run and Cloud SQL for
+      MySQL database.
+  deploymentViews:
+  - key: ECommerce-GCP-Production
+    softwareSystemId: ECommerce
+    environment: Production
+    title: E-Commerce System - GCP Production Deployment
+    description: Shows the production deployment of the E-Commerce System on Google Cloud Platform in the us-central1 region,
+      including GKE Autopilot for application workloads, Cloud SQL for PostgreSQL, Cloud Firestore for document storage, and
+      Elastic Cloud for search.
+  - key: Inventory-GCP-Production
+    softwareSystemId: Inventory
+    environment: Production
+    title: Inventory Management System - GCP Production Deployment
+    description: Shows the production deployment of the Inventory Management System on Google Cloud Platform using GKE Autopilot
+      and Cloud SQL for PostgreSQL.
+  - key: CMS-GCP-Production
+    softwareSystemId: CMS
+    environment: Production
+    title: CMS - GCP Production Deployment
+    description: Shows the production deployment of the Content Management System on Google Cloud Platform using Cloud Run
+      for the WordPress application and Cloud SQL for MySQL.
+  - key: Platform-GCP-Production
+    softwareSystemId: ECommerce
+    environment: Production
+    title: Full Platform - GCP Production Deployment
+    description: Comprehensive view of the entire e-commerce platform deployment on Google Cloud Platform in us-central1,
+      showing all systems including E-Commerce, Inventory, and CMS with their GKE, Cloud SQL, Cloud Firestore, Elastic Cloud,
+      and Cloud Run infrastructure.

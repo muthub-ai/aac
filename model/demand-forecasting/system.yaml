@@ -1,106 +1,291 @@
-actors:
-  StockController:
-    type: Person
-    label: Stock Controller
-    description: Responsible for stock levels of products in a category
-    boundary: External
-  DataScientist:
-    type: Person
-    label: Data Scientist
-    description: Person involved in developing the machine learning model
-    boundary: External
-
-softwareSystems:
-  DemandForecasting:
-    label: Demand Forecasting
-    description: ML model predicting monthly product demand
-    boundary: Internal
-    containers:
-      ForecastStorage:
-        label: Forecast Storage
-        technology: Azure Cosmos DB
-        description: OLTP database storing predicted demand per product per month
-      ModelRegistry:
-        label: Model Registry
-        technology: MLFlow
-        description: Storage for experiments, model artifacts, and metadata
-      PredictionPipeline:
-        label: Prediction Pipeline
-        technology: PySpark
-        description: Scheduled monthly pipeline predicting demand for all products
-      ModelTraining:
-        label: Model Training
-        technology: Azure ML
-        description: Pipeline that trains a new model based on input data
-      PerformanceDashboard:
-        label: Performance Dashboard
-        technology: Azure Databricks
-        description: Dashboard showing KPIs for demand predictions
-      EvaluationJob:
-        label: Evaluation Job
-        technology: PySpark
-        description: Compares real demand with predictions and creates dashboards
-      DataExploration:
-        label: Data Exploration Service
-        technology: Jupyter Notebook
-        description: Notebook environment for exploratory analysis
-
-  DataWarehouse:
-    label: Data Warehouse
-    description: Company data warehouse
-    boundary: External
-    containers:
-      SalesData:
-        label: Sales Data
-        technology: Azure Databricks
-        description: Tables containing historical sales figures
-
-  ERPSystem:
-    label: ERP Software
-    description: Software used to manage warehouse inventory
-    boundary: External
-
-relationships:
-  - from: DataScientist
-    to: DemandForecasting
-    label: Develops
-  - from: DataScientist
-    to: DemandForecasting.PerformanceDashboard
-    label: Analyses
-  - from: DataScientist
-    to: DemandForecasting.DataExploration
-    label: Uses
-  - from: StockController
-    to: DemandForecasting.PerformanceDashboard
-    label: Analyses
-  - from: StockController
-    to: ERPSystem
-    label: Uses
-  - from: DemandForecasting.PredictionPipeline
-    to: DemandForecasting.ForecastStorage
-    label: Writes forecasts to
-  - from: DemandForecasting.PredictionPipeline
-    to: DemandForecasting.ModelRegistry
-    label: Loads model from
-  - from: DemandForecasting.ModelTraining
-    to: DemandForecasting.ModelRegistry
-    label: Writes candidate model to
-  - from: DemandForecasting.EvaluationJob
-    to: DemandForecasting.ForecastStorage
-    label: Reads forecasts
-  - from: DemandForecasting.EvaluationJob
-    to: DemandForecasting.PerformanceDashboard
-    label: Writes data
-  - from: DemandForecasting.EvaluationJob
-    to: DataWarehouse.SalesData
-    label: Reads sales figures
-  - from: DemandForecasting.DataExploration
-    to: DataWarehouse.SalesData
-    label: Loads data from
-  - from: DemandForecasting.ModelTraining
-    to: DataWarehouse.SalesData
-    label: Reads data from
-  - from: ERPSystem
-    to: DemandForecasting.ForecastStorage
-    label: Reads data from
-    protocol: JDBC
+name: DemandForecasting
+description: Architecture-as-Code model for the Demand Forecasting ML system on Google Cloud Platform.
+model:
+  people:
+    - id: StockController
+      name: Stock Controller
+      description: Responsible for stock levels of products in a category
+      relationships:
+        - destinationId: DemandForecasting.PerformanceDashboard
+          description: Analyses
+          technology: HTTPS
+        - destinationId: ERPSystem
+          description: Uses
+          technology: HTTPS
+    - id: DataScientist
+      name: Data Scientist
+      description: Person involved in developing the machine learning model
+      relationships:
+        - destinationId: DemandForecasting
+          description: Develops
+        - destinationId: DemandForecasting.PerformanceDashboard
+          description: Analyses
+          technology: HTTPS
+        - destinationId: DemandForecasting.DataExploration
+          description: Uses
+          technology: HTTPS
+  softwareSystems:
+    - id: DemandForecasting
+      name: Demand Forecasting
+      description: ML model predicting monthly product demand
+      group: Supply Chain Analytics
+      tags: ml,forecasting,gcp
+      disposition: Invest
+      dataClassification: Confidential
+      properties:
+        capabilitiy: Demand Planning
+        risk: Medium
+        pci: "No"
+      containers:
+        - id: ForecastStorage
+          name: Forecast Storage
+          description: OLTP database storing predicted demand per product per month
+          technology: Cloud Firestore
+          tags: database,gcp
+          properties:
+            type: database
+            softwreType: SaaS
+            hostingPlatform: GCP Serverless
+            operatingSystem: linux
+            dataClassification: Confidential
+            unencryptedPAN: "false"
+            vendor: Google
+            version: native-mode
+        - id: ModelRegistry
+          name: Model Registry
+          description: Storage for experiments, model artifacts, and metadata
+          technology: Vertex AI Model Registry
+          tags: ml,registry,gcp
+          properties:
+            type: other
+            softwreType: SaaS
+            hostingPlatform: Vertex AI
+            operatingSystem: linux
+            dataClassification: Internal Use
+            unencryptedPAN: "false"
+            vendor: Google
+        - id: PredictionPipeline
+          name: Prediction Pipeline
+          description: Scheduled monthly pipeline predicting demand for all products
+          technology: PySpark on Dataproc
+          tags: batch,ml,gcp
+          properties:
+            type: batch
+            softwreType: custom
+            primaryLanguage: python
+            deploymentType: single
+            hostingPlatform: Dataproc
+            operatingSystem: linux
+            dataClassification: Confidential
+            unencryptedPAN: "false"
+          relationships:
+            - destinationId: DemandForecasting.ForecastStorage
+              description: Writes forecasts to
+              technology: gRPC
+            - destinationId: DemandForecasting.ModelRegistry
+              description: Loads model from
+              technology: REST
+        - id: ModelTraining
+          name: Model Training
+          description: Pipeline that trains a new model based on input data
+          technology: Vertex AI
+          tags: ml,training,gcp
+          properties:
+            type: batch
+            softwreType: SaaS
+            primaryLanguage: python
+            hostingPlatform: Vertex AI
+            operatingSystem: linux
+            dataClassification: Confidential
+            unencryptedPAN: "false"
+            vendor: Google
+          relationships:
+            - destinationId: DemandForecasting.ModelRegistry
+              description: Writes candidate model to
+              technology: REST
+            - destinationId: DataWarehouse.SalesData
+              description: Reads data from
+              technology: BigQuery API
+        - id: PerformanceDashboard
+          name: Performance Dashboard
+          description: Dashboard showing KPIs for demand predictions
+          technology: Looker Studio
+          tags: ui,dashboard,gcp
+          properties:
+            type: UI
+            softwreType: SaaS
+            hostingPlatform: GCP Serverless
+            operatingSystem: linux
+            dataClassification: Internal Use
+            unencryptedPAN: "false"
+            vendor: Google
+        - id: EvaluationJob
+          name: Evaluation Job
+          description: Compares real demand with predictions and creates dashboards
+          technology: PySpark on Dataproc
+          tags: batch,evaluation,gcp
+          properties:
+            type: batch
+            softwreType: custom
+            primaryLanguage: python
+            deploymentType: single
+            hostingPlatform: Dataproc
+            operatingSystem: linux
+            dataClassification: Confidential
+            unencryptedPAN: "false"
+          relationships:
+            - destinationId: DemandForecasting.ForecastStorage
+              description: Reads forecasts
+              technology: gRPC
+            - destinationId: DemandForecasting.PerformanceDashboard
+              description: Writes data
+              technology: REST
+            - destinationId: DataWarehouse.SalesData
+              description: Reads sales figures
+              technology: BigQuery API
+        - id: DataExploration
+          name: Data Exploration Service
+          description: Notebook environment for exploratory analysis
+          technology: Vertex AI Workbench
+          tags: notebook,exploration,gcp
+          properties:
+            type: other
+            softwreType: SaaS
+            primaryLanguage: python
+            hostingPlatform: Vertex AI
+            operatingSystem: linux
+            dataClassification: Internal Use
+            unencryptedPAN: "false"
+            vendor: Google
+          relationships:
+            - destinationId: DataWarehouse.SalesData
+              description: Loads data from
+              technology: BigQuery API
+    - id: DataWarehouse
+      name: Data Warehouse
+      description: Company data warehouse
+      group: Data Platform
+      tags: data,warehouse,gcp
+      disposition: Tolerate
+      dataClassification: Confidential
+      properties:
+        capabilitiy: Enterprise Data Management
+        risk: Low
+        pci: "No"
+      containers:
+        - id: SalesData
+          name: Sales Data
+          description: Tables containing historical sales figures
+          technology: BigQuery
+          tags: database,analytics,gcp
+          properties:
+            type: database
+            softwreType: SaaS
+            hostingPlatform: GCP Serverless
+            operatingSystem: linux
+            dataClassification: Confidential
+            unencryptedPAN: "false"
+            vendor: Google
+    - id: ERPSystem
+      name: ERP Software
+      description: Software used to manage warehouse inventory
+      group: Enterprise Applications
+      tags: erp,external
+      disposition: Tolerate
+      dataClassification: Internal Use
+      properties:
+        capabilitiy: Inventory Management
+        risk: Low
+        pci: "No"
+      relationships:
+        - destinationId: DemandForecasting.ForecastStorage
+          description: Reads data from
+          technology: JDBC
+  deploymentNodes:
+    - id: gcp-us-central1
+      name: Google Cloud us-central1
+      environment: Production
+      technology: GCP Region
+      tags: gcp,production
+      infrastructureNodes:
+        - id: cloud-load-balancer
+          name: Cloud Load Balancer
+          technology: Google Cloud Load Balancing
+          tags: networking,gcp
+          properties:
+            type: load-balancer
+          relationships:
+            - destinationId: DemandForecasting.PerformanceDashboard
+              description: Routes dashboard traffic to
+              technology: HTTPS
+        - id: cloud-nat
+          name: Cloud NAT Gateway
+          technology: Google Cloud NAT
+          tags: networking,gcp
+          properties:
+            type: nat-gateway
+        - id: vpc-firewall
+          name: VPC Firewall
+          technology: Google Cloud VPC
+          tags: networking,security
+          properties:
+            type: firewall
+      children:
+        - id: dataproc-cluster
+          name: Dataproc Cluster
+          technology: Google Cloud Dataproc
+          tags: compute,spark,gcp
+          containerInstances:
+            - containerId: DemandForecasting.PredictionPipeline
+              instanceId: 1
+            - containerId: DemandForecasting.EvaluationJob
+              instanceId: 1
+        - id: vertex-ai-platform
+          name: Vertex AI Platform
+          technology: Google Cloud Vertex AI
+          tags: ml,ai,gcp
+          containerInstances:
+            - containerId: DemandForecasting.ModelTraining
+              instanceId: 1
+            - containerId: DemandForecasting.ModelRegistry
+              instanceId: 1
+            - containerId: DemandForecasting.DataExploration
+              instanceId: 1
+        - id: firestore-cluster
+          name: Cloud Firestore
+          technology: Google Cloud Firestore
+          tags: database,nosql,gcp
+          containerInstances:
+            - containerId: DemandForecasting.ForecastStorage
+              instanceId: 1
+        - id: looker-studio-instance
+          name: Looker Studio
+          technology: Google Looker Studio
+          tags: ui,dashboard,gcp
+          containerInstances:
+            - containerId: DemandForecasting.PerformanceDashboard
+              instanceId: 1
+        - id: bigquery-instance
+          name: BigQuery
+          technology: Google BigQuery
+          tags: database,analytics,gcp
+          containerInstances:
+            - containerId: DataWarehouse.SalesData
+              instanceId: 1
+views:
+  systemContextViews:
+    - key: DemandForecasting-SystemContext
+      softwareSystemId: DemandForecasting
+      title: Demand Forecasting System Context
+      description: Shows the Demand Forecasting system in its environment with external actors and systems.
+  containerViews:
+    - key: DemandForecasting-Containers
+      softwareSystemId: DemandForecasting
+      title: Demand Forecasting Container View
+      description: Internal containers and data flows within the Demand Forecasting system.
+  deploymentViews:
+    - key: DemandForecasting-Deployment-Prod
+      softwareSystemId: DemandForecasting
+      environment: Production
+      title: GCP Production Deployment
+      description: Production deployment topology on Google Cloud Platform us-central1 region.
