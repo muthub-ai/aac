@@ -11,6 +11,7 @@ const navLinks = [
   { label: 'Application Systems', href: '/dashboard?tab=applications' },
   { label: 'Patterns Catalog', href: '/dashboard?tab=patterns' },
   { label: 'Standards Catalog', href: '/dashboard?tab=standards' },
+  { label: 'Waiver Registry', href: '/dashboard?tab=waivers' },
   { label: 'Utilities', href: '/dashboard?tab=utilities' },
 ];
 
