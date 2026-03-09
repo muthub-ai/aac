@@ -9,6 +9,7 @@ import {
   Container,
   ArrowRightLeft,
   ChevronRight,
+  BookOpen,
 } from 'lucide-react';
 import type { SystemData } from '@/types/system';
 import { cn } from '@/lib/utils';
@@ -70,9 +71,42 @@ export function SystemCard({ system, onClick }: SystemCardProps) {
 
       {/* Row 2: Title */}
       <div className="mb-1 flex items-center gap-2">
-        <h3 className="truncate text-[15px] font-semibold text-foreground transition-colors group-hover:text-ring">
+        <h3 className="min-w-0 truncate text-[15px] font-semibold text-foreground transition-colors group-hover:text-ring">
           {system.name}
         </h3>
+        <span
+          role="link"
+          tabIndex={0}
+          onClick={(e) => {
+            e.stopPropagation();
+            window.open(
+              `https://muthub-ai.github.io/aac/systems/${system.id}.html`,
+              '_blank',
+              'noopener,noreferrer',
+            );
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.stopPropagation();
+              e.preventDefault();
+              window.open(
+                `https://muthub-ai.github.io/aac/systems/${system.id}.html`,
+                '_blank',
+                'noopener,noreferrer',
+              );
+            }
+          }}
+          className={cn(
+            'ml-auto inline-flex shrink-0 items-center gap-1 rounded px-1.5 py-0.5',
+            'text-[10px] font-medium text-muted-foreground/50',
+            'transition-colors hover:bg-ring/10 hover:text-ring',
+            'cursor-pointer',
+          )}
+          title="View documentation"
+        >
+          <BookOpen className="h-2.5 w-2.5" strokeWidth={1.8} />
+          Docs
+        </span>
         <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground/40 transition-transform group-hover:translate-x-0.5 group-hover:text-ring" />
       </div>
 

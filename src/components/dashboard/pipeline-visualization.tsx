@@ -95,8 +95,8 @@ const stages = [
     trigger: 'Every Push',
     triggerVariant: 'secondary' as const,
     description:
-      'Builds a static HTML documentation microsite from AsciiDoc templates with embedded architecture diagrams using docToolchain.',
-    tools: ['docToolchain', 'AsciiDoc', 'Gradle'],
+      'Builds a static HTML documentation microsite from AsciiDoc templates with embedded architecture diagrams using Asciidoctor.js.',
+    tools: ['Asciidoctor.js', 'AsciiDoc', 'Node.js'],
     impact: 'Required',
     impactClass: 'text-muted-foreground',
   },

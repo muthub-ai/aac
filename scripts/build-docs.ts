@@ -423,6 +423,41 @@ tr:hover { background: var(--card-hover); }
 /* ── Footer ─────────────────────── */
 footer { border-top: 1px solid var(--border); padding: 32px 0; text-align: center; color: var(--text-tertiary); font-size: 13px; }
 footer a { color: var(--text-secondary); }
+
+/* ── Lightbox / Click-to-zoom ───── */
+.diagram-img-wrapper { position: relative; display: inline-block; cursor: zoom-in; }
+.diagram-img-wrapper img { display: block; transition: filter 0.15s; }
+.diagram-img-wrapper:hover img { filter: brightness(0.97); }
+.diagram-zoom-btn {
+  position: absolute; top: 10px; right: 10px; width: 32px; height: 32px; border-radius: 8px;
+  background: rgba(0,0,0,0.55); color: #fff; border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; transition: opacity 0.2s; z-index: 2; pointer-events: none;
+}
+.diagram-img-wrapper:hover .diagram-zoom-btn { opacity: 1; pointer-events: auto; }
+.diagram-zoom-btn svg { width: 16px; height: 16px; }
+
+.lightbox-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0,0,0,0.82); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; visibility: hidden; transition: opacity 0.25s ease, visibility 0.25s ease;
+}
+.lightbox-overlay.active { opacity: 1; visibility: visible; }
+.lightbox-overlay img {
+  max-width: 92vw; max-height: 90vh; border-radius: 8px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+  transform: scale(0.95); transition: transform 0.25s ease;
+}
+.lightbox-overlay.active img { transform: scale(1); }
+.lightbox-close {
+  position: absolute; top: 20px; right: 24px; width: 40px; height: 40px;
+  border-radius: 50%; background: rgba(255,255,255,0.15); color: #fff;
+  border: none; cursor: pointer; font-size: 22px; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s;
+}
+.lightbox-close:hover { background: rgba(255,255,255,0.3); }
 `;
 
 // ── SVG Icons (inline) ───────────────────────────────────────────────
@@ -486,6 +521,37 @@ function footer(): string {
     <p style="margin-top:4px;font-size:11px;color:var(--text-tertiary)">Built with C4 Model &bull; PlantUML &bull; Asciidoctor &bull; GitHub Actions</p>
   </div>
 </footer>
+
+<div class="lightbox-overlay" id="lightboxOverlay" onclick="closeLightbox()">
+  <button class="lightbox-close" onclick="closeLightbox()" aria-label="Close">&times;</button>
+  <img id="lightboxImg" src="" alt="" onclick="event.stopPropagation()">
+</div>
+
+<script>
+(function(){
+  var overlay = document.getElementById('lightboxOverlay');
+  var lbImg = document.getElementById('lightboxImg');
+
+  window.openLightbox = function(img) {
+    if (!img) return;
+    lbImg.src = img.src;
+    lbImg.alt = img.alt;
+    overlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  };
+
+  window.closeLightbox = function() {
+    overlay.classList.remove('active');
+    document.body.style.overflow = '';
+  };
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && overlay.classList.contains('active')) {
+      closeLightbox();
+    }
+  });
+})();
+</script>
 </body>
 </html>`;
 }
@@ -525,13 +591,13 @@ function buildIndexPage(systems: SystemInfo[]): string {
     </a>`;
   }).join('');
 
-  return `${htmlHead('Architecture as Code — Enterprise Architecture Documentation')}
+  return `${htmlHead('Architecture as Code — Documentation')}
 ${nav('home')}
 
 <section class="hero">
   <div class="container" style="position:relative">
     <div class="hero-badge">${ICONS.check} CI/CD Validated Architecture</div>
-    <h1>Enterprise Architecture<br><span>as Code</span></h1>
+    <h1>Architecture<br><span>as Code</span></h1>
     <p>Auto-generated documentation from declarative YAML models using the C4 model.
     Every system is validated, diagrammed, and published through our CI/CD pipeline.</p>
   </div>
@@ -660,7 +726,10 @@ function buildSystemPage(sys: SystemInfo): string {
             <span class="diagram-type-badge type-${d.type}">${d.type === 'systemContext' ? 'System Context' : d.type === 'container' ? 'Container' : d.type === 'deployment' ? 'Deployment' : 'Full'}</span>
           </div>
           <div class="diagram-card-body">
-            <img src="${escapeHtml(svgUrl)}" alt="${escapeHtml(d.title)}" loading="lazy">
+            <div class="diagram-img-wrapper" onclick="openLightbox(this.querySelector('img'))">
+              <button class="diagram-zoom-btn" aria-label="Zoom diagram" onclick="event.stopPropagation();openLightbox(this.parentElement.querySelector('img'))"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></button>
+              <img src="${escapeHtml(svgUrl)}" alt="${escapeHtml(d.title)}" loading="lazy">
+            </div>
           </div>
           ${d.desc ? `<div class="diagram-card-footer">${escapeHtml(d.desc)}</div>` : ''}
         </div>
