@@ -6,10 +6,24 @@ import { fileURLToPath } from 'node:url';
 import * as logger from '../utils/logger.js';
 import { EXIT_SUCCESS, EXIT_SYSTEM_ERROR } from '../utils/exit-codes.js';
 
-const TEMPLATES_DIR = path.join(
-  path.dirname(fileURLToPath(import.meta.url)),
-  '..', 'templates',
-);
+/** Resolve templates dir — works for npm package, dev mode, and compiled binary */
+function resolveTemplatesDir(): string {
+  // 1. Relative to this module (npm package / dev via tsx)
+  const fromModule = path.join(
+    path.dirname(fileURLToPath(import.meta.url)),
+    '..', 'templates',
+  );
+  if (fs.existsSync(fromModule)) return fromModule;
+
+  // 2. Relative to the executable (compiled binary)
+  const fromExec = path.join(path.dirname(process.execPath), 'templates');
+  if (fs.existsSync(fromExec)) return fromExec;
+
+  // 3. Fall back to module-relative (will error naturally on missing files)
+  return fromModule;
+}
+
+const TEMPLATES_DIR = resolveTemplatesDir();
 
 interface TypeConfig {
   dir: string;

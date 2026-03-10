@@ -1,0 +1,139 @@
+name: Release CLI
+
+on:
+  push:
+    tags:
+      - 'cli-v*'  # Trigger on tags like cli-v1.0.0
+
+permissions:
+  contents: write  # Needed for creating GitHub releases
+
+jobs:
+  # ──────────────────────────────────────────────────────────────
+  # 1. Build + test the CLI package
+  # ──────────────────────────────────────────────────────────────
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: npx vitest run cli/
+
+  # ──────────────────────────────────────────────────────────────
+  # 2. Publish to npm
+  # ──────────────────────────────────────────────────────────────
+  publish-npm:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org
+      - name: Install root dependencies (for tsup build)
+        run: npm ci
+        working-directory: cli
+      - name: Build CLI package
+        run: npm run build
+        working-directory: cli
+      - name: Publish to npm
+        run: npm publish --access public
+        working-directory: cli
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  # ──────────────────────────────────────────────────────────────
+  # 3. Build standalone binaries for each platform
+  # ──────────────────────────────────────────────────────────────
+  build-binaries:
+    needs: test
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: bun-linux-x64
+            label: linux-x64
+          - os: ubuntu-latest
+            target: bun-linux-arm64
+            label: linux-arm64
+          - os: macos-latest
+            target: bun-darwin-arm64
+            label: darwin-arm64
+          - os: macos-13
+            target: bun-darwin-x64
+            label: darwin-x64
+          - os: ubuntu-latest
+            target: bun-windows-x64
+            label: windows-x64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Install CLI dependencies
+        run: npm ci
+        working-directory: cli
+      - name: Build CLI (tsup + templates)
+        run: npm run build
+        working-directory: cli
+      - name: Compile binary for ${{ matrix.label }}
+        run: bun run scripts/build-binary.js --target ${{ matrix.target }}
+        working-directory: cli
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: aac-${{ matrix.label }}
+          path: cli/bin-release/aac-${{ matrix.label }}.*
+
+  # ──────────────────────────────────────────────────────────────
+  # 4. Create GitHub Release with all binaries
+  # ──────────────────────────────────────────────────────────────
+  release:
+    needs: [publish-npm, build-binaries]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+      - name: Extract version from tag
+        id: version
+        run: echo "version=${GITHUB_REF#refs/tags/cli-v}" >> "$GITHUB_OUTPUT"
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "aac CLI v${{ steps.version.outputs.version }}"
+          body: |
+            ## Install
+
+            **npm (recommended for Node.js users):**
+            ```bash
+            npm install -g @muthub-ai/aac@${{ steps.version.outputs.version }}
+            ```
+
+            **npx (no install):**
+            ```bash
+            npx @muthub-ai/aac@${{ steps.version.outputs.version }} validate model/
+            ```
+
+            **Standalone binary:**
+            Download the archive for your platform, extract, and add to PATH.
+
+            | Platform | File |
+            |----------|------|
+            | Linux x64 | `aac-linux-x64.tar.gz` |
+            | Linux ARM64 | `aac-linux-arm64.tar.gz` |
+            | macOS ARM (Apple Silicon) | `aac-darwin-arm64.tar.gz` |
+            | macOS Intel | `aac-darwin-x64.tar.gz` |
+            | Windows x64 | `aac-windows-x64.zip` |
+          files: artifacts/*
+          generate_release_notes: true

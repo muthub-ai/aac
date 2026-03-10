@@ -70,6 +70,20 @@ npm run cli -- create pattern "My Pattern"   # Create pattern from template
 - **Exit codes:** 0 = success, 1 = system error, 2 = validation failed
 - **Dependencies:** commander, chalk (ajv/ajv-formats already present)
 
+### CLI Distribution
+
+The CLI is a standalone npm package (`@muthub-ai/aac`) with its own `cli/package.json`:
+
+```bash
+npm run cli:build          # Build CLI package (tsup + copy templates) -> cli/dist/
+cd cli && npm run build    # Same, from inside cli/
+```
+
+- **npm package:** `cli/dist/bin/aac.js` (compiled JS) + `cli/dist/templates/`
+- **Standalone binary:** `cd cli && bun run scripts/build-binary.js` (requires Bun)
+- **Release workflow:** `.github/workflows/release-cli.yml` — triggered by `cli-v*` tags
+  - Publishes to npm + builds binaries for linux-x64, linux-arm64, darwin-arm64, darwin-x64, windows-x64
+
 ## Git Workflow
 
 - **Always work in a feature branch.** Never commit directly to `main`. Create a descriptive branch (e.g., `standards`, `fix-nav-links`) before making any changes.

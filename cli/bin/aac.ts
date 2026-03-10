@@ -1,4 +1,3 @@
-#!/usr/bin/env npx tsx
 /* ── aac — Architecture as Code CLI ─────────────────────────── */
 
 import { Command } from 'commander';
