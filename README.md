@@ -5,223 +5,166 @@
 <h1 align="center">Architecture as Code</h1>
 
 <p align="center">
-  Define, validate, visualize, and publish enterprise system architectures from declarative YAML.<br />
-  A full-lifecycle platform: interactive C4 diagram editor, pattern catalog, standards catalog, waiver registry, CI/CD governance pipeline, and auto-generated documentation site.
+  Define, validate, visualize, and govern enterprise system architectures from declarative YAML.<br />
+  A full-lifecycle platform with an interactive diagram editor, CLI toolchain, AI-native MCP server, governance pipeline, and auto-published documentation site.
 </p>
 
 <p align="center">
   <a href="https://aac.muthub.org/"><img src="https://img.shields.io/badge/Live%20Site-aac.muthub.org-2563eb?style=flat-square" alt="Live Site" /></a>
   <img src="https://img.shields.io/badge/Next.js-16.1-black?logo=next.js&style=flat-square" alt="Next.js 16.1" />
-  <img src="https://img.shields.io/badge/React-19.2-61DAFB?logo=react&logoColor=white&style=flat-square" alt="React 19.2" />
   <img src="https://img.shields.io/badge/TypeScript-Strict-3178C6?logo=typescript&logoColor=white&style=flat-square" alt="TypeScript Strict" />
-  <img src="https://img.shields.io/badge/Tailwind%20CSS-v4-06B6D4?logo=tailwindcss&logoColor=white&style=flat-square" alt="Tailwind CSS v4" />
-  <img src="https://img.shields.io/badge/Tests-288%20passing-22C55E?logo=vitest&logoColor=white&style=flat-square" alt="288 tests passing" />
+  <img src="https://img.shields.io/badge/Tests-374%20passing-22C55E?logo=vitest&logoColor=white&style=flat-square" alt="374 tests passing" />
+  <img src="https://img.shields.io/badge/MCP-1.0-8B5CF6?style=flat-square" alt="MCP Server" />
 </p>
 
 ---
 
 ## Why Architecture as Code?
 
-Most organizations store architecture knowledge in slide decks and wiki pages that drift from reality within weeks of creation. **Architecture as Code** treats architecture definitions as source code: version-controlled YAML files that are validated, linted for policy compliance, and automatically rendered into interactive diagrams and a published documentation site -- all through a CI/CD pipeline.
+Most organizations store architecture knowledge in slide decks and wiki pages that drift from reality within weeks. **Architecture as Code** treats architecture definitions as source code: version-controlled YAML files that are validated against schemas, linted for policy compliance, rendered into interactive diagrams, and automatically published -- all through a CI/CD pipeline.
 
-The result is a single source of truth that stays in sync with the codebase, enforces enterprise standards, and makes architecture knowledge accessible to every engineer on the team.
+The result is a single source of truth that stays in sync with the codebase, enforces enterprise standards, and makes architecture knowledge accessible to every engineer -- including AI coding agents.
 
 ---
 
-## What This Project Does
+## Platform Overview
+
+```
+                                    Architecture as Code
+    ┌──────────────────────────────────────────────────────────────────────────┐
+    │                                                                          │
+    │   YAML Sources         Toolchain              Outputs                    │
+    │   ────────────         ─────────              ───────                    │
+    │                                                                          │
+    │   model/          ──>  CLI (aac)          ──> Interactive Diagram Editor │
+    │   patterns/       ──>  MCP Server         ──> Published Documentation   │
+    │   standards/      ──>  CI/CD Pipeline     ──> PlantUML + Draw.io Export │
+    │   waivers/        ──>  JSON Schema + Zod  ──> PR Feedback (diagrams)    │
+    │   schema/                                     GitHub Pages              │
+    │                                                                          │
+    └──────────────────────────────────────────────────────────────────────────┘
+```
 
 | Capability | Description |
 |------------|-------------|
 | **Interactive Diagram Editor** | Bidirectional sync between a Monaco YAML editor and a React Flow canvas. Edit YAML and the diagram updates; drag a node and the YAML updates. |
-| **C4 Model Support** | Full C4 hierarchy: Persons, Software Systems, Containers, Components, Deployment Nodes, and Infrastructure Nodes with boundary classification. |
-| **Pattern Catalog** | 6 reusable enterprise architecture patterns with C4 diagrams, design considerations, NFR targets, cost profiles, and getting-started guides. |
-| **Standards Catalog** | 9 enterprise architecture standards covering AI/ML governance, cryptography, data platforms, resiliency, API integration, IaC, FinOps, and IAM -- each with RFC 2119 requirements, guidelines, solutions, and authoritative sources. |
-| **Waiver Registry** | 10 architecture exception/waiver requests documenting temporary deviations from enterprise standards with risk assessments, compensating controls, financial impact analysis, and remediation plans across 8 domains. |
-| **Governance Pipeline** | 8-job CI/CD pipeline with parallel domain stages: quality gate, then App Architecture / Patterns / Standards / Waivers in parallel, assembly, PR feedback, and GitHub Pages deployment. |
-| **Published Documentation** | Auto-generated static site with system detail pages, pattern catalog, standards catalog, waiver registry, pipeline visualization, and lightbox diagram zoom. Deployed to GitHub Pages on every merge to `main`. |
-| **Multi-Format Export** | Export diagrams to PlantUML (`.puml`) and Draw.io XML (`.drawio.xml`) with correct C4 styling. |
+| **CLI Toolchain** | `aac init`, `aac create`, `aac validate` -- scaffold projects, generate boilerplate, validate artifacts against live schemas with ETag caching. |
+| **MCP Server** | Expose architecture data to AI coding agents via the Model Context Protocol. 10 resources, 3 tools, 2 guided prompts. Works with VS Code Copilot, Cursor, Claude Desktop. |
+| **Pattern Catalog** | 6 reusable architecture patterns with C4 diagrams, NFR targets, cost profiles, and getting-started guides. |
+| **Standards Catalog** | 9 enterprise standards with RFC 2119 requirements, verification methods, and approved solutions. |
+| **Waiver Registry** | 10 architecture exceptions with risk assessments, compensating controls, financial impact, and remediation plans. |
+| **Governance Pipeline** | 8-job CI/CD pipeline: schema validation, 5-rule compliance linter, diagram generation, and auto-publish to GitHub Pages. |
 
 ---
 
 ## Live Site
 
-The documentation site is auto-published on every push to `main`:
-
 **[https://aac.muthub.org/](https://aac.muthub.org/)**
 
-| Page | URL |
-|------|-----|
-| Homepage (system catalog, stats, pipeline) | [`/`](https://aac.muthub.org/) |
-| System detail (per-system diagrams, containers, actors) | [`/systems/{id}.html`](https://aac.muthub.org/systems/ecommerce-platform.html) |
-| Pattern catalog index | [`/patterns/`](https://aac.muthub.org/patterns/) |
-| Pattern detail (diagrams, NFRs, cost, getting started) | [`/patterns/{id}.html`](https://aac.muthub.org/patterns/public-web-application.html) |
-| Standards catalog index | [`/standards/`](https://aac.muthub.org/standards/) |
-| Standard detail (requirements, guidelines, solutions) | [`/standards/{id}.html`](https://aac.muthub.org/standards/ml-model-governance.html) |
-| Waiver registry index | [`/waivers/`](https://aac.muthub.org/waivers/) |
-| Waiver detail (risk, controls, financial impact) | [`/waivers/{id}.html`](https://aac.muthub.org/waivers/legacy-encryption-waiver.html) |
+Auto-published on every push to `main`. Includes system detail pages, pattern catalog, standards catalog, waiver registry, and pipeline visualization.
 
 ---
 
-## Tech Stack
-
-| Layer | Technology |
-|-------|-----------|
-| **Framework** | [Next.js 16](https://nextjs.org) (App Router, Turbopack) |
-| **UI** | [React 19](https://react.dev), [Tailwind CSS v4](https://tailwindcss.com), [Shadcn UI](https://ui.shadcn.com) |
-| **Diagram Canvas** | [React Flow](https://reactflow.dev) (`@xyflow/react`) |
-| **Code Editor** | [Monaco Editor](https://microsoft.github.io/monaco-editor/) (`@monaco-editor/react`) |
-| **Graph Layout** | [Dagre](https://github.com/dagrejs/dagre) (`@dagrejs/dagre`) |
-| **State** | [Zustand 5](https://zustand-demo.pmnd.rs/) |
-| **Validation** | [Zod v4](https://zod.dev) + [Ajv](https://ajv.js.org) (JSON Schema draft-07 & draft 2020-12) |
-| **YAML** | [js-yaml](https://github.com/nodeca/js-yaml) |
-| **Diagram Export** | [plantuml-encoder](https://github.com/markushedvall/plantuml-encoder), custom Draw.io XML generator |
-| **Animation** | [Framer Motion](https://www.framer.com/motion/) |
-| **Theming** | [next-themes](https://github.com/pacocoursey/next-themes) |
-| **Testing** | [Vitest](https://vitest.dev) (288 tests), jsdom |
-| **Documentation** | Custom static site generator (TypeScript), [Asciidoctor.js](https://docs.asciidoctor.org/asciidoctor.js/) |
-| **CI/CD** | GitHub Actions, [GitHub Pages](https://pages.github.com) |
-| **Runtime** | Node.js 22, TypeScript 5 (`strict: true`, zero `any`) |
-
----
-
-## Project Structure
-
-```
-aac/
-├── .github/workflows/
-│   └── aac-pipeline.yml              # 8-job CI/CD pipeline (parallel domain stages)
-├── model/                             # System architecture definitions (YAML + metadata)
-│   ├── demand-forecasting/
-│   ├── ecommerce-platform/
-│   ├── image-categorization/
-│   └── ml-platform/
-├── patterns/                          # Pattern definitions (YAML + PlantUML diagrams)
-│   ├── internal-api-multiregional/
-│   ├── data-platform-bq/
-│   └── aiml-model-inference/
-├── standards/                         # Architecture standard definitions (9 YAML files)
-│   ├── ml-model-governance.yaml
-│   ├── cryptography-key-management.yaml
-│   ├── api-microservices-integration.yaml
-│   └── ... (9 total)
-├── waivers/                           # Architecture waiver/exception definitions (10 YAML files)
-│   ├── legacy-encryption-waiver.yaml
-│   ├── api-gateway-bypass.yaml
-│   ├── genai-unfiltered-output.yaml
-│   └── ... (10 total)
-├── schema/                            # JSON Schema definitions
-│   ├── application-schema.json        #   C4 model YAML validation (draft-07)
-│   ├── pattern-schema.json            #   Pattern definition validation (draft-07)
-│   ├── patterns-schema.json           #   Pattern catalog entry validation (draft-07)
-│   └── standards.json                 #   Architecture standard validation (draft 2020-12)
-│   └── waivers.json                   #   Architecture waiver validation (draft 2020-12)
-├── scripts/                           # Build & governance scripts
-│   ├── validate-models.ts             #   Model schema validation (Ajv + Zod)
-│   ├── validate-standards.ts          #   Standards schema validation (Ajv 2020-12)
-│   ├── validate-waivers.ts            #   Waiver schema validation (Ajv 2020-12)
-│   ├── lint-architecture.ts           #   Enterprise policy linter (5 rules)
-│   ├── build-diagrams.ts              #   PlantUML + Draw.io generation
-│   ├── build-docs.ts                  #   Documentation site generator
-│   ├── build-pattern-pages.ts         #   Pattern catalog page generator
-│   ├── build-standard-pages.ts        #   Standards catalog page generator
-│   └── build-waiver-pages.ts          #   Waiver registry page generator
-├── src/
-│   ├── app/                           # Next.js App Router
-│   │   ├── page.tsx                   #   Landing page (/)
-│   │   ├── dashboard/page.tsx         #   System & pattern catalog (/dashboard)
-│   │   ├── systems/[id]/page.tsx      #   Interactive diagram editor (/systems/:id)
-│   │   └── globals.css                #   Design tokens (light/dark themes)
-│   ├── components/                    # 40+ React components
-│   │   ├── canvas/                    #   React Flow canvas with minimap
-│   │   ├── dashboard/                 #   Catalog tabs, pattern/standards/waiver catalogs, system cards
-│   │   ├── editor/                    #   Monaco YAML editor
-│   │   ├── landing/                   #   Landing page sections
-│   │   ├── nodes/                     #   C4 node renderers (6 types)
-│   │   ├── providers/                 #   Theme provider & toggle
-│   │   ├── toolbar/                   #   Toolbar (auto-layout, export, theme)
-│   │   └── ui/                        #   Shadcn primitives
-│   ├── lib/
-│   │   ├── parser/                    #   YAML <-> graph bidirectional conversion
-│   │   ├── validation/                #   Zod schemas + validation helpers
-│   │   ├── layout/                    #   Dagre auto-layout engine
-│   │   ├── export/                    #   Draw.io XML + PlantUML export
-│   │   ├── data/                      #   Pattern catalog data
-│   │   └── model/                     #   Filesystem model & standards loader
-│   ├── store/                         # Zustand store (bidirectional graph state)
-│   └── types/                         # TypeScript types (C4, system, pattern, standard, waiver, YAML schema)
-└── build/                             # Generated artifacts (gitignored)
-    ├── microsite/output/              #   Documentation site (HTML)
-    ├── patterns/                      #   Pattern pages (HTML)
-    ├── standards/                     #   Standards pages (HTML)
-    └── waivers/                       #   Waiver pages (HTML)
-```
-
----
-
-## Getting Started
+## Quick Start
 
 ### Prerequisites
 
 - **Node.js** >= 22 (see `.nvmrc`)
 - **npm** >= 9
 
-### Installation
+### Install & Run
 
 ```bash
 git clone https://github.com/muthub-ai/aac.git
 cd aac
 npm install
-```
-
-### Development
-
-```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). Navigate to the [dashboard](http://localhost:3000/dashboard) to browse systems and patterns, or click any system card to open the interactive diagram editor.
+Open [http://localhost:3000](http://localhost:3000). The [dashboard](http://localhost:3000/dashboard) shows all systems, patterns, standards, waivers, and developer utilities.
 
-### Production Build
+### CLI
 
 ```bash
-npm run build
-npm start
+npm install -g @muthub-ai/aac
+
+aac init                                    # Scaffold project structure
+aac create system "Order Management"        # Generate boilerplate YAML
+aac validate model/ --type system           # Validate against live schemas
+aac validate standards/ --output json       # JSON output for CI/CD
+```
+
+### MCP Server (for AI Agents)
+
+```bash
+npm install -g @muthub-ai/aac-mcp-server
+
+# Test with the MCP Inspector
+npx @modelcontextprotocol/inspector aac-mcp -- --root /path/to/your/aac/repo
+```
+
+Or add to your IDE's MCP configuration (VS Code, Cursor, Claude Desktop):
+
+```json
+{
+  "mcpServers": {
+    "aac": {
+      "command": "aac-mcp",
+      "args": ["--root", "/path/to/your/aac/repo"]
+    }
+  }
+}
 ```
 
 ---
 
-## Available Scripts
+## MCP Server
 
-### Application
+The MCP server exposes enterprise architecture governance data to AI coding agents via the [Model Context Protocol](https://modelcontextprotocol.io). It runs as a local subprocess over stdio, giving agents structured access to your architecture repository.
 
-| Script | Description |
+### Resources (10 endpoints)
+
+| URI | Description |
+|-----|-------------|
+| `aac://systems` | List all system models |
+| `aac://systems/{id}` | Read a system's C4 YAML |
+| `aac://standards` | List all architecture standards |
+| `aac://standards/{filename}` | Read a standard's YAML |
+| `aac://waivers` | List all waivers with status |
+| `aac://waivers/active` | List only approved, non-expired waivers |
+| `aac://waivers/{filename}` | Read a waiver's YAML |
+| `aac://patterns` | List all architecture patterns |
+| `aac://patterns/{id}` | Read a pattern's YAML |
+| `aac://schemas/{type}` | Read the JSON Schema for a given artifact type |
+
+### Tools
+
+| Tool | Description |
+|------|-------------|
+| `validate_architecture` | Validate YAML against JSON Schemas (auto-detects type) |
+| `lint_compliance` | Run 5 enterprise policy rules against system models |
+| `scaffold_waiver` | Generate a pre-filled waiver YAML from parameters |
+
+### Prompts
+
+| Prompt | Description |
 |--------|-------------|
-| `npm run dev` | Start dev server with Turbopack HMR |
-| `npm run build` | Create optimized production build |
-| `npm start` | Serve production build |
-| `npm run lint` | Run ESLint checks |
+| `design_new_system` | Guided workflow to design a C4 model conforming to enterprise standards |
+| `request_architecture_exception` | Generate a formal waiver request to bypass an architecture standard |
 
-### Testing
+---
 
-| Script | Description |
-|--------|-------------|
-| `npm test` | Run tests in watch mode |
-| `npm run test:run` | Single test run (CI-friendly) |
-| `npm run test:coverage` | Test run with V8 coverage report |
+## CLI
 
-### Governance & Documentation
+The CLI validates architecture artifacts against live enterprise schemas hosted on GitHub, with ETag-based caching for offline support.
 
-| Script | Description |
-|--------|-------------|
-| `npm run validate:models` | Validate all YAML models against JSON Schema + Zod |
-| `npm run validate:standards` | Validate all standards YAML against JSON Schema (draft 2020-12) |
-| `npm run validate:waivers` | Validate all waiver YAML against JSON Schema (draft 2020-12) |
-| `npm run lint:architecture` | Enterprise architecture policy compliance checks |
-| `npm run build:diagrams` | Generate PlantUML + Draw.io diagrams from models |
-| `npm run build:docs` | Generate documentation site to `build/microsite/output/` |
-| `npm run build:patterns` | Generate pattern catalog pages to `build/patterns/` |
-| `npm run build:standards` | Generate standards catalog pages to `build/standards/` |
-| `npm run build:waivers` | Generate waiver registry pages to `build/waivers/` |
+| Command | Description |
+|---------|-------------|
+| `aac init` | Scaffold `.aacrc` config + directory structure (`model/`, `patterns/`, `standards/`, `waivers/`, `schema/`) |
+| `aac create <type> [name]` | Generate boilerplate YAML for `system`, `pattern`, `standard`, or `waiver` |
+| `aac validate <path> [flags]` | Validate YAML against live JSON Schemas. Supports directories, type auto-inference, JSON output, and `--force-refresh`. |
+
+Exit codes: `0` success, `1` system error, `2` validation failed.
 
 ---
 
@@ -237,13 +180,12 @@ npm start
 └─────────────┘     updateFromCanvas()    │  nodes[]          │     onNodesChange()        └──────────────┘
                                           │  edges[]          │     onEdgesChange()
                                           │  syncSource       │     onConnect()
-                                          │  parseError       │
                                           └─────────────────┘
 ```
 
-1. **YAML -> Canvas**: User edits YAML -> debounced (300ms) -> `js-yaml` parse -> `yamlToGraph()` -> Zod validation -> `applyDagreLayout()` -> render nodes/edges
-2. **Canvas -> YAML**: User drags/connects nodes -> `graphToYaml()` -> update Monaco editor
-3. **Sync guard**: A `syncSource` flag (`'yaml' | 'canvas' | null`) prevents infinite update loops
+1. **YAML -> Canvas**: Edit YAML -> debounced parse -> `yamlToGraph()` -> Zod validation -> `applyDagreLayout()` -> render
+2. **Canvas -> YAML**: Drag/connect nodes -> `graphToYaml()` -> update editor
+3. **Sync guard**: `syncSource` flag prevents infinite update loops
 
 ### C4 Model Hierarchy
 
@@ -257,26 +199,21 @@ Deployment Node
         └── Container Instance
 ```
 
-Each level maps to a custom React Flow node type with C4-standard colors and styling. Relationships are rendered as labeled edges with optional protocol annotations.
+Each level maps to a custom React Flow node with C4-standard styling. Relationships are labeled edges with optional protocol annotations.
 
 ### CI/CD Pipeline
 
-Every push triggers an 8-job governance pipeline organized into 4 phases. The four domain-specific build stages run **in parallel** after the quality gate:
+8-job pipeline with 4 parallel domain stages:
 
 ```
                 ┌─────────────────┐
-                │   Lint & Test    │   ← Quality Gate
+                │   Lint & Test    │   ← Quality Gate (374 tests)
                 └────────┬────────┘
           ┌──────────────┼──────────────┬──────────────┐
-          ▼              ▼              ▼              ▼      ← Parallel Build
+          ▼              ▼              ▼              ▼
    ┌────────────┐  ┌──────────┐  ┌───────────┐  ┌──────────┐
    │    App     │  │ Patterns │  │ Standards │  │ Waivers  │
-   │Architecture│  │          │  │           │  │          │
-   │            │  │ Catalog  │  │ Schema    │  │ Schema   │
-   │ Schema     │  │ 10 pages │  │ Validation│  │ Validation│
-   │ Compliance │  │          │  │ Catalog   │  │ Registry │
-   │ Diagrams   │  │          │  │ 10 pages  │  │ 11 pages │
-   │ Docs       │  │          │  │           │  │          │
+   │Architecture│  │ Catalog  │  │ Catalog   │  │ Registry │
    └─────┬──────┘  └────┬─────┘  └─────┬─────┘  └────┬─────┘
          └───────────────┼──────────────┼─────────────┘
                 ┌────────▼────────┐
@@ -286,249 +223,163 @@ Every push triggers an 8-job governance pipeline organized into 4 phases. The fo
                 ▼                 ▼
          ┌────────────┐   ┌────────────┐
          │  PR Review  │   │  Publish   │   ← Deploy
-         │ (PRs only)  │   │ (main only)│
          └────────────┘   └────────────┘
 ```
 
-| Phase | Job | Sub-stages | Impact |
-|-------|-----|------------|--------|
-| **Quality Gate** | **Lint & Test** | ESLint, Vitest (288 tests) | Blocks merge |
-| **Build** | **App Architecture** | Schema validation (Ajv + Zod), Architecture compliance (5 policy rules), Diagram generation (PlantUML + Draw.io), Documentation rendering (Asciidoctor.js) | Blocks merge |
-| **Build** | **Patterns** | Pattern catalog generation (10 HTML pages) | Required |
-| **Build** | **Standards** | Schema validation (Ajv 2020-12), Standards catalog generation (10 HTML pages) | Blocks merge |
-| **Build** | **Waivers** | Schema validation (Ajv 2020-12), Waiver registry generation (11 HTML pages) | Blocks merge |
-| **Assembly** | **Assemble** | Merge docs + patterns + standards + waivers into unified microsite | Required |
-| **Deploy** | **PR Review** | Post diagram previews to PR comments | PRs only |
-| **Deploy** | **Publish** | Deploy to GitHub Pages via `gh-pages` branch | Main only |
+**Compliance rules enforced:**
 
-Architecture policy rules enforced in the App Architecture stage:
-
-1. No frontend container may connect directly to a database (must go through an API layer)
-2. Every system must define at least one container
-3. No orphaned external systems (must have at least one relationship)
+1. No frontend container may connect directly to a database
+2. Every internal system must define at least one container
+3. No orphaned external systems
 4. Deployment container references must resolve to defined containers
 5. Every container must specify its technology
 
 ---
 
-## Pattern Catalog
+## Project Structure
 
-The platform ships with 6 reusable architecture patterns, each documented to production-grade depth:
-
-| Pattern | Category | Maturity | Exposure |
-|---------|----------|----------|----------|
-| Internal API (Multi-Regional VMs) | Compute | Production Ready | Internal |
-| Enterprise Data Warehouse (BigQuery) | Database | Production Ready | Internal |
-| AI/ML Model Inference | AI + ML | Beta | Internal |
-| Internal Web Application | Compute | Production Ready | Internal |
-| Public Web Application | Compute | Production Ready | External |
-| Managed File Transfer | Networking | Beta | External |
-
-Each pattern includes:
-
-- **Architecture Overview** -- prose description of the design
-- **C4 Diagrams** -- System Context and Container-level PlantUML diagrams
-- **Design Considerations** -- 3-4 key architectural decisions
-- **Products Used** -- technology table with roles
-- **Non-Functional Requirements** -- availability, latency, throughput, RPO/RTO targets
-- **Advantages & Considerations** -- pros/cons analysis
-- **Constraints & Limitations** -- known boundaries
-- **Cost Profile** -- cost estimation guidance
-- **Getting Started** -- step-by-step onboarding
-
-Patterns are browsable in the [Next.js dashboard](http://localhost:3000/dashboard?tab=patterns) and on the [published documentation site](https://muthub-ai.github.io/aac/patterns/).
-
----
-
-## Standards Catalog
-
-The platform ships with 9 enterprise architecture standards, each validated against a JSON Schema (draft 2020-12) and published as static HTML pages:
-
-| Standard | ID | Domain | Status | Lifecycle |
-|----------|-----|--------|--------|-----------|
-| ML Model Governance | STD-AIML-001 | AI / ML | Approved | Standard |
-| Cryptography & Key Management | STD-SEC-001 | Security | Approved | Standard |
-| Data Platform & Warehousing | STD-DATA-001 | Data | Approved | Provisional |
-| Multi-Region Resiliency | STD-INFRA-001 | Infrastructure | Approved | Standard |
-| API & Microservices Integration | STD-INT-001 | Integration | Approved | Standard |
-| Generative AI Usage | STD-AIML-002 | AI / ML | Draft | Draft |
-| Infrastructure as Code | STD-DEVOPS-001 | DevOps | Approved | Provisional |
-| Cloud Rightsizing & FinOps | STD-FINOPS-001 | FinOps | Approved | Provisional |
-| Customer IAM (CIAM) | STD-IAM-001 | Identity | Approved | Retired |
-
-Each standard includes:
-
-- **Scope** -- in-scope and out-of-scope boundaries
-- **Requirements** -- RFC 2119 severity levels (MUST, SHOULD, MUST NOT) with rationale, verification method, and platform applicability
-- **Guidelines** -- recommended practices and implementation advice
-- **Solutions** -- approved technology solutions with context
-- **Authoritative Sources** -- links to governing standards and regulations
-- **Definitions** -- glossary of domain-specific terms
-- **FAQs** -- frequently asked questions
-- **Revision History** -- change log with authors and reviewers
-
-Standards are browsable in the [Next.js dashboard](http://localhost:3000/dashboard?tab=standards) and on the [published documentation site](https://muthub-ai.github.io/aac/standards/).
+```
+aac/
+├── .github/workflows/aac-pipeline.yml     # 8-job CI/CD pipeline
+├── .vscode/mcp.json                       # VS Code MCP server configuration
+├── model/                                 # System architecture definitions (4 systems)
+│   ├── demand-forecasting/
+│   ├── ecommerce-platform/
+│   ├── image-categorization/
+│   └── ml-platform/
+├── patterns/                              # Architecture pattern definitions (6 patterns)
+├── standards/                             # Enterprise standards (9 YAML files)
+├── waivers/                               # Architecture waivers (10 YAML files)
+├── schema/                                # JSON Schema definitions (5 schemas)
+├── cli/                                   # CLI package (@muthub-ai/aac)
+│   ├── bin/aac.ts                         #   Entry point: init, create, validate
+│   └── src/                               #   Schema manager, validators, templates
+├── mcp-server/                            # MCP server package (@muthub-ai/aac-mcp-server)
+│   ├── bin/aac-mcp.ts                     #   Entry point: stdio transport
+│   └── src/
+│       ├── lib/                           #   Core: repo-resolver, schema-loader, validator
+│       ├── resources/                     #   10 resource endpoints
+│       ├── tools/                         #   3 tool handlers
+│       └── prompts/                       #   2 guided workflows
+├── scripts/                               # Build & governance scripts (9 scripts)
+├── src/
+│   ├── app/                               # Next.js App Router (/, /dashboard, /systems/[id])
+│   ├── components/                        # 40+ React components
+│   │   ├── canvas/                        #   React Flow canvas
+│   │   ├── dashboard/                     #   Catalogs, utilities, system cards
+│   │   ├── editor/                        #   Monaco YAML editor
+│   │   ├── landing/                       #   Landing page sections
+│   │   ├── nodes/                         #   C4 node renderers (6 types)
+│   │   └── ui/                            #   Shadcn primitives
+│   ├── lib/                               # Pure logic modules
+│   │   ├── parser/                        #   YAML <-> graph bidirectional conversion
+│   │   ├── validation/                    #   Zod schemas + validation
+│   │   ├── layout/                        #   Dagre auto-layout
+│   │   ├── export/                        #   Draw.io XML + PlantUML
+│   │   └── data/                          #   Pattern, CLI, MCP data
+│   ├── store/                             # Zustand store
+│   └── types/                             # TypeScript types
+└── build/                                 # Generated artifacts (gitignored)
+```
 
 ---
 
-## Waiver Registry
+## Tech Stack
 
-The platform ships with 10 architecture exception/waiver requests, each validated against a JSON Schema (draft 2020-12) and published as static HTML pages:
+| Layer | Technology |
+|-------|-----------|
+| **Framework** | [Next.js 16](https://nextjs.org) (App Router, Turbopack) |
+| **UI** | [React 19](https://react.dev), [Tailwind CSS v4](https://tailwindcss.com), [Shadcn UI](https://ui.shadcn.com) |
+| **Diagram Canvas** | [React Flow](https://reactflow.dev) (`@xyflow/react`) |
+| **Code Editor** | [Monaco Editor](https://microsoft.github.io/monaco-editor/) |
+| **Graph Layout** | [Dagre](https://github.com/dagrejs/dagre) |
+| **State** | [Zustand 5](https://zustand-demo.pmnd.rs/) |
+| **Validation** | [Zod v4](https://zod.dev) + [Ajv](https://ajv.js.org) (JSON Schema draft-07 & 2020-12) |
+| **MCP** | [@modelcontextprotocol/sdk](https://github.com/modelcontextprotocol/typescript-sdk) (stdio transport) |
+| **CLI** | [Commander.js](https://github.com/tj/commander.js), [Chalk](https://github.com/chalk/chalk) |
+| **Animation** | [Framer Motion](https://www.framer.com/motion/) |
+| **Testing** | [Vitest](https://vitest.dev) (374 tests across 21 suites) |
+| **Documentation** | Custom static site generator, [Asciidoctor.js](https://docs.asciidoctor.org/asciidoctor.js/) |
+| **CI/CD** | GitHub Actions, [GitHub Pages](https://pages.github.com) |
+| **Runtime** | Node.js 22, TypeScript 5 (`strict: true`, zero `any`) |
 
-| Waiver | ID | Domain | Status | Risk |
-|--------|-----|--------|--------|------|
-| Legacy AES-128 Encryption in E-Commerce Payment Module | EXC-SEC-001 | Security | Approved | Critical |
-| Direct Database Access Bypassing API Gateway in ML Platform | EXC-INT-001 | Integration | Approved | High |
-| Single-Region Deployment for Image Categorization Service | EXC-INFRA-001 | Infrastructure | Approved | High |
-| Missing Model Lineage Tracking in Demand Forecasting | EXC-AIML-001 | AI / ML | Pending Review | Medium |
-| Customer Support Chatbot Without Output Guardrails | EXC-AIML-002 | AI / ML | Rejected | Critical |
-| Manual Provisioning for Legacy Payment Gateway | EXC-DEVOPS-001 | DevOps | Approved | Medium |
-| Extended Data Retention in Analytics Pipeline | EXC-DATA-001 | Data | Expired | High |
-| Partner Portal Using SAML 1.1 Instead of OIDC | EXC-IAM-001 | Identity | Remediated | Medium |
-| Missing Cost Allocation Tags in Development Environments | EXC-FINOPS-001 | FinOps | Approved | Low |
-| Internal Analytics API Missing Rate Limiting | EXC-INT-002 | Integration | Pending Review | High |
+---
 
-Each waiver includes:
+## Available Scripts
 
-- **Risk Assessment** -- severity classification (Critical / High / Medium / Low) with detailed risk description
-- **Compensating Controls** -- specific security or operational measures with effectiveness ratings and verification methods
-- **Financial Impact** -- compliance cost, delay cost, risk exposure cost, and executive summary
-- **Remediation Plan** -- description, target date, assigned team, progress percentage, and backlog item link
-- **Revision History** -- audit trail of request, review, approval, and milestone events
-- **Review Notes** -- Architecture Review Board decisions and conditions
-
-Waivers are browsable in the [Next.js dashboard](http://localhost:3000/dashboard?tab=waivers) and on the [published documentation site](https://muthub-ai.github.io/aac/waivers/).
+| Script | Description |
+|--------|-------------|
+| `npm run dev` | Start dev server with Turbopack HMR |
+| `npm run build` | Production build |
+| `npm run lint` | ESLint |
+| `npm test` | Vitest watch mode |
+| `npm run test:run` | Single test run (CI) |
+| `npm run test:coverage` | Coverage report |
+| `npm run validate:models` | Validate all YAML models against JSON Schema + Zod |
+| `npm run validate:standards` | Validate standards against JSON Schema (draft 2020-12) |
+| `npm run validate:waivers` | Validate waivers against JSON Schema (draft 2020-12) |
+| `npm run lint:architecture` | Enterprise policy compliance checks (5 rules) |
+| `npm run build:diagrams` | Generate PlantUML + Draw.io diagrams |
+| `npm run build:docs` | Generate documentation site |
+| `npm run build:patterns` | Generate pattern catalog pages |
+| `npm run build:standards` | Generate standards catalog pages |
+| `npm run build:waivers` | Generate waiver registry pages |
 
 ---
 
 ## System Models
 
-The project ships with 4 example system architectures defined in `model/`:
+4 example architectures in `model/`:
 
 | System | Containers | Description |
 |--------|-----------|-------------|
-| **E-Commerce Platform** | 10 | Full e-commerce stack: web app, API gateway, database, payment gateway, messaging |
-| **Demand Forecasting** | 7 | ML-powered demand prediction pipeline with feature store and model serving |
-| **Image Categorization** | 3 | Image classification service with training and inference endpoints |
-| **ML Platform** | 2 | Shared ML infrastructure platform with model registry |
-
-### YAML Schema
-
-System architectures are defined in a declarative YAML format following the C4 model:
-
-```yaml
-actors:
-  customer:
-    type: Person
-    label: Customer
-    description: End user of the platform
-    boundary: External
-
-softwareSystems:
-  ecommerce:
-    label: E-Commerce Platform
-    description: Handles orders and payments
-    boundary: Internal
-    containers:
-      webApp:
-        label: Web Application
-        technology: React / Next.js
-        description: Customer-facing storefront
-        components:
-          catalog:
-            label: Product Catalog
-            technology: React
-            description: Browsable product listings
-
-relationships:
-  - from: customer
-    to: webApp
-    label: Browses products
-    protocol: HTTPS
-```
+| **E-Commerce Platform** | 10 | Full stack: web app, API gateway, database, payment, messaging |
+| **Demand Forecasting** | 7 | ML-powered demand prediction with feature store and model serving |
+| **Image Categorization** | 3 | Image classification with training and inference |
+| **ML Platform** | 2 | Shared ML infrastructure with model registry |
 
 ### Adding a New System
 
-1. Create `model/my-system/metadata.json`:
+1. Create `model/my-system/metadata.json` with system metadata
+2. Create `model/my-system/system.yaml` following the C4 YAML schema
+3. Restart dev server -- the system appears in the dashboard and will be validated by CI on the next push
 
-```json
-{
-  "id": "my-system",
-  "name": "My System",
-  "repoCount": 1,
-  "linesOfCode": 5000,
-  "deployableUnits": 2,
-  "domainModules": 3,
-  "domainObjects": 10,
-  "domainBehaviors": 20,
-  "lastScan": "2025-01-15T12:00:00Z",
-  "branchName": "main"
-}
+Or use the CLI:
+
+```bash
+aac create system "Order Management"
 ```
-
-2. Create `model/my-system/system.yaml` following the C4 YAML schema above.
-
-3. Restart the dev server. The new system appears in the dashboard automatically and will be validated, diagrammed, and published by the CI pipeline on the next push.
-
-> **Validation rules**: System IDs must be lowercase alphanumeric with hyphens (`/^[a-z0-9-]+$/`). All numeric fields must be non-negative integers. `lastScan` must be a valid ISO 8601 datetime.
-
----
-
-## JSON Schemas
-
-Five JSON Schema files in `schema/` define the contract for all architecture data:
-
-| Schema | Draft | Validates | Key Structures |
-|--------|-------|-----------|----------------|
-| `application-schema.json` | draft-07 | `model/*/system.yaml` | C4 hierarchy (System -> Container -> Component), People, Relationships, Deployment Nodes, Views |
-| `pattern-schema.json` | draft-07 | `patterns/*/pattern.yaml` | Pattern definitions with validation rules, resiliency patterns, components, deployment model |
-| `patterns-schema.json` | draft-07 | Pattern catalog entries | UI-facing metadata: id, version, name, category, maturity, exposure, tags |
-| `standards.json` | 2020-12 | `standards/*.yaml` | Architecture standards with metadata, scope, requirements (RFC 2119), guidelines, solutions, authoritative sources, definitions, FAQs |
-| `waivers.json` | 2020-12 | `waivers/*.yaml` | Architecture waivers with risk severity, compensating controls, financial impact, remediation plans, revision history |
 
 ---
 
 ## Testing
 
-288 tests across 10 suites covering all pure-logic modules:
+374 tests across 21 suites:
 
-| Test Suite | File | Tests | Coverage |
-|-----------|------|-------|----------|
-| YAML Parser | `parser/yaml-to-graph.test.ts` | 46 | YAML to nodes/edges, boundary mapping, suffix resolution, edge cases |
-| YAML Serializer | `parser/graph-to-yaml.test.ts` | 29 | Nodes/edges back to YAML, hierarchy nesting, boundary mapping |
-| Schema Transform | `parser/new-to-old-transform.test.ts` | 29 | Schema migration transforms |
-| View Filtering | `graph/filter-by-view.test.ts` | 21 | C4 view filtering (system context, container, deployment) |
-| PlantUML Export | `export/plantuml-export.test.ts` | 51 | PlantUML syntax generation, C4 stereotypes, relationship labels |
-| Draw.io Export | `export/drawio-export.test.ts` | 43 | XML generation, C4 styles, position offsets, HTML escaping |
-| Schema Validation | `validation/system-schema.test.ts` | 23 | Zod schema validation, ref resolution, metadata validation |
-| System Validation | `validation/validate-new-system.test.ts` | 23 | End-to-end validation pipeline, error categorization |
-| Auto Layout | `layout/dagre-layout.test.ts` | 15 | Dagre positioning, parent-child grid, custom options |
-| Utilities | `utils.test.ts` | 8 | Tailwind class merging, conflict resolution |
+| Area | Suites | Tests | Scope |
+|------|--------|-------|-------|
+| **App** (`src/lib/`) | 12 | 296 | Parser, validation, layout, export, graph filtering, utilities |
+| **CLI** (`cli/src/`) | 6 | 52 | Commands (init, create, validate), schema manager, config, logger |
+| **MCP Server** (`mcp-server/src/`) | 3 | 26 | Schema loader, validator (AJV + draft-2020-12), repo resolver |
 
 ```bash
-npm run test:run          # Single run (CI)
-npm test                  # Watch mode
-npm run test:coverage     # With V8 coverage
+npm run test:run                  # All 374 tests
+cd mcp-server && npm test         # MCP server tests only
 ```
 
 ---
 
-## Design System
+## Dashboard
 
-GitHub-inspired semantic token system with automatic light/dark mode support:
+The Next.js dashboard at `/dashboard` provides 5 tabs:
 
-| Token | Light | Dark | Usage |
-|-------|-------|------|-------|
-| `--background` | `#f6f8fa` | `#0d1117` | Page background |
-| `--foreground` | `#1f2328` | `#e6edf3` | Primary text |
-| `--card` | `#ffffff` | `#161b22` | Card surfaces |
-| `--border` | `#d0d7de` | `#30363d` | Borders and dividers |
-| `--ring` | `#2563eb` | `#58a6ff` | Focus rings and accents |
-| `--muted-foreground` | `#656d76` | `#8b949e` | Secondary text |
-| `--success` | `#1a7f37` | `#238636` | Success states |
-| `--destructive` | `#cf222e` | `#f85149` | Error states |
-
-All components use semantic Tailwind classes (`bg-card`, `text-foreground`, `border-border`) rather than hardcoded colors. The published documentation site shares the same token system for visual consistency across the interactive app and static pages.
+| Tab | Content |
+|-----|---------|
+| **Application Catalog** | System cards with container counts, links to interactive diagram editor |
+| **Pattern Catalog** | 6 patterns with search, category filters, and detail drawer |
+| **Standards Catalog** | 9 standards with domain tags and compliance status |
+| **Waiver Registry** | 10 waivers with risk severity badges and lifecycle status |
+| **Utilities** | CLI documentation, MCP Server documentation, and upcoming tools |
 
 ---
 
@@ -536,20 +387,20 @@ All components use semantic Tailwind classes (`bg-card`, `text-foreground`, `bor
 
 | Route | Description |
 |-------|-------------|
-| `/` | Landing page with feature overview and system cards |
+| `/` | Landing page |
 | `/dashboard` | System catalog with tabbed navigation |
-| `/dashboard?tab=patterns` | Pattern catalog with search, filters, and detail drawer |
+| `/dashboard?tab=patterns` | Pattern catalog |
 | `/dashboard?tab=standards` | Standards catalog |
 | `/dashboard?tab=waivers` | Waiver registry |
-| `/dashboard?tab=utilities` | Utilities catalog |
-| `/systems/:id` | Interactive diagram editor for a specific system |
+| `/dashboard?tab=utilities` | Developer utilities (CLI, MCP Server) |
+| `/systems/:id` | Interactive diagram editor |
 
 ---
 
 ## Acknowledgements
 
 - [C4 Model](https://c4model.com/) by Simon Brown
-- [PlantUML](https://plantuml.com/) for diagram rendering
+- [Model Context Protocol](https://modelcontextprotocol.io) by Anthropic
 - [React Flow](https://reactflow.dev/) for the interactive canvas
 - [Shadcn UI](https://ui.shadcn.com/) for accessible component primitives
 

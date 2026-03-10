@@ -79,7 +79,7 @@ jobs:
         run: npm run lint
 
       # --- Sub-stage: Unit Tests -------------------------------------------
-      - name: "Vitest — run full test suite (288 tests)"
+      - name: "Vitest — run full test suite (374 tests)"
         run: npm run test:run
 
   # =========================================================================

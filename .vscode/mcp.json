@@ -1,0 +1,13 @@
+{
+  "servers": {
+    "aac": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "${workspaceFolder}/mcp-server/dist/bin/aac-mcp.js",
+        "--root",
+        "${workspaceFolder}"
+      ]
+    }
+  }
+}
