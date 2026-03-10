@@ -10,6 +10,7 @@ import { PatternCatalog } from '@/components/dashboard/pattern-catalog';
 import { StandardsCatalog } from '@/components/dashboard/standards-catalog';
 import { WaiverRegistry } from '@/components/dashboard/waiver-registry';
 import { UtilitiesCatalog } from '@/components/dashboard/utilities-catalog';
+import { UTILITIES } from '@/lib/data/utilities-data';
 import type { SystemData } from '@/types/system';
 import type { StandardData } from '@/types/standard';
 import type { WaiverData } from '@/types/waiver';
@@ -33,7 +34,7 @@ export function SystemsOverview({ systems, standards, waivers }: SystemsOverview
     { id: 'patterns', label: 'Pattern Catalog', icon: Puzzle, count: 6 },
     { id: 'standards', label: 'Standards Catalog', icon: ShieldCheck, count: standards.length },
     { id: 'waivers', label: 'Waiver Registry', icon: FileWarning, count: waivers.length },
-    { id: 'utilities', label: 'Utilities', icon: Wrench, count: 3 },
+    { id: 'utilities', label: 'Utilities', icon: Wrench, count: UTILITIES.length },
   ];
 
   return (
