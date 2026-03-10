@@ -13,7 +13,7 @@
   <a href="https://aac.muthub.org/"><img src="https://img.shields.io/badge/Live%20Site-aac.muthub.org-2563eb?style=flat-square" alt="Live Site" /></a>
   <img src="https://img.shields.io/badge/Next.js-16.1-black?logo=next.js&style=flat-square" alt="Next.js 16.1" />
   <img src="https://img.shields.io/badge/TypeScript-Strict-3178C6?logo=typescript&logoColor=white&style=flat-square" alt="TypeScript Strict" />
-  <img src="https://img.shields.io/badge/Tests-406%20passing-22C55E?logo=vitest&logoColor=white&style=flat-square" alt="406 tests passing" />
+  <img src="https://img.shields.io/badge/Tests-436%20passing-22C55E?logo=vitest&logoColor=white&style=flat-square" alt="436 tests passing" />
   <img src="https://img.shields.io/badge/MCP-1.0-8B5CF6?style=flat-square" alt="MCP Server" />
   <img src="https://img.shields.io/badge/OPA-Rego-326DE6?logo=openpolicyagent&logoColor=white&style=flat-square" alt="OPA Rego" />
   <img src="https://img.shields.io/badge/Copilot%20Spaces-RAG-000000?logo=github&logoColor=white&style=flat-square" alt="Copilot Spaces" />
@@ -307,7 +307,7 @@ Each level maps to a custom React Flow node with C4-standard styling. Relationsh
 
 ```
                 ┌─────────────────┐
-                │   Lint & Test    │   ← Quality Gate (406 tests)
+                │   Lint & Test    │   ← Quality Gate (436 tests)
                 └────────┬────────┘
      ┌───────────────────┼───────────────────┬──────────────┐
      │           ┌───────┼───────┐           │              │
@@ -405,7 +405,7 @@ aac/
 | **Policy Engine** | [Open Policy Agent](https://www.openpolicyagent.org/) (Rego) |
 | **Context Driven Dev** | [GitHub Copilot Spaces](https://github.com/copilot/spaces) (RAG) |
 | **Animation** | [Framer Motion](https://www.framer.com/motion/) |
-| **Testing** | [Vitest](https://vitest.dev) (406 tests across 23 suites) |
+| **Testing** | [Vitest](https://vitest.dev) (436 tests across 24 suites) |
 | **Documentation** | Custom static site generator, [Asciidoctor.js](https://docs.asciidoctor.org/asciidoctor.js/) |
 | **CI/CD** | GitHub Actions, [GitHub Pages](https://pages.github.com) |
 | **Runtime** | Node.js 22, TypeScript 5 (`strict: true`, zero `any`) |
@@ -463,16 +463,16 @@ aac create system "Order Management"
 
 ## Testing
 
-406 tests across 23 suites:
+436 tests across 24 suites:
 
 | Area | Suites | Tests | Scope |
 |------|--------|-------|-------|
-| **App** (`src/lib/`) | 14 | 328 | Parser, validation, layout, export, graph filtering, utilities, policy engine data, copilot spaces data |
+| **App** (`src/lib/`) | 15 | 358 | Parser, validation, layout, export, graph filtering, utilities, policy engine data, copilot spaces data, CI pipeline data |
 | **CLI** (`cli/src/`) | 6 | 52 | Commands (init, create, validate), schema manager, config, logger |
 | **MCP Server** (`mcp-server/src/`) | 3 | 26 | Schema loader, validator (AJV + draft-2020-12), repo resolver |
 
 ```bash
-npm run test:run                  # All 406 tests
+npm run test:run                  # All 436 tests
 cd mcp-server && npm test         # MCP server tests only
 ```
 
