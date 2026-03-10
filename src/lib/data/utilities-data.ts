@@ -1,4 +1,4 @@
-import { Terminal, Bot, Server, Shield, Sparkles } from 'lucide-react';
+import { Terminal, Bot, Server, Shield, Sparkles, GitBranch } from 'lucide-react';
 import type { UtilityInfo } from '@/types/utility';
 
 export const UTILITIES: UtilityInfo[] = [
@@ -105,6 +105,26 @@ export const UTILITIES: UtilityInfo[] = [
       'Eliminates AI hallucination with contextual grounding',
     ],
   },
+  {
+    id: 'ci-pipeline',
+    name: 'Continuous Integration',
+    tagline: 'Reference GitHub Actions pipeline for validating app architecture against enterprise schemas and policies',
+    icon: GitBranch,
+    color: 'chart-1',
+    status: 'available',
+    version: '1.0.0',
+    links: [
+      { label: 'GitHub', url: 'https://github.com/muthub-ai/aac' },
+    ],
+    features: [
+      'Schema validation via aac validate against published JSON Schema',
+      '5 architecture compliance rules enforced on every PR',
+      '3 OPA Rego policy checks: KMS encryption, autoscaling, API gateway',
+      'Copy-paste GitHub Actions workflow for any app repo',
+      'Path-filtered triggers — only runs when model/ changes',
+      'POSIX exit codes (0/1/2) for CI scripting and gating',
+    ],
+  },
 ];
 
 export const UTILITY_COLORS: Record<string, { bg: string; text: string; border: string }> = {
@@ -113,4 +133,5 @@ export const UTILITY_COLORS: Record<string, { bg: string; text: string; border: 
   success: { bg: 'bg-success/10', text: 'text-success', border: 'border-success/20' },
   'chart-4': { bg: 'bg-chart-4/10', text: 'text-chart-4', border: 'border-chart-4/20' },
   'chart-2': { bg: 'bg-chart-2/10', text: 'text-chart-2', border: 'border-chart-2/20' },
+  'chart-1': { bg: 'bg-chart-1/10', text: 'text-chart-1', border: 'border-chart-1/20' },
 };

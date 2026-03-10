@@ -7,6 +7,7 @@ import { CliDocumentation } from '@/components/dashboard/utilities/cli-documenta
 import { McpDocumentation } from '@/components/dashboard/utilities/mcp-documentation';
 import { PolicyEngineDocumentation } from '@/components/dashboard/utilities/policy-engine-documentation';
 import { CopilotSpacesDocumentation } from '@/components/dashboard/utilities/copilot-spaces-documentation';
+import { CiPipelineDocumentation } from '@/components/dashboard/utilities/ci-pipeline-documentation';
 import { ComingSoonUtility } from '@/components/dashboard/utilities/coming-soon-utility';
 
 export function UtilitiesCatalog() {
@@ -26,7 +27,8 @@ export function UtilitiesCatalog() {
           {activeUtility === 'mcp-server' && <McpDocumentation />}
           {activeUtility === 'policy-engine' && <PolicyEngineDocumentation />}
           {activeUtility === 'copilot-spaces' && <CopilotSpacesDocumentation />}
-          {utility && !['cli', 'mcp-server', 'policy-engine', 'copilot-spaces'].includes(activeUtility) && <ComingSoonUtility utility={utility} />}
+          {activeUtility === 'ci-pipeline' && <CiPipelineDocumentation />}
+          {utility && !['cli', 'mcp-server', 'policy-engine', 'copilot-spaces', 'ci-pipeline'].includes(activeUtility) && <ComingSoonUtility utility={utility} />}
         </div>
       </div>
     </>
