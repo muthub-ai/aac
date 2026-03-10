@@ -6,6 +6,7 @@ import { UtilitySidebar, UtilityMobileStrip } from '@/components/dashboard/utili
 import { CliDocumentation } from '@/components/dashboard/utilities/cli-documentation';
 import { McpDocumentation } from '@/components/dashboard/utilities/mcp-documentation';
 import { PolicyEngineDocumentation } from '@/components/dashboard/utilities/policy-engine-documentation';
+import { CopilotSpacesDocumentation } from '@/components/dashboard/utilities/copilot-spaces-documentation';
 import { ComingSoonUtility } from '@/components/dashboard/utilities/coming-soon-utility';
 
 export function UtilitiesCatalog() {
@@ -24,7 +25,8 @@ export function UtilitiesCatalog() {
           {activeUtility === 'cli' && <CliDocumentation />}
           {activeUtility === 'mcp-server' && <McpDocumentation />}
           {activeUtility === 'policy-engine' && <PolicyEngineDocumentation />}
-          {activeUtility !== 'cli' && activeUtility !== 'mcp-server' && activeUtility !== 'policy-engine' && utility && <ComingSoonUtility utility={utility} />}
+          {activeUtility === 'copilot-spaces' && <CopilotSpacesDocumentation />}
+          {utility && !['cli', 'mcp-server', 'policy-engine', 'copilot-spaces'].includes(activeUtility) && <ComingSoonUtility utility={utility} />}
         </div>
       </div>
     </>
