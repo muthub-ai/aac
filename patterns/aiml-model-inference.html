@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI-ML Model Deployment &amp; Inferencing — Architecture Pattern</title>
+  <meta name="description" content="Production-ready machine learning model serving using Vertex AI for real-time online inference, autoscaling, and A/B testing.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232563eb' stroke-width='2'><path d='M12 2L2 7l10 5 10-5-10-5z'/><path d='M2 17l10 5 10-5'/><path d='M2 12l10 5 10-5'/></svg>">
+  <style>
+:root {
+  --bg: #f6f8fa; --bg-alt: #ffffff; --card: #ffffff; --card-hover: #f8fafc;
+  --text: #1f2328; --text-secondary: #656d76; --text-tertiary: #8c959f;
+  --border: #d0d7de; --border-muted: #e8ebef;
+  --accent: #2563eb; --accent-hover: #1d4ed8; --accent-subtle: rgba(37,99,235,0.08);
+  --success: #1a7f37; --success-subtle: rgba(26,127,55,0.08);
+  --warning: #bf8700; --warning-subtle: rgba(191,135,0,0.08);
+  --danger: #cf222e; --danger-subtle: rgba(207,34,46,0.08);
+  --purple: #8250df; --purple-subtle: rgba(130,80,223,0.08);
+  --orange: #f78166; --orange-subtle: rgba(247,129,102,0.08);
+  --code-bg: #f0f3f6; --shadow: 0 1px 3px rgba(31,35,40,0.04), 0 1px 2px rgba(31,35,40,0.06);
+  --shadow-md: 0 4px 12px rgba(31,35,40,0.08); --radius: 12px; --radius-sm: 8px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0d1117; --bg-alt: #161b22; --card: #161b22; --card-hover: #1c2128;
+    --text: #e6edf3; --text-secondary: #8b949e; --text-tertiary: #6e7681;
+    --border: #30363d; --border-muted: #21262d;
+    --accent: #58a6ff; --accent-hover: #79c0ff; --accent-subtle: rgba(88,166,255,0.1);
+    --success: #3fb950; --success-subtle: rgba(63,185,80,0.1);
+    --warning: #d29922; --warning-subtle: rgba(210,153,34,0.1);
+    --danger: #f85149; --danger-subtle: rgba(248,81,73,0.1);
+    --purple: #bc8cff; --purple-subtle: rgba(188,140,255,0.1);
+    --orange: #f78166; --orange-subtle: rgba(247,129,102,0.1);
+    --code-bg: #1c2128; --shadow: 0 1px 3px rgba(0,0,0,0.2); --shadow-md: 0 4px 12px rgba(0,0,0,0.3);
+  }
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Noto Sans, Helvetica, Arial, sans-serif;
+  background: var(--bg); color: var(--text); line-height: 1.6; -webkit-font-smoothing: antialiased;
+}
+a { color: var(--accent); text-decoration: none; transition: color 0.15s; }
+a:hover { color: var(--accent-hover); }
+img { max-width: 100%; height: auto; }
+
+/* ── Layout ─────────────────────── */
+.container { max-width: 1152px; margin: 0 auto; padding: 0 24px; }
+@media (min-width: 640px) { .container { padding: 0 40px; } }
+
+/* ── Nav (same as main site) ────── */
+.nav { position: sticky; top: 0; z-index: 50; background: var(--bg-alt); border-bottom: 1px solid var(--border); backdrop-filter: blur(12px); }
+.nav-inner { display: flex; align-items: center; height: 56px; gap: 16px; }
+.nav-brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 15px; color: var(--text); text-decoration: none; }
+.nav-brand svg { width: 28px; height: 28px; color: var(--accent); }
+.nav-links { display: flex; gap: 4px; margin-left: auto; }
+.nav-link { padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 500; color: var(--text-secondary); transition: all 0.15s; }
+.nav-link:hover { color: var(--text); background: var(--accent-subtle); }
+.nav-link.active { color: var(--accent); background: var(--accent-subtle); }
+
+/* ── Footer ─────────────────────── */
+footer { margin-top: 40px; padding: 24px 0; border-top: 1px solid var(--border); }
+footer p { font-size: 13px; color: var(--text-tertiary); text-align: center; }
+footer p + p { margin-top: 4px; }
+
+/* ── Breadcrumb ─────────────────── */
+.breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-tertiary); margin-bottom: 16px; }
+.breadcrumb a { color: var(--text-secondary); }
+.breadcrumb a:hover { color: var(--accent); }
+.breadcrumb svg { width: 12px; height: 12px; color: var(--text-tertiary); }
+
+/* ── Detail Hero ────────────────── */
+.detail-hero { padding: 48px 0 32px; border-bottom: 1px solid var(--border); }
+.detail-hero h1 { font-size: 36px; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 12px; }
+.detail-hero .desc { font-size: 16px; color: var(--text-secondary); line-height: 1.6; max-width: 720px; }
+.detail-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; border: 1px solid; }
+.tag { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 500; background: var(--accent-subtle); color: var(--accent); }
+
+/* ── Content Sections ───────────── */
+.detail-content { padding: 40px 0 20px; }
+.detail-section { margin-bottom: 48px; }
+.detail-section h2 { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 8px; padding-bottom: 12px; border-bottom: 2px solid var(--border); display: flex; align-items: center; gap: 8px; }
+.detail-section h2 .section-icon { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 6px; }
+.detail-section > p.section-desc { color: var(--text-secondary); font-size: 14px; margin-bottom: 20px; }
+
+/* ── Cards ──────────────────────── */
+.card-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+@media (min-width: 640px) { .card-grid { grid-template-columns: repeat(2, 1fr); } }
+.info-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px 20px; box-shadow: var(--shadow); }
+.info-card h3 { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+.info-card p { font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin: 0; }
+
+/* ── Pattern Catalog Cards ──────── */
+.pattern-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px; }
+.pattern-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow); transition: all 0.2s ease; display: flex; flex-direction: column; text-decoration: none; color: inherit; }
+.pattern-card:hover { border-color: var(--accent); box-shadow: var(--shadow-md); transform: translateY(-2px); color: inherit; }
+.pattern-card-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 12px; }
+.pattern-card h3 { font-size: 17px; font-weight: 700; letter-spacing: -0.01em; }
+.pattern-card:hover h3 { color: var(--accent); }
+.pattern-card-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 16px; flex: 1; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.pattern-card-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+.pattern-card-footer { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding-top: 14px; border-top: 1px solid var(--border-muted); }
+.pattern-card-stat { text-align: center; }
+.pattern-card-stat .val { font-size: 16px; font-weight: 700; color: var(--text); }
+.pattern-card-stat .lbl { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-tertiary); }
+.group-badge { background: var(--purple-subtle); color: var(--purple); border-color: transparent; font-size: 10px; padding: 1px 8px; border-radius: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; }
+
+/* ── Table ──────────────────────── */
+.table-wrap { overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--border); background: var(--card); box-shadow: var(--shadow); }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead { background: var(--bg); }
+th { padding: 10px 16px; text-align: left; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-secondary); border-bottom: 1px solid var(--border); }
+td { padding: 12px 16px; border-bottom: 1px solid var(--border-muted); vertical-align: top; }
+tr:last-child td { border-bottom: none; }
+tr:hover { background: var(--card-hover); }
+
+/* ── NFR Grid ───────────────────── */
+.nfr-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+.nfr-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px; box-shadow: var(--shadow); }
+.nfr-card .label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-secondary); }
+.nfr-card .value { font-size: 15px; font-weight: 700; color: var(--text); margin-top: 4px; }
+
+/* ── Pros / Cons ────────────────── */
+.pros-cons { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 640px) { .pros-cons { grid-template-columns: 1fr; } }
+.pros-box { background: var(--success-subtle); border: 1px solid var(--success); border-radius: var(--radius-sm); padding: 20px; }
+.cons-box { background: var(--warning-subtle); border: 1px solid var(--warning); border-radius: var(--radius-sm); padding: 20px; }
+.pros-box h3, .cons-box h3 { font-size: 14px; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+.pros-box h3 { color: var(--success); }
+.cons-box h3 { color: var(--warning); }
+.check-list, .warn-list { list-style: none; padding: 0; }
+.check-list li, .warn-list li { padding: 4px 0; font-size: 13px; line-height: 1.5; display: flex; gap: 8px; align-items: flex-start; }
+.check-list li svg { color: var(--success); flex-shrink: 0; margin-top: 2px; }
+.warn-list li svg { color: var(--warning); flex-shrink: 0; margin-top: 2px; }
+
+/* ── Stepper ────────────────────── */
+.stepper { margin-left: 12px; border-left: 2px solid var(--border); padding-left: 24px; }
+.stepper .step { position: relative; padding-bottom: 20px; }
+.stepper .step:last-child { padding-bottom: 0; }
+.stepper .step-num { position: absolute; left: -37px; top: 0; width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--accent); background: var(--bg); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: var(--accent); }
+.stepper .step p { font-size: 14px; margin: 0; padding-top: 2px; color: var(--text); }
+
+/* ── Diagram Card ───────────────── */
+.diagram-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); margin-bottom: 16px; }
+.diagram-card-header { padding: 12px 20px; border-bottom: 1px solid var(--border-muted); display: flex; align-items: center; justify-content: space-between; }
+.diagram-card-header h3 { font-size: 14px; font-weight: 600; }
+.diagram-type-badge { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 3px 10px; border-radius: 4px; }
+.type-context { background: var(--accent-subtle); color: var(--accent); }
+.type-container { background: var(--success-subtle); color: var(--success); }
+.diagram-card-body { padding: 20px; background: var(--bg); text-align: center; min-height: 200px; }
+.diagram-card-body img { border-radius: 8px; max-height: 600px; cursor: pointer; }
+
+/* ── Constraint list ────────────── */
+.constraint-list { list-style: none; padding: 0; }
+.constraint-list li { padding: 8px 0; font-size: 14px; color: var(--text); display: flex; gap: 10px; align-items: flex-start; border-bottom: 1px solid var(--border-muted); }
+.constraint-list li:last-child { border-bottom: none; }
+.constraint-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-tertiary); flex-shrink: 0; margin-top: 8px; }
+
+/* ── Hero section for index ─────── */
+.patterns-hero { padding: 60px 0 40px; text-align: center; position: relative; overflow: hidden; }
+.patterns-hero::before { content: ''; position: absolute; top: -200px; left: 50%; transform: translateX(-50%); width: 800px; height: 600px; background: radial-gradient(ellipse, var(--accent-subtle) 0%, transparent 70%); pointer-events: none; }
+.patterns-hero h1 { font-size: 36px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; margin-bottom: 12px; }
+.patterns-hero h1 span { color: var(--accent); }
+.patterns-hero p { font-size: 16px; color: var(--text-secondary); max-width: 600px; margin: 0 auto; line-height: 1.5; }
+
+/* ── Stats ──────────────────────── */
+.stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 32px 0 48px; }
+@media (max-width: 640px) { .stats-row { grid-template-columns: 1fr; } }
+.stat-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; text-align: center; box-shadow: var(--shadow); }
+.stat-value { font-size: 32px; font-weight: 800; letter-spacing: -0.02em; color: var(--accent); }
+.stat-label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-top: 4px; }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="container nav-inner">
+    <a href="../index.html" class="nav-brand">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+      Architecture as Code
+    </a>
+    <div class="nav-links">
+      <a href="../index.html" class="nav-link ">Overview</a>
+      <a href="../index.html#systems" class="nav-link">Systems</a>
+      <a href="../patterns/index.html" class="nav-link active">Patterns</a>
+      <a href="../standards/index.html" class="nav-link ">Standards</a>
+      <a href="../waivers/index.html" class="nav-link ">Waivers</a>
+      <a href="../index.html#pipeline" class="nav-link">Pipeline</a>
+      <a href="https://github.com/muthub-ai/aac" class="nav-link" target="_blank" rel="noopener">GitHub &nearr;</a>
+    </div>
+  </div>
+</nav>
+
+<section class="detail-hero">
+  <div class="container">
+    <div class="breadcrumb">
+      <a href="../index.html">Home</a>
+      <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg></span>
+      <a href="index.html">Patterns</a>
+      <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg></span>
+      <span>AI-ML Model Deployment &amp; Inferencing</span>
+    </div>
+    <h1>AI-ML Model Deployment &amp; Inferencing</h1>
+    <p class="desc">Production-ready machine learning model serving using Vertex AI for real-time online inference, autoscaling, and A/B testing.</p>
+    <div class="detail-meta">
+      <span class="badge" style="background:#fff8c5;color:#9a6700;border-color:#bf8700">Beta</span>
+      <span class="badge" style="background:var(--accent-subtle);color:var(--accent);border-color:var(--accent)">internal</span>
+      <span class="badge" style="background:var(--card);color:var(--text-secondary);border-color:var(--border)">v1.0.0</span>
+      <span class="badge" style="background:var(--purple-subtle);color:var(--purple);border-color:transparent">AI + Machine Learning</span>
+    </div>
+    <div style="margin-top:16px;display:flex;flex-wrap:wrap;gap:6px"><span class="tag">Vertex AI</span> <span class="tag">MLOps</span> <span class="tag">Inference</span> <span class="tag">Model Serving</span></div>
+  </div>
+</section>
+
+<div class="container detail-content">
+
+  <div class="detail-section">
+    <h2><span class="section-icon" style="background:var(--accent-subtle);color:var(--accent)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></span> Architecture Overview</h2>
+    <p style="font-size:15px;line-height:1.7;color:var(--text);margin-bottom:12px">This pattern provides a production-grade ML model serving infrastructure built on Vertex AI. It supports the complete model lifecycle from registry to endpoint deployment, canary rollouts, and continuous monitoring.</p>
+<p style="font-size:15px;line-height:1.7;color:var(--text);margin-bottom:12px">Trained model artifacts are stored in the Vertex AI Model Registry with full version lineage. Deployments target managed Vertex AI Endpoints that support traffic splitting — enabling canary releases where a new model version serves a configurable percentage of traffic (e.g., 10%) alongside the stable version (90%).</p>
+<p style="font-size:15px;line-height:1.7;color:var(--text);margin-bottom:12px">Each model version runs in its own serving container (TensorFlow Serving, PyTorch Serve, or custom) on dedicated compute with optional GPU acceleration. The endpoint auto-scales replicas based on request load, scaling from 1 to 20 instances with zero downtime.</p>
+<p style="font-size:15px;line-height:1.7;color:var(--text);margin-bottom:12px">The operations layer includes continuous model monitoring that detects data drift, feature skew, and prediction quality degradation. A fully automated ML CI/CD pipeline triggers retraining when quality thresholds are breached, validates the new model, and performs blue-green deployments.</p>
+  </div>
+
+  <div class="detail-section">
+    <h2><span class="section-icon" style="background:var(--accent-subtle);color:var(--accent)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></span> Architecture Diagrams</h2>
+    
+    <div class="diagram-card">
+      <div class="diagram-card-header">
+        <h3>System Context</h3>
+        <span class="diagram-type-badge type-context">Context</span>
+      </div>
+      <div class="diagram-card-body">
+        <img src="https://www.plantuml.com/plantuml/svg/TLH1ZkCs4Bpx5HqT5cD47WN1dd9QntOI9_QECV8co4dWa6s904KgP7DcVDj7v8LvIT2KR5cpknS19CMgxkegVWWaFCNMpBxJLfge41gYBlnK55wytDUQclWK0thfBA6bU-dQeZF2yfr586NqKx5wlpZmrgVzhcX58FJ5wdsruXklTDyn-cot_FlXqx7wQtlyhTfjVjryND_DPpFIP13ASo1iORW0_tt-5vRRnNu7UwVGm1exuyujMe9tiBKdz6YbjlLiTa0VdBrhJOMspY7Rxs1ZQsqHVPP3TlH2sm0jeuGSLC89G0xGgivfIo67rbbDpWVeq9-SRuMLcCqlq4gGg8BKQ4a7oY5R2n9GNZQOPVFQeTTSNe0NJSsL3v-5YO8mG8lajGmvTF79wD1WAi9ZhGFvyyWcEbr9PqDiqUUGBGzR5YKjcMbh2RqL1WBwPoqPfH44KXW3dKUb9Mbdn-Qo-MpMQyiITKOGDzZhr4jRCf2juJ2SCSl1EnKJqiAZKEU-dvxJrX03V_z4J_WAoosSd0UFmYn8jmXw60_c82Av88NHF1houdJI4a9dD57Q4bODqCC8jAt7YglDAzr9NKcLGxRQ5gir77I7Hbla8fUHN2i8Bn34eqwmpy9e9RZydaADxddM0bR6HGK_HsrKDfzmyK6b1UlJ_xHTxfcgxCK68QMBbhYl9Y7VIEvTfFG7XW0S5U_C5Fw4WgB7Af3pc4FsIx-6ajTCitCl2oC8hJo3izmd37Ukqa-bxXlNjejfqb-qCgfwxMW_2it67Nm20sqEr7WNwwQBr6k7tZEb80GbGlFaX5TVvJAkhc-9TlswjzEe4luJCL3XCNJE1eJXMk8IKMbASsJbPezehhcUcdSznFZT6Dq-SSms-h9S_v53dShBvWdkRPQdi8SnckobYxFUeFQnUHoJoy3Js4vXIxGgJApIYv1m7pVb4Gge7m-h0Mfm_1JZw7LTemyfKhthHrSde1jNm_UNS5xo4WRi2UYjtPUH6XP5fiUAdnFq2VQ1J-37-n-WW4iCbdqCleRvfST9ig33VW11umC1REBiRHBWeRV-yh3zTjKJPszUE-SfN5-zosERwk_G7j4WRvs_ZJUwT-Vgss4ba99yb5oXWj_BXuzipWzeLMpD_m00" alt="System Context diagram for AI-ML Model Deployment &amp; Inferencing" loading="lazy" />
+      </div>
+    </div>
+
+    <div class="diagram-card">
+      <div class="diagram-card-header">
+        <h3>Container</h3>
+        <span class="diagram-type-badge type-container">Container</span>
+      </div>
+      <div class="diagram-card-body">
+        <img src="https://www.plantuml.com/plantuml/svg/fLNRZjis47ttLqmDD5WZzZfxUMcUehKtgL4xQwozAVfaqDH89fOY5N9enoW2v1_QByoN59IeYo-R0ksR97AEpXoUENndYHbocUpy91INBaRO4ENsxN1esEuo5RHnQsVHSAq85LrodGrpoPIl6LYAfLWFHxU3kV_qD9iECsO9pN1qknffHKmeD9Uvn-zCepyUdfQhtoVBNrVJ-m_t7ySNlKw714c4UY-C1KiDo-3xjxyXcWncKvZf62MCCPTwdw4YU0KJbQ11nOLAEvqv6glLHIPNgD8-T6TJk5UfK8YcsuTkMMY1gHWohGHfOxkzgehbOiMriYv3quTkD9zuBiMhBvuRZ0KdeHKO_EpGag_jBFQMC5lTQQTYPlR-txbab6YJbGHApWiqMw5Ic8UrRW_-x7G0wZg3gR1azhweg9WnnLBqNHPx0Q2HvYBpMrOdDO_XW-Vx2GtX5uWcuSKAhT3txJSoGo9Xd2pi16r02eKiHI33-BEdwHLYUMxqbadOQVESIBtp_PwZOKaRbcBD8WhWi2WNF86Hr2vkVrWQ3r7nMGl5Z43R1nk4ujLFRBzWmxLAH0g9a5Zo-7eWNoZhGxTIUg8ImomPnyaPFACXgZZNGb5RAxWF7qyKB8yZXhonGGLGQaY69OdWO7CfY8HAty8lRtw6xJKCuSe_t0muKypiJrHi85VRwqEd5SrmXErreHaggyrxgNULdqfZYeoPVL2oqi__Er3gWxeQM69UgNXm2w_XuwV9U1B1yXO-p9_wSFNzsr_NRy1WBWLdzeS4RruWU0CNewAzNi5flzI6RuhbyloBjIEELmr7IBI1Q7W7k6NICOzzvfHrRllGVSZH53iil89PESTUYvV698nwCrbDoV4f-rAXd7OMOaOCOYCIWXW9YtRxa23pTWBxZ3jWYicz5S6XBMTyTamAsWEJQEZCsCXLBdBqKrTcn6Wo78rX7hurytBdX8pXDGIErGRhTqIETCO8Oo-XK8Nv6_7wi6LInE7PqrjBXuFK82g8wm0zet7eq0lzFZHRcUr4uF6wsbw40BPh_Fk1ld2oDDMxWMI4Ykz1AzzPRGsTU3q7N6UvyprMh0gVY93v6EX_hMFu_WjTS2_TIh2ibd4IpGh5E4ThYsGnMdPxxQAizaHTTMYJ6P8Ht3kkFjJE8yhwhZb9v3ABqTXW-cqPmVPGayNujsxl4EZ074iZqjI3D6TcZ_qHpISLnX69utmkbBTD-dka3wC5h1r_Hde1f9MJrGLAkbjFKqCiP7I0ERnEMo3dBbAlr_rY2KD87-UZWD3K72VaetQ4jfrnuKff4lY763SDnjKXHiYfDiJHpqyDJtpZZHaSwb4U3itS7D0HYV-5THHknne5-zhMGe6tO5akFLBbid-7k_alS6qRdmp7tAsbiBxLOgaCj8JGj6Bhv0JRWnqvsg0YmHcLCbKNKSIvTehEDtKmvGjKiGq97sRwpEm7mJllKCKka_y0" alt="Container diagram for AI-ML Model Deployment &amp; Inferencing" loading="lazy" />
+      </div>
+    </div>
+  </div>
+
+  <div class="detail-section">
+    <h2><span class="section-icon" style="background:var(--purple-subtle);color:var(--purple)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></span> Design Considerations</h2>
+    
+    <div class="card-grid">
+      
+      <div class="info-card">
+        <h3>Model Serving Strategy</h3>
+        <p>Online prediction endpoints are used for real-time, low-latency inference (&lt; 100 ms). For batch scoring use cases, Vertex AI Batch Prediction jobs process large datasets asynchronously. The choice depends on latency requirements and request volume patterns.</p>
+      </div>
+
+      <div class="info-card">
+        <h3>Traffic Splitting &amp; Canary Releases</h3>
+        <p>New model versions are deployed with 10% traffic allocation for A/B evaluation. If quality metrics (accuracy, latency p99, error rate) meet thresholds after a 24-hour bake period, traffic is gradually ramped to 100%. Rollback is automatic if metrics degrade.</p>
+      </div>
+
+      <div class="info-card">
+        <h3>Feature Serving</h3>
+        <p>The Vertex AI Feature Store provides low-latency online serving of pre-computed features. This ensures training-serving consistency (avoiding training-serving skew) and reduces inference-time compute by caching expensive feature transformations.</p>
+      </div>
+
+      <div class="info-card">
+        <h3>GPU Acceleration</h3>
+        <p>Models requiring GPU acceleration are deployed on NVIDIA T4 or A100 nodes. GPU utilisation is monitored to right-size accelerator allocation. For cost optimisation, consider CPU-only serving for smaller models where inference latency is not GPU-bound.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="detail-section">
+    <h2><span class="section-icon" style="background:var(--success-subtle);color:var(--success)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></span> Products Used</h2>
+    
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Product</th><th>Role</th></tr></thead>
+        <tbody>
+          
+          <tr>
+            <td style="font-weight:500">Vertex AI Endpoints</td>
+            <td>Managed prediction endpoints with autoscaling and traffic splitting</td>
+          </tr>
+
+          <tr>
+            <td style="font-weight:500">Vertex AI Model Registry</td>
+            <td>Versioned model artifact storage with lineage tracking</td>
+          </tr>
+
+          <tr>
+            <td style="font-weight:500">Vertex AI Feature Store</td>
+            <td>Low-latency online feature serving for inference</td>
+          </tr>
+
+          <tr>
+            <td style="font-weight:500">Vertex AI Model Monitoring</td>
+            <td>Continuous drift detection and quality alerting</td>
+          </tr>
+
+          <tr>
+            <td style="font-weight:500">Cloud Build + Vertex Pipelines</td>
+            <td>Automated ML CI/CD for training, validation, and deployment</td>
+          </tr>
+
+          <tr>
+            <td style="font-weight:500">Cloud Storage</td>
+            <td>Model artifact and training data storage</td>
+          </tr>
+
+          <tr>
+            <td style="font-weight:500">Cloud Monitoring</td>
+            <td>Endpoint performance metrics and SLO dashboards</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="detail-section">
+    <h2><span class="section-icon" style="background:var(--orange-subtle);color:var(--orange)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg></span> Non-Functional Requirements</h2>
+    
+    <div class="nfr-grid">
+      
+      <div class="nfr-card">
+        <div class="label">Inference Latency (p99)</div>
+        <div class="value">&lt; 100 ms (online prediction)</div>
+      </div>
+
+      <div class="nfr-card">
+        <div class="label">Availability</div>
+        <div class="value">99.9% (managed endpoint SLA)</div>
+      </div>
+
+      <div class="nfr-card">
+        <div class="label">Autoscale Range</div>
+        <div class="value">1–20 replicas per model version</div>
+      </div>
+
+      <div class="nfr-card">
+        <div class="label">Canary Bake Period</div>
+        <div class="value">24 hours before full rollout</div>
+      </div>
+
+      <div class="nfr-card">
+        <div class="label">Model Retraining SLA</div>
+        <div class="value">&lt; 4 hours from drift detection to deployment</div>
+      </div>
+
+      <div class="nfr-card">
+        <div class="label">Data Drift Detection</div>
+        <div class="value">Continuous monitoring with 1-hour evaluation window</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="detail-section">
+    <h2><span class="section-icon" style="background:var(--success-subtle);color:var(--success)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span> Advantages &amp; Considerations</h2>
+    
+    <div class="pros-cons">
+      <div class="pros-box">
+        <h3><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Advantages</h3>
+        <ul class="check-list">
+          <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Fully managed endpoints with automatic scaling</li>
+<li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Built-in traffic splitting for canary deployments</li>
+<li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Integrated model monitoring for data drift</li>
+        </ul>
+      </div>
+      <div class="cons-box">
+        <h3><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Considerations</h3>
+        <ul class="warn-list">
+          <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Cold start latency for large models</li>
+<li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Endpoint compute costs (especially with GPUs)</li>
+<li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Strict IAM access controls for prediction routes</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="detail-section">
+    <h2><span class="section-icon" style="background:var(--danger-subtle);color:var(--danger)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span> Constraints &amp; Limitations</h2>
+    
+    <ul class="constraint-list">
+      <li><span class="constraint-dot"></span>Model artifacts must be registered in the Model Registry with proper versioning before deployment</li>
+<li><span class="constraint-dot"></span>GPU-accelerated endpoints require quota approval for NVIDIA T4/A100 nodes in the target region</li>
+<li><span class="constraint-dot"></span>All prediction requests must be authenticated via service accounts — public endpoints are not permitted</li>
+<li><span class="constraint-dot"></span>Feature Store entities must be pre-populated before model deployment (no lazy feature computation)</li>
+<li><span class="constraint-dot"></span>Maximum model size for online serving is 10 GB; larger models require custom container optimisations</li>
+    </ul>
+  </div>
+
+  <div class="detail-section">
+    <h2><span class="section-icon" style="background:var(--warning-subtle);color:var(--warning)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span> Cost Profile</h2>
+    <div class="info-card">
+      <p>High. Primary cost drivers are compute instances (especially GPU-equipped nodes), sustained endpoint uptime, and Feature Store online serving. Costs scale linearly with prediction QPS. NVIDIA T4 nodes cost ~$0.35/hr; A100 nodes ~$2.93/hr. Estimated monthly cost: $3,000–$15,000 depending on GPU usage and traffic volume.</p>
+    </div>
+  </div>
+
+  <div class="detail-section">
+    <h2><span class="section-icon" style="background:var(--accent-subtle);color:var(--accent)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/></svg></span> Getting Started</h2>
+    
+    <div class="stepper">
+      
+      <div class="step">
+        <div class="step-num">1</div>
+        <p>Upload the trained ML model artifact to the Vertex AI Model Registry.</p>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <p>Create a dedicated Vertex AI Endpoint.</p>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <p>Deploy the model to the endpoint, specifying the target machine type and accelerators (e.g., NVIDIA GPUs).</p>
+      </div>
+
+      <div class="step">
+        <div class="step-num">4</div>
+        <p>Configure performance monitoring, logging, and establish operational runbooks.</p>
+      </div>
+    </div>
+  </div>
+
+  <div style="padding:16px 0;font-size:13px;color:var(--text-secondary);border-top:1px solid var(--border-muted)">
+    Maintained by <strong>ML Platform</strong> &middot; Version 1.0.0 &middot; <a href="https://muthub-ai.github.io/aac/patterns/aiml-model-inference.html">Full Documentation &nearr;</a>
+  </div>
+
+</div>
+
+
+<footer>
+  <div class="container">
+    <p>Architecture as Code &mdash; auto-generated from <a href="https://github.com/muthub-ai/aac">YAML models</a> via CI/CD pipeline</p>
+    <p style="font-size:11px;color:var(--text-tertiary)">Built with C4 Model &bull; PlantUML &bull; Asciidoctor &bull; GitHub Actions</p>
+  </div>
+</footer>
+</body>
+</html>

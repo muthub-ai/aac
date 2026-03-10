@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Public Web Application — Architecture Pattern</title>
+  <meta name="description" content="Globally distributed public-facing web application with Cloud CDN for edge caching, Cloud Armor WAF for DDoS and OWASP protection, external HTTPS load balancing, and Cloud Run for serverless container hosting with automatic scaling.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232563eb' stroke-width='2'><path d='M12 2L2 7l10 5 10-5-10-5z'/><path d='M2 17l10 5 10-5'/><path d='M2 12l10 5 10-5'/></svg>">
+  <style>
+:root {
+  --bg: #f6f8fa; --bg-alt: #ffffff; --card: #ffffff; --card-hover: #f8fafc;
+  --text: #1f2328; --text-secondary: #656d76; --text-tertiary: #8c959f;
+  --border: #d0d7de; --border-muted: #e8ebef;
+  --accent: #2563eb; --accent-hover: #1d4ed8; --accent-subtle: rgba(37,99,235,0.08);
+  --success: #1a7f37; --success-subtle: rgba(26,127,55,0.08);
+  --warning: #bf8700; --warning-subtle: rgba(191,135,0,0.08);
+  --danger: #cf222e; --danger-subtle: rgba(207,34,46,0.08);
+  --purple: #8250df; --purple-subtle: rgba(130,80,223,0.08);
+  --orange: #f78166; --orange-subtle: rgba(247,129,102,0.08);
+  --code-bg: #f0f3f6; --shadow: 0 1px 3px rgba(31,35,40,0.04), 0 1px 2px rgba(31,35,40,0.06);
+  --shadow-md: 0 4px 12px rgba(31,35,40,0.08); --radius: 12px; --radius-sm: 8px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0d1117; --bg-alt: #161b22; --card: #161b22; --card-hover: #1c2128;
+    --text: #e6edf3; --text-secondary: #8b949e; --text-tertiary: #6e7681;
+    --border: #30363d; --border-muted: #21262d;
+    --accent: #58a6ff; --accent-hover: #79c0ff; --accent-subtle: rgba(88,166,255,0.1);
+    --success: #3fb950; --success-subtle: rgba(63,185,80,0.1);
+    --warning: #d29922; --warning-subtle: rgba(210,153,34,0.1);
+    --danger: #f85149; --danger-subtle: rgba(248,81,73,0.1);
+    --purple: #bc8cff; --purple-subtle: rgba(188,140,255,0.1);
+    --orange: #f78166; --orange-subtle: rgba(247,129,102,0.1);
+    --code-bg: #1c2128; --shadow: 0 1px 3px rgba(0,0,0,0.2); --shadow-md: 0 4px 12px rgba(0,0,0,0.3);
+  }
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Noto Sans, Helvetica, Arial, sans-serif;
+  background: var(--bg); color: var(--text); line-height: 1.6; -webkit-font-smoothing: antialiased;
+}
+a { color: var(--accent); text-decoration: none; transition: color 0.15s; }
+a:hover { color: var(--accent-hover); }
+img { max-width: 100%; height: auto; }
+
+/* ── Layout ─────────────────────── */
+.container { max-width: 1152px; margin: 0 auto; padding: 0 24px; }
+@media (min-width: 640px) { .container { padding: 0 40px; } }
+
+/* ── Nav (same as main site) ────── */
+.nav { position: sticky; top: 0; z-index: 50; background: var(--bg-alt); border-bottom: 1px solid var(--border); backdrop-filter: blur(12px); }
+.nav-inner { display: flex; align-items: center; height: 56px; gap: 16px; }
+.nav-brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 15px; color: var(--text); text-decoration: none; }
+.nav-brand svg { width: 28px; height: 28px; color: var(--accent); }
+.nav-links { display: flex; gap: 4px; margin-left: auto; }
+.nav-link { padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 500; color: var(--text-secondary); transition: all 0.15s; }
+.nav-link:hover { color: var(--text); background: var(--accent-subtle); }
+.nav-link.active { color: var(--accent); background: var(--accent-subtle); }
+
+/* ── Footer ─────────────────────── */
+footer { margin-top: 40px; padding: 24px 0; border-top: 1px solid var(--border); }
+footer p { font-size: 13px; color: var(--text-tertiary); text-align: center; }
+footer p + p { margin-top: 4px; }
+
+/* ── Breadcrumb ─────────────────── */
+.breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-tertiary); margin-bottom: 16px; }
+.breadcrumb a { color: var(--text-secondary); }
+.breadcrumb a:hover { color: var(--accent); }
+.breadcrumb svg { width: 12px; height: 12px; color: var(--text-tertiary); }
+
+/* ── Detail Hero ────────────────── */
+.detail-hero { padding: 48px 0 32px; border-bottom: 1px solid var(--border); }
+.detail-hero h1 { font-size: 36px; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 12px; }
+.detail-hero .desc { font-size: 16px; color: var(--text-secondary); line-height: 1.6; max-width: 720px; }
+.detail-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; border: 1px solid; }
+.tag { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 500; background: var(--accent-subtle); color: var(--accent); }
+
+/* ── Content Sections ───────────── */
+.detail-content { padding: 40px 0 20px; }
+.detail-section { margin-bottom: 48px; }
+.detail-section h2 { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 8px; padding-bottom: 12px; border-bottom: 2px solid var(--border); display: flex; align-items: center; gap: 8px; }
+.detail-section h2 .section-icon { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 6px; }
+.detail-section > p.section-desc { color: var(--text-secondary); font-size: 14px; margin-bottom: 20px; }
+
+/* ── Cards ──────────────────────── */
+.card-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+@media (min-width: 640px) { .card-grid { grid-template-columns: repeat(2, 1fr); } }
+.info-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px 20px; box-shadow: var(--shadow); }
+.info-card h3 { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+.info-card p { font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin: 0; }
+
+/* ── Pattern Catalog Cards ──────── */
+.pattern-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px; }
+.pattern-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow); transition: all 0.2s ease; display: flex; flex-direction: column; text-decoration: none; color: inherit; }
+.pattern-card:hover { border-color: var(--accent); box-shadow: var(--shadow-md); transform: translateY(-2px); color: inherit; }
+.pattern-card-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 12px; }
+.pattern-card h3 { font-size: 17px; font-weight: 700; letter-spacing: -0.01em; }
+.pattern-card:hover h3 { color: var(--accent); }
+.pattern-card-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 16px; flex: 1; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.pattern-card-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+.pattern-card-footer { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding-top: 14px; border-top: 1px solid var(--border-muted); }
+.pattern-card-stat { text-align: center; }
+.pattern-card-stat .val { font-size: 16px; font-weight: 700; color: var(--text); }
+.pattern-card-stat .lbl { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-tertiary); }
+.group-badge { background: var(--purple-subtle); color: var(--purple); border-color: transparent; font-size: 10px; padding: 1px 8px; border-radius: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; }
+
+/* ── Table ──────────────────────── */
+.table-wrap { overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--border); background: var(--card); box-shadow: var(--shadow); }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead { background: var(--bg); }
+th { padding: 10px 16px; text-align: left; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-secondary); border-bottom: 1px solid var(--border); }
+td { padding: 12px 16px; border-bottom: 1px solid var(--border-muted); vertical-align: top; }
+tr:last-child td { border-bottom: none; }
+tr:hover { background: var(--card-hover); }
+
+/* ── NFR Grid ───────────────────── */
+.nfr-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+.nfr-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px; box-shadow: var(--shadow); }
+.nfr-card .label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-secondary); }
+.nfr-card .value { font-size: 15px; font-weight: 700; color: var(--text); margin-top: 4px; }
+
+/* ── Pros / Cons ────────────────── */
+.pros-cons { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 640px) { .pros-cons { grid-template-columns: 1fr; } }
+.pros-box { background: var(--success-subtle); border: 1px solid var(--success); border-radius: var(--radius-sm); padding: 20px; }
+.cons-box { background: var(--warning-subtle); border: 1px solid var(--warning); border-radius: var(--radius-sm); padding: 20px; }
+.pros-box h3, .cons-box h3 { font-size: 14px; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+.pros-box h3 { color: var(--success); }
+.cons-box h3 { color: var(--warning); }
+.check-list, .warn-list { list-style: none; padding: 0; }
+.check-list li, .warn-list li { padding: 4px 0; font-size: 13px; line-height: 1.5; display: flex; gap: 8px; align-items: flex-start; }
+.check-list li svg { color: var(--success); flex-shrink: 0; margin-top: 2px; }
+.warn-list li svg { color: var(--warning); flex-shrink: 0; margin-top: 2px; }
+
+/* ── Stepper ────────────────────── */
+.stepper { margin-left: 12px; border-left: 2px solid var(--border); padding-left: 24px; }
+.stepper .step { position: relative; padding-bottom: 20px; }
+.stepper .step:last-child { padding-bottom: 0; }
+.stepper .step-num { position: absolute; left: -37px; top: 0; width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--accent); background: var(--bg); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: var(--accent); }
+.stepper .step p { font-size: 14px; margin: 0; padding-top: 2px; color: var(--text); }
+
+/* ── Diagram Card ───────────────── */
+.diagram-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); margin-bottom: 16px; }
+.diagram-card-header { padding: 12px 20px; border-bottom: 1px solid var(--border-muted); display: flex; align-items: center; justify-content: space-between; }
+.diagram-card-header h3 { font-size: 14px; font-weight: 600; }
+.diagram-type-badge { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 3px 10px; border-radius: 4px; }
+.type-context { background: var(--accent-subtle); color: var(--accent); }
+.type-container { background: var(--success-subtle); color: var(--success); }
+.diagram-card-body { padding: 20px; background: var(--bg); text-align: center; min-height: 200px; }
+.diagram-card-body img { border-radius: 8px; max-height: 600px; cursor: pointer; }
+
+/* ── Constraint list ────────────── */
+.constraint-list { list-style: none; padding: 0; }
+.constraint-list li { padding: 8px 0; font-size: 14px; color: var(--text); display: flex; gap: 10px; align-items: flex-start; border-bottom: 1px solid var(--border-muted); }
+.constraint-list li:last-child { border-bottom: none; }
+.constraint-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-tertiary); flex-shrink: 0; margin-top: 8px; }
+
+/* ── Hero section for index ─────── */
+.patterns-hero { padding: 60px 0 40px; text-align: center; position: relative; overflow: hidden; }
+.patterns-hero::before { content: ''; position: absolute; top: -200px; left: 50%; transform: translateX(-50%); width: 800px; height: 600px; background: radial-gradient(ellipse, var(--accent-subtle) 0%, transparent 70%); pointer-events: none; }
+.patterns-hero h1 { font-size: 36px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; margin-bottom: 12px; }
+.patterns-hero h1 span { color: var(--accent); }
+.patterns-hero p { font-size: 16px; color: var(--text-secondary); max-width: 600px; margin: 0 auto; line-height: 1.5; }
+
+/* ── Stats ──────────────────────── */
+.stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 32px 0 48px; }
+@media (max-width: 640px) { .stats-row { grid-template-columns: 1fr; } }
+.stat-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; text-align: center; box-shadow: var(--shadow); }
+.stat-value { font-size: 32px; font-weight: 800; letter-spacing: -0.02em; color: var(--accent); }
+.stat-label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-top: 4px; }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="container nav-inner">
+    <a href="../index.html" class="nav-brand">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+      Architecture as Code
+    </a>
+    <div class="nav-links">
+      <a href="../index.html" class="nav-link ">Overview</a>
+      <a href="../index.html#systems" class="nav-link">Systems</a>
+      <a href="../patterns/index.html" class="nav-link active">Patterns</a>
+      <a href="../standards/index.html" class="nav-link ">Standards</a>
+      <a href="../waivers/index.html" class="nav-link ">Waivers</a>
+      <a href="../index.html#pipeline" class="nav-link">Pipeline</a>
+      <a href="https://github.com/muthub-ai/aac" class="nav-link" target="_blank" rel="noopener">GitHub &nearr;</a>
+    </div>
+  </div>
+</nav>
+
+<section class="detail-hero">
+  <div class="container">
+    <div class="breadcrumb">
+      <a href="../index.html">Home</a>
+      <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg></span>
+      <a href="index.html">Patterns</a>
+      <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg></span>
+      <span>Public Web Application</span>
+    </div>
+    <h1>Public Web Application</h1>
+    <p class="desc">Globally distributed public-facing web application with Cloud CDN for edge caching, Cloud Armor WAF for DDoS and OWASP protection, external HTTPS load balancing, and Cloud Run for serverless container hosting with automatic scaling.</p>
+    <div class="detail-meta">
+      <span class="badge" style="background:#dafbe1;color:#1a7f37;border-color:#1a7f37">Production Ready</span>
+      <span class="badge" style="background:var(--accent-subtle);color:var(--accent);border-color:var(--accent)">external</span>
+      <span class="badge" style="background:var(--card);color:var(--text-secondary);border-color:var(--border)">v2.0.0</span>
+      <span class="badge" style="background:var(--purple-subtle);color:var(--purple);border-color:transparent">Compute</span>
+    </div>
+    <div style="margin-top:16px;display:flex;flex-wrap:wrap;gap:6px"><span class="tag">Cloud Run</span> <span class="tag">CDN</span> <span class="tag">Cloud Armor</span> <span class="tag">Web Application</span> <span class="tag">Public Facing</span></div>
+  </div>
+</section>
+
+<div class="container detail-content">
+
+  <div class="detail-section">
+    <h2><span class="section-icon" style="background:var(--accent-subtle);color:var(--accent)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></span> Architecture Overview</h2>
+    <p style="font-size:15px;line-height:1.7;color:var(--text);margin-bottom:12px">This pattern delivers a globally available public web application with enterprise-grade security, performance, and scalability. The architecture places Google Cloud's edge network at the front — handling SSL termination, CDN caching, and WAF filtering before requests reach the origin.</p>
+<p style="font-size:15px;line-height:1.7;color:var(--text);margin-bottom:12px">Incoming HTTPS traffic hits the external global load balancer, which terminates TLS 1.3 with managed SSL certificates. Cloud Armor evaluates every request against OWASP CRS 3.3 rules, geo-restriction policies, rate limits (10K req/min per IP), and adaptive protection powered by ML-based anomaly detection.</p>
+<p style="font-size:15px;line-height:1.7;color:var(--text);margin-bottom:12px">Clean traffic passes through Cloud CDN, which caches static assets at 100+ edge PoPs worldwide with a 98% cache hit ratio for typical web applications. Cache misses are forwarded to the origin — a Next.js SSR application running on Cloud Run with Incremental Static Regeneration (ISR).</p>
+<p style="font-size:15px;line-height:1.7;color:var(--text);margin-bottom:12px">The backend tier consists of a separate Cloud Run API service handling business logic, Cloud Run Jobs for async task processing, and a data tier with Cloud SQL (PostgreSQL), Memorystore (Redis), and Cloud Storage. Firebase Authentication provides user identity management with email, social login, and multi-factor authentication support.</p>
+  </div>
+
+  <div class="detail-section">
+    <h2><span class="section-icon" style="background:var(--accent-subtle);color:var(--accent)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></span> Architecture Diagrams</h2>
+    
+    <div class="diagram-card">
+      <div class="diagram-card-header">
+        <h3>System Context</h3>
+        <span class="diagram-type-badge type-context">Context</span>
+      </div>
+      <div class="diagram-card-body">
+        <img src="https://www.plantuml.com/plantuml/svg/VLN1RYCt3BtxArWV5WamYRV5ddhQMTlPJU6iZTX1q9CXI_ICK8qqfQWuxgaVqI_ibnJKZ6F7c-OsbANt7lb8-dDaHPmQD_Z9UksIGQYPs_ZhQ4HgTrrPhjCcHIGTFAFdQnsQKUkKbpTNaOspcz7uqzL2ZXxkPgD6HKOQZJ-jn_BYcQzRGH_Coj_d3wlru-tgstes_JhzFhcu70pOiaDOxYDZ0_q3-FVlVs2HDivgUCGDb6thh5PiWnyC5aWn-0lqPYsg2XXElO67Y3IKxsT6yig1Jf53WnH1UGDFDbeE4cYDCLfV0TS8RSUnmqsqZCFB0tYVwbgPnle2XkCkXb9YeRbJNbKOeRzOm1OL9qBOEbN58dEgesgvjxLLeXmTULgdU1keMQEl2XWk-X2clh8UkumM54Hzy16itvAAJ4bdBY5fUY46MnVs3NgEH_X8MC1mUJ-55Qecwmw-gqDgsJPOG8iaZCfhx5H7r8aixy5wRKsFD-ZykUZgjTxXHhMjQ7lJ8o7wwi96ERS7OoEJtIH6Sr9kAGwaxCFOXMHWFFbUz9ybDO7WiRmf00zkVbkj5ajmGHdOAAUyjb8mqTkzkKyUje4W8ZqXEOoTDSfw9AX3PEkhOnxhwJDVQ7curYRxUz1mb7wm5Wmw-uIq1u-y2_G7QALh4HvPiTMWOaIEe1ZGL0YBi92A_K2a9AiNgfoZa3rsjNXfbAqbt2ddO6UvXlbZkLm0X_Rgvuz0oM7NpPD9M49BWL7t_NH29mWR5N6j4jS536_w6Ch4DNe-CKc61hB9OdZNIj9245FR1fAY0JRAkW9Yq5QvhkHtDoL4M_ahwz_AjEbwB3lKftltSYIqCyNezRu090e4fBZlFQuffAfk4uDHiTu4HIPsbLYe2ccISbyoLY-3z0Ex2rLrIZthOk4TesTIplw51WZ_J1WP-kklMrybOncOb7NIDFVeJjRD-GnyeR2BlJ6YZPJcA7IvPuUN-VdPGZd7E5idyA5V60AJTmw87Sh12CPtIoWNjptkwmLo3Zl9Iw6JTjX0cBLrjVcIh3CmWXKIAO7fKVFUUCFCb-sndCqppEJeqWSe7LBU5bdOQocdmxQK6OrvZD3quvDNzs5yO1V8cPqr-1xOOQ1kh6DPyuroLjkGeXYttLgTnwkyWJR83_W_oix7vMHAC89OdiNDvHn-kVu88vZVJiRlANjLi-cpM1UXGIQhEwmM_GeToj7-FQ1ZBo-PK3LHsZL3B0z_0WP-Myw_IvT-HczIu_u3" alt="System Context diagram for Public Web Application" loading="lazy" />
+      </div>
+    </div>
+
+    <div class="diagram-card">
+      <div class="diagram-card-header">
+        <h3>Container</h3>
+        <span class="diagram-type-badge type-container">Container</span>
+      </div>
+      <div class="diagram-card-body">
+        <img src="https://www.plantuml.com/plantuml/svg/TLR1Rjiu4BtxAsODj8W1nKusBThigOwTf6cTnBMS1dioHjHOPaEH2aavCOe2FVK3TlSB-oMBeMH7TjgREE8Ctnk-UT8xvz7wCbUjFwGMgam95juNxgzUp-93DvD-KIQb8okCzgHzLvYyLoZKdBFlVAfaqXkysXzpwEPorClHURAzmQlPm6YFKfFj5bo_DUh_VNqpdTrUJD_FHgVdfrV3lKwhvQLN19kzC9IOMSpXv_V_O5mcIWgufGJwHQ6aG2-DRhN6P9tHUwJJ6KEBe7sgKxXnPDly_EZ9QbGWIkTDJhRTMMTWcaiTGNjGaO4-hpbdS1a3wXI4qNEPGOuQCyf9-tQdrOfNpbC-Ep6bJj6kzXuemQAO5GhztDWyWlQlWSAutj7kmDTM2vvOxcNA9AXcAcdYVJ-TZcCO6KpX11LgKV4PA5EcpR3K6SVFGmqOlG75xv8w1HwaNq0SZy2JpQKEK2AucOmWny95WUVnSVVu-0N4epuJR28JVDeCRMxix07dc_Fx787R_bbxEyJBwzj-F8R198QZxX7OKf6B82EpdoWZxgJE8h3e2PJCfPSw0_HmUF0HBDttSgcX80iNumePfbXukIGehF4a6FmpYAdUO1WChzgxYxenb6O40iM2JmnDENxx8WG85j8p96aYE3hOJt45q-a8viQ2y-Yb07IEVDsi0QViy_dMA5WGfcHT1MgZYRaDaafdNWP1djLhc4eM87nj0JGvRFQxfMXkZyakfQ0dJfCo2FIA7dttYuCudW0s91PuNSIJ2B3qPjy9L4ptuEVtVmyF3a1gvraLBe93M0x6Dz23ruT_mkL9QFhwTRlJ0lYsHIX1STVWSr8jVqS72rapwOylVajYSXfFU-SMYyMd4V16Lss41Uequ4vA9pKv1yfaKaI1n-i6ZOglC5gKrf8MAtXx4C0tmJmOUqUsniF0Cykiu3R4tHOi-62I4EcxbHRWqTsnyWGvntXO4PIZL2u2RRoSrtslbM6fCDP3Hfg2clGl6fcYntKNX-ZnDoqS9lNekNkr0HX_6Z6siN4-inH_6i7Xwn2mCaUx0gwTeAEgBU_xO2cJXhraZbAP9Hzg2GDGbamDcwMIeoSs3N5N5cwtXSDapr8gNGJjIygDNJblRBZF2OVXJVU05p5toMW8RwDmevPSORIh1e_gBcrc7uGfjQ-cP_V0JBZPUkhMzBsnc8LphvCl97mpmdOFPS7UvoB8APMuDRNr8C-b8bWOnxvJtywtZQMVFlgzkRJ4FPnXwHSyYlKQ-gLVR0wIAMal_QhTQURcHajlR72u6lFb9jGEtVDM2WSl0HLP7rnZGghnwMf-2QeFWANxafmFgfoEOZZi7hKx8QknzxbDdqd5dGLlSJwNWhDl-sTG62N52cY9gbnBb6izAr2vwfXRw40eGjqi5JmGb35tPR6km0axFbPjowLpyFF7Fs2ipAI6ENaHMXa8rkdRcTi68b0fjtOCw47j6NNcPczpO2Q4gUizMEd9XRdO6PobHFWy7h1tQ1BUsDrYQy5N55w2gyJjdbJFNoGZZDhDt58kAvHSZvsDN51Vg70-YE53V7t5GxARl-LNf_g-f99SiAA6Lqrv2Jt-9-h5PR9ROrV5dydAkUGoveug4a_2vhyUY8SVrqMglwAdA-2_8LFKbbQvOqZXgo6T5aRg8ENdrxWr4AUFx8uEyce8mXWNfAUaY4CyIwrtfDCoL_y3" alt="Container diagram for Public Web Application" loading="lazy" />
+      </div>
+    </div>
+  </div>
+
+  <div class="detail-section">
+    <h2><span class="section-icon" style="background:var(--purple-subtle);color:var(--purple)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></span> Design Considerations</h2>
+    
+    <div class="card-grid">
+      
+      <div class="info-card">
+        <h3>Edge Caching Strategy</h3>
+        <p>Cloud CDN is configured with Cache-Control headers set at the application level. Static assets (JS, CSS, images) use immutable content hashing with 30-day TTL. Dynamic pages use short TTLs (60s) with stale-while-revalidate. Cache key policies exclude query parameters that do not affect content.</p>
+      </div>
+
+      <div class="info-card">
+        <h3>DDoS &amp; WAF Protection</h3>
+        <p>Cloud Armor provides multi-layered protection: L3/L4 volumetric DDoS mitigation at the Google edge, L7 OWASP CRS rules for application-layer attacks, IP reputation-based blocking, and adaptive protection that auto-detects and mitigates novel attack patterns. Rate limiting is applied per-IP to prevent abuse.</p>
+      </div>
+
+      <div class="info-card">
+        <h3>Frontend / Backend Separation</h3>
+        <p>The Next.js frontend and API backend are deployed as separate Cloud Run services with independent scaling profiles. The frontend optimises for render latency (1 vCPU, 512 MB), while the API optimises for concurrent request handling (concurrency 80). This separation allows independent deployment cycles.</p>
+      </div>
+
+      <div class="info-card">
+        <h3>Authentication Flow</h3>
+        <p>Firebase Authentication handles the user identity lifecycle — sign-up, sign-in (email, Google, Apple, GitHub), MFA enrollment, and session management. The API service validates Firebase ID tokens using the Admin SDK. Token refresh is handled transparently by the client SDK.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="detail-section">
+    <h2><span class="section-icon" style="background:var(--success-subtle);color:var(--success)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></span> Products Used</h2>
+    
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Product</th><th>Role</th></tr></thead>
+        <tbody>
+          
+          <tr>
+            <td style="font-weight:500">External HTTPS Load Balancer</td>
+            <td>Global L7 load balancing with managed SSL certificates</td>
+          </tr>
+
+          <tr>
+            <td style="font-weight:500">Cloud CDN</td>
+            <td>Global edge caching at 100+ PoPs</td>
+          </tr>
+
+          <tr>
+            <td style="font-weight:500">Cloud Armor</td>
+            <td>WAF with OWASP CRS, DDoS protection, and adaptive threat detection</td>
+          </tr>
+
+          <tr>
+            <td style="font-weight:500">Cloud Run</td>
+            <td>Serverless container hosting for frontend SSR and backend API</td>
+          </tr>
+
+          <tr>
+            <td style="font-weight:500">Cloud SQL (PostgreSQL)</td>
+            <td>Managed relational database with HA failover and read replicas</td>
+          </tr>
+
+          <tr>
+            <td style="font-weight:500">Memorystore (Redis)</td>
+            <td>Session store, API cache, and rate limit counters</td>
+          </tr>
+
+          <tr>
+            <td style="font-weight:500">Cloud Storage</td>
+            <td>User uploads, media assets, and static file hosting</td>
+          </tr>
+
+          <tr>
+            <td style="font-weight:500">Firebase Authentication</td>
+            <td>User identity management with MFA support</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="detail-section">
+    <h2><span class="section-icon" style="background:var(--orange-subtle);color:var(--orange)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg></span> Non-Functional Requirements</h2>
+    
+    <div class="nfr-grid">
+      
+      <div class="nfr-card">
+        <div class="label">Availability</div>
+        <div class="value">99.99% (global load balancer SLA)</div>
+      </div>
+
+      <div class="nfr-card">
+        <div class="label">Time to First Byte (p95)</div>
+        <div class="value">&lt; 200 ms (CDN cache hit)</div>
+      </div>
+
+      <div class="nfr-card">
+        <div class="label">CDN Cache Hit Ratio</div>
+        <div class="value">&gt; 95% for static assets</div>
+      </div>
+
+      <div class="nfr-card">
+        <div class="label">DDoS Mitigation</div>
+        <div class="value">Automatic, &lt; 10 seconds detection-to-mitigation</div>
+      </div>
+
+      <div class="nfr-card">
+        <div class="label">Autoscale Range</div>
+        <div class="value">0–100 instances per Cloud Run service</div>
+      </div>
+
+      <div class="nfr-card">
+        <div class="label">Max Concurrent Users</div>
+        <div class="value">50,000+</div>
+      </div>
+
+      <div class="nfr-card">
+        <div class="label">Encryption</div>
+        <div class="value">TLS 1.3 everywhere, CMEK for data at rest</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="detail-section">
+    <h2><span class="section-icon" style="background:var(--success-subtle);color:var(--success)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span> Advantages &amp; Considerations</h2>
+    
+    <div class="pros-cons">
+      <div class="pros-box">
+        <h3><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Advantages</h3>
+        <ul class="check-list">
+          <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Global edge caching via Cloud CDN delivers sub-100ms latency worldwide</li>
+<li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Cloud Armor WAF provides enterprise-grade DDoS and OWASP top-10 protection</li>
+<li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Serverless compute auto-scales 0 to 100 instances with zero cluster management</li>
+<li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> TLS 1.3 termination at the load balancer with managed SSL certificates</li>
+        </ul>
+      </div>
+      <div class="cons-box">
+        <h3><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Considerations</h3>
+        <ul class="warn-list">
+          <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> CDN cache invalidation requires careful Cache-Control header strategy</li>
+<li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Cloud Armor advanced rules (adaptive protection) incur additional cost</li>
+<li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> SSR cold starts impact Time-to-First-Byte under sudden traffic spikes</li>
+<li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Multi-region database replication needed for true global HA</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="detail-section">
+    <h2><span class="section-icon" style="background:var(--danger-subtle);color:var(--danger)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span> Constraints &amp; Limitations</h2>
+    
+    <ul class="constraint-list">
+      <li><span class="constraint-dot"></span>Cloud Armor advanced features (adaptive protection, bot management) require Cloud Armor Enterprise subscription</li>
+<li><span class="constraint-dot"></span>Cloud CDN does not cache responses with Set-Cookie headers — session-dependent content bypasses cache</li>
+<li><span class="constraint-dot"></span>Next.js ISR pages have a minimum revalidation interval of 1 second</li>
+<li><span class="constraint-dot"></span>Cloud Run request timeout is limited to 60 minutes — WebSocket connections require alternative solutions</li>
+<li><span class="constraint-dot"></span>Firebase Authentication free tier allows 10K verifications/month; paid plan required beyond that</li>
+<li><span class="constraint-dot"></span>Multi-region Cloud SQL replication requires custom setup — not included in this base pattern</li>
+    </ul>
+  </div>
+
+  <div class="detail-section">
+    <h2><span class="section-icon" style="background:var(--warning-subtle);color:var(--warning)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span> Cost Profile</h2>
+    <div class="info-card">
+      <p>Medium. Cloud CDN significantly reduces origin load (and cost) by serving 95%+ of static requests from edge cache. Cloud Run charges are usage-based with scale-to-zero. Cloud Armor standard rules are included with the load balancer; advanced features add ~$200/month. Estimated monthly cost: $500–$3,000 depending on traffic volume and Cloud Armor tier.</p>
+    </div>
+  </div>
+
+  <div class="detail-section">
+    <h2><span class="section-icon" style="background:var(--accent-subtle);color:var(--accent)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/></svg></span> Getting Started</h2>
+    
+    <div class="stepper">
+      
+      <div class="step">
+        <div class="step-num">1</div>
+        <p>Configure an external HTTPS load balancer with managed SSL certificates and URL maps.</p>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <p>Enable Cloud CDN on the backend service with appropriate cache TTLs and cache key policies.</p>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <p>Create Cloud Armor security policies with OWASP CRS rules, rate limiting, and geo-restrictions.</p>
+      </div>
+
+      <div class="step">
+        <div class="step-num">4</div>
+        <p>Deploy the frontend (Next.js SSR) and backend API as separate Cloud Run services.</p>
+      </div>
+
+      <div class="step">
+        <div class="step-num">5</div>
+        <p>Provision Cloud SQL, Memorystore, and Cloud Storage for the data tier with VPC connectors.</p>
+      </div>
+
+      <div class="step">
+        <div class="step-num">6</div>
+        <p>Integrate Firebase Authentication for user sign-in and set up Cloud Monitoring with SLO alerting.</p>
+      </div>
+    </div>
+  </div>
+
+  <div style="padding:16px 0;font-size:13px;color:var(--text-secondary);border-top:1px solid var(--border-muted)">
+    Maintained by <strong>Web Platform</strong> &middot; Version 2.0.0 &middot; <a href="https://muthub-ai.github.io/aac/patterns/public-web-application.html">Full Documentation &nearr;</a>
+  </div>
+
+</div>
+
+
+<footer>
+  <div class="container">
+    <p>Architecture as Code &mdash; auto-generated from <a href="https://github.com/muthub-ai/aac">YAML models</a> via CI/CD pipeline</p>
+    <p style="font-size:11px;color:var(--text-tertiary)">Built with C4 Model &bull; PlantUML &bull; Asciidoctor &bull; GitHub Actions</p>
+  </div>
+</footer>
+</body>
+</html>

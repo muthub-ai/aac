@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Demand Forecasting — Architecture as Code</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232563eb' stroke-width='2'><path d='M12 2L2 7l10 5 10-5-10-5z'/><path d='M2 17l10 5 10-5'/><path d='M2 12l10 5 10-5'/></svg>">
+  <style>
+:root {
+  --bg: #f6f8fa; --bg-alt: #ffffff; --card: #ffffff; --card-hover: #f8fafc;
+  --text: #1f2328; --text-secondary: #656d76; --text-tertiary: #8c959f;
+  --border: #d0d7de; --border-muted: #e8ebef;
+  --accent: #2563eb; --accent-hover: #1d4ed8; --accent-subtle: rgba(37,99,235,0.08);
+  --success: #1a7f37; --success-subtle: rgba(26,127,55,0.08);
+  --warning: #bf8700; --warning-subtle: rgba(191,135,0,0.08);
+  --danger: #cf222e; --danger-subtle: rgba(207,34,46,0.08);
+  --purple: #8250df; --purple-subtle: rgba(130,80,223,0.08);
+  --orange: #f78166; --orange-subtle: rgba(247,129,102,0.08);
+  --code-bg: #f0f3f6; --shadow: 0 1px 3px rgba(31,35,40,0.04), 0 1px 2px rgba(31,35,40,0.06);
+  --shadow-md: 0 4px 12px rgba(31,35,40,0.08); --radius: 12px; --radius-sm: 8px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0d1117; --bg-alt: #161b22; --card: #161b22; --card-hover: #1c2128;
+    --text: #e6edf3; --text-secondary: #8b949e; --text-tertiary: #6e7681;
+    --border: #30363d; --border-muted: #21262d;
+    --accent: #58a6ff; --accent-hover: #79c0ff; --accent-subtle: rgba(88,166,255,0.1);
+    --success: #3fb950; --success-subtle: rgba(63,185,80,0.1);
+    --warning: #d29922; --warning-subtle: rgba(210,153,34,0.1);
+    --danger: #f85149; --danger-subtle: rgba(248,81,73,0.1);
+    --purple: #bc8cff; --purple-subtle: rgba(188,140,255,0.1);
+    --orange: #f78166; --orange-subtle: rgba(247,129,102,0.1);
+    --code-bg: #1c2128; --shadow: 0 1px 3px rgba(0,0,0,0.2); --shadow-md: 0 4px 12px rgba(0,0,0,0.3);
+  }
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Noto Sans, Helvetica, Arial, sans-serif;
+  background: var(--bg); color: var(--text); line-height: 1.6; -webkit-font-smoothing: antialiased;
+}
+a { color: var(--accent); text-decoration: none; transition: color 0.15s; }
+a:hover { color: var(--accent-hover); }
+code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace; }
+img { max-width: 100%; height: auto; }
+
+/* ── Layout ─────────────────────── */
+.container { max-width: 1152px; margin: 0 auto; padding: 0 24px; }
+@media (min-width: 640px) { .container { padding: 0 40px; } }
+
+/* ── Nav ────────────────────────── */
+.nav { position: sticky; top: 0; z-index: 50; background: var(--bg-alt); border-bottom: 1px solid var(--border); backdrop-filter: blur(12px); }
+.nav-inner { display: flex; align-items: center; height: 56px; gap: 16px; }
+.nav-brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 15px; color: var(--text); text-decoration: none; }
+.nav-brand svg { width: 28px; height: 28px; color: var(--accent); }
+.nav-links { display: flex; gap: 4px; margin-left: auto; }
+.nav-link { padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 500; color: var(--text-secondary); transition: all 0.15s; }
+.nav-link:hover { color: var(--text); background: var(--accent-subtle); }
+.nav-link.active { color: var(--accent); background: var(--accent-subtle); }
+
+/* ── Hero ───────────────────────── */
+.hero { padding: 80px 0 60px; text-align: center; position: relative; overflow: hidden; }
+.hero::before { content: ''; position: absolute; top: -200px; left: 50%; transform: translateX(-50%); width: 800px; height: 600px; background: radial-gradient(ellipse, var(--accent-subtle) 0%, transparent 70%); pointer-events: none; }
+.hero-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; letter-spacing: 0.02em; background: var(--accent-subtle); color: var(--accent); margin-bottom: 20px; }
+.hero h1 { font-size: 48px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; margin-bottom: 16px; }
+@media (max-width: 640px) { .hero h1 { font-size: 32px; } }
+.hero h1 span { color: var(--accent); }
+.hero p { font-size: 18px; color: var(--text-secondary); max-width: 640px; margin: 0 auto 40px; line-height: 1.5; }
+
+/* ── Stats Row ──────────────────── */
+.stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 60px; }
+@media (max-width: 640px) { .stats-row { grid-template-columns: repeat(2, 1fr); } }
+.stat-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; text-align: center; box-shadow: var(--shadow); }
+.stat-value { font-size: 32px; font-weight: 800; letter-spacing: -0.02em; color: var(--accent); }
+.stat-label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-top: 4px; }
+
+/* ── System Cards ───────────────── */
+.systems-section { padding-bottom: 80px; }
+.section-header { margin-bottom: 32px; }
+.section-header h2 { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 4px; }
+.section-header p { color: var(--text-secondary); font-size: 15px; }
+.system-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px; }
+.system-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow); transition: all 0.2s ease; display: flex; flex-direction: column; text-decoration: none; color: inherit; }
+.system-card:hover { border-color: var(--accent); box-shadow: var(--shadow-md); transform: translateY(-2px); color: inherit; }
+.system-card-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 12px; }
+.system-card h3 { font-size: 17px; font-weight: 700; letter-spacing: -0.01em; }
+.system-card:hover h3 { color: var(--accent); }
+.system-card-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 16px; flex: 1; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.system-card-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+.tag { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 500; background: var(--accent-subtle); color: var(--accent); }
+.system-card-footer { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding-top: 14px; border-top: 1px solid var(--border-muted); }
+.system-card-stat { text-align: center; }
+.system-card-stat .val { font-size: 16px; font-weight: 700; color: var(--text); }
+.system-card-stat .lbl { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-tertiary); }
+
+/* ── Badge ──────────────────────── */
+.badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; border: 1px solid; }
+.group-badge { background: var(--purple-subtle); color: var(--purple); border-color: transparent; font-size: 10px; padding: 1px 8px; border-radius: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; }
+
+/* ── System Detail Page ─────────── */
+.detail-hero { padding: 48px 0 32px; border-bottom: 1px solid var(--border); }
+.breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-tertiary); margin-bottom: 16px; }
+.breadcrumb a { color: var(--text-secondary); }
+.breadcrumb a:hover { color: var(--accent); }
+.detail-hero h1 { font-size: 36px; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 12px; }
+.detail-hero .desc { font-size: 16px; color: var(--text-secondary); line-height: 1.6; max-width: 720px; }
+.detail-meta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 20px; }
+.meta-item { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 8px; font-size: 12px; font-weight: 500; background: var(--card); border: 1px solid var(--border); }
+.meta-icon { width: 14px; height: 14px; }
+
+/* ── Detail Sections ────────────── */
+.detail-content { padding: 40px 0 80px; }
+.detail-section { margin-bottom: 56px; }
+.detail-section h2 { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 8px; padding-bottom: 12px; border-bottom: 2px solid var(--border); }
+.detail-section h2 .section-icon { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 6px; margin-right: 8px; vertical-align: middle; }
+.detail-section > p { color: var(--text-secondary); font-size: 14px; margin-bottom: 24px; }
+
+/* ── Diagram ────────────────────── */
+.diagram-group { margin-bottom: 40px; }
+.diagram-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
+.diagram-card-header { padding: 16px 20px; border-bottom: 1px solid var(--border-muted); display: flex; align-items: center; justify-content: space-between; }
+.diagram-card-header h3 { font-size: 15px; font-weight: 600; }
+.diagram-type-badge { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 3px 10px; border-radius: 4px; }
+.type-systemContext { background: var(--accent-subtle); color: var(--accent); }
+.type-container { background: var(--success-subtle); color: var(--success); }
+.type-deployment { background: var(--purple-subtle); color: var(--purple); }
+.type-full { background: var(--orange-subtle); color: var(--orange); }
+.diagram-card-body { padding: 20px; background: var(--bg); text-align: center; min-height: 200px; }
+.diagram-card-body img { border-radius: 8px; max-height: 600px; }
+.diagram-card-footer { padding: 12px 20px; font-size: 12px; color: var(--text-tertiary); border-top: 1px solid var(--border-muted); }
+
+/* ── Table ──────────────────────── */
+.table-wrap { overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--border); background: var(--card); box-shadow: var(--shadow); }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead { background: var(--bg); }
+th { padding: 10px 16px; text-align: left; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-secondary); border-bottom: 1px solid var(--border); white-space: nowrap; }
+td { padding: 12px 16px; border-bottom: 1px solid var(--border-muted); vertical-align: top; }
+tr:last-child td { border-bottom: none; }
+tr:hover { background: var(--card-hover); }
+.tech-badge { display: inline-block; padding: 1px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; background: var(--code-bg); color: var(--text-secondary); border: 1px solid var(--border-muted); }
+
+/* ── People cards ───────────────── */
+.people-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+.person-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px; box-shadow: var(--shadow); }
+.person-card h4 { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+.person-card p { font-size: 12px; color: var(--text-secondary); }
+.person-icon { width: 36px; height: 36px; border-radius: 50%; background: var(--accent-subtle); display: flex; align-items: center; justify-content: center; margin-bottom: 10px; color: var(--accent); }
+
+/* ── Pipeline Section ───────────── */
+.pipeline-stages { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+.pipeline-stage { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px; text-align: center; box-shadow: var(--shadow); }
+.pipeline-stage .stage-num { width: 28px; height: 28px; border-radius: 50%; background: var(--accent); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; margin-bottom: 8px; }
+.pipeline-stage h4 { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+.pipeline-stage p { font-size: 11px; color: var(--text-secondary); }
+
+/* ── Footer ─────────────────────── */
+footer { border-top: 1px solid var(--border); padding: 32px 0; text-align: center; color: var(--text-tertiary); font-size: 13px; }
+footer a { color: var(--text-secondary); }
+
+/* ── Lightbox / Click-to-zoom ───── */
+.diagram-img-wrapper { position: relative; display: inline-block; cursor: zoom-in; }
+.diagram-img-wrapper img { display: block; transition: filter 0.15s; }
+.diagram-img-wrapper:hover img { filter: brightness(0.97); }
+.diagram-zoom-btn {
+  position: absolute; top: 10px; right: 10px; width: 32px; height: 32px; border-radius: 8px;
+  background: rgba(0,0,0,0.55); color: #fff; border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; transition: opacity 0.2s; z-index: 2; pointer-events: none;
+}
+.diagram-img-wrapper:hover .diagram-zoom-btn { opacity: 1; pointer-events: auto; }
+.diagram-zoom-btn svg { width: 16px; height: 16px; }
+
+.lightbox-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0,0,0,0.82); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; visibility: hidden; transition: opacity 0.25s ease, visibility 0.25s ease;
+}
+.lightbox-overlay.active { opacity: 1; visibility: visible; }
+.lightbox-img-container {
+  position: relative; overflow: auto; max-width: 94vw; max-height: calc(100vh - 80px);
+  display: flex; align-items: center; justify-content: center;
+}
+.lightbox-overlay img {
+  border-radius: 8px; box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+  transform-origin: center center; transition: transform 0.2s ease;
+  max-width: 92vw; max-height: 88vh; cursor: grab;
+}
+.lightbox-overlay img.lb-dragging { cursor: grabbing; transition: none; }
+.lightbox-close {
+  position: absolute; top: 16px; right: 20px; width: 38px; height: 38px;
+  border-radius: 50%; background: rgba(255,255,255,0.12); color: #fff;
+  border: 1px solid rgba(255,255,255,0.12); cursor: pointer; font-size: 20px; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s; z-index: 10002;
+}
+.lightbox-close:hover { background: rgba(255,255,255,0.25); }
+.lightbox-toolbar {
+  position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 2px;
+  background: rgba(30,30,30,0.85); backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.1); border-radius: 10px;
+  padding: 4px; z-index: 10002; user-select: none;
+}
+.lightbox-toolbar button {
+  width: 36px; height: 36px; border: none; border-radius: 8px;
+  background: transparent; color: #fff; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; font-weight: 500; transition: background 0.12s;
+}
+.lightbox-toolbar button:hover { background: rgba(255,255,255,0.15); }
+.lightbox-toolbar button:active { background: rgba(255,255,255,0.25); }
+.lightbox-toolbar button:disabled { opacity: 0.3; cursor: default; }
+.lightbox-toolbar button:disabled:hover { background: transparent; }
+.lightbox-toolbar .lb-zoom-level {
+  min-width: 48px; text-align: center; font-size: 12px; font-weight: 600;
+  color: rgba(255,255,255,0.7); letter-spacing: 0.02em; padding: 0 4px;
+}
+.lightbox-toolbar .lb-sep {
+  width: 1px; height: 20px; background: rgba(255,255,255,0.15); margin: 0 2px;
+}
+</style>
+  
+</head>
+<body>
+
+<nav class="nav">
+  <div class="container nav-inner">
+    <a href="../index.html" class="nav-brand">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+      Architecture as Code
+    </a>
+    <div class="nav-links">
+      <a href="../index.html" class="nav-link ">Overview</a>
+      <a href="../index.html#systems" class="nav-link active">Systems</a>
+      <a href="../patterns/index.html" class="nav-link ">Patterns</a>
+      <a href="../standards/index.html" class="nav-link ">Standards</a>
+      <a href="../waivers/index.html" class="nav-link ">Waivers</a>
+      <a href="../index.html#pipeline" class="nav-link">Pipeline</a>
+      <a href="https://github.com/muthub-ai/aac" class="nav-link" target="_blank" rel="noopener">GitHub &nearr;</a>
+    </div>
+  </div>
+</nav>
+
+<section class="detail-hero">
+  <div class="container">
+    <div class="breadcrumb">
+      <a href="../index.html">Home</a>
+      <span style="width:16px;height:16px;display:inline-flex"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg></span>
+      <span>Demand Forecasting</span>
+    </div>
+    <h1>Demand Forecasting</h1>
+    <p class="desc">Architecture-as-Code model for the Demand Forecasting ML system on Google Cloud Platform.</p>
+    <div class="detail-meta"><span class="meta-item"><span class="badge" style="background:#dafbe1;color:#1a7f37;border-color:#1a7f37">Invest</span></span><span class="meta-item" style="color:#cf222e"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Confidential</span><span class="meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg> 18.6K LoC</span><span class="meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m8 17 4 4 4-4"/></svg> 7 deployable units</span><span class="meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 3v6m0 6v6"/></svg> feature/monthly-retrain</span><span class="meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> yesterday</span></div>
+  </div>
+</section>
+
+<section class="detail-content">
+  <div class="container">
+
+    <div class="detail-section">
+      <h2><span class="section-icon" style="background:var(--accent-subtle);color:var(--accent)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></span>Architecture Diagrams</h2>
+      <p>C4 model diagrams rendered from declarative YAML definitions. Each view shows a different perspective of the system architecture.</p>
+      
+      <div class="diagram-group">
+        <div class="diagram-card">
+          <div class="diagram-card-header">
+            <h3>Complete Architecture Overview</h3>
+            <span class="diagram-type-badge type-full">Full</span>
+          </div>
+          <div class="diagram-card-body">
+            <div class="diagram-img-wrapper" onclick="openLightbox(this.querySelector('img'))">
+              <button class="diagram-zoom-btn" aria-label="Zoom diagram" onclick="event.stopPropagation();openLightbox(this.parentElement.querySelector('img'))"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></button>
+              <img src="https://www.plantuml.com/plantuml/svg/nLV1Sjis4BtxAxOwEJDoD9scbvuYItBgZErXHRavSY1mHM420WomiAtfvDyp2v8oBLgMtDRjJLW2xs7Vxc9N7pq9Hw7K9pyf8tN84TP4bVzjD7BY_dsXQ1sMmQEJrX0QUYzjEQgqC7pcp5EkrN8q-N2MiEds-cfK2a_eHfCFsHGhRJSb7wgOuEJHaDtO74_pkCuAMMM5jakXXp3uP6sX4IRQXXm-HUk0pPEaMS6bMJdXoGL9mU7W7Vnr0h0BhNXJ9XabouqVmg16dDwaWrqMjjKet_SYrVVBeZIPNZ94VPlV5uiaXIihSZWNMXY9haSmUo1qHcWOLvLMKf2oPkV88VxQ4vcRhIUJwKsFY6t78GbNMhV56lEgXrPRMxplBuKl-4oY8IVqpxiemP-rdzf0ph5GrhmOkU0pPMhLQhalczK1gRVR5fDaT3jDNYap-n7rCOAswjoC5_194DwBJO_lPhmu1lIkajbAERmNcfFypsG25yso1zdz2FEWqHz_xQYPjCQWVBp_PSVOJtxCEIDnPzj-nYRgmMUv854vApEf0zVy40RJnWIJsjIdQpOSHN27Zl0X4oghjA2LTILh5uqmleIaCVOLRBSSnS9nyMGTRWMxQ2rmUXqqgRCwOS68yjTtFRRjxgFOjBLVqMMUGgxi40PNSGrfN7UmdzgFGLwgubj0jnd2u5mLV_1FEBrDeUj2z_RjfkCg78Ep5MRtwAbNulMti_Zj5JMEuN-fSGnlKECOthh6jzV-xseSmnlNEAlszZMEuHKrZi7zyezg7CDRrJY6vsjyTlkQ6a_GUMkosGETfcJbruarvApMCRRH0eycXfgZhwpnQgaHLjQ1Ztiqtg7sO5TGEPi7IHwK0G6SPuLbnYuJfqGg5HfIdfeSWgs1MUhDeCoTrNUOCrZE5BPIfW1Q8vH2hfL1q2YSOMDfSzI3ToVfnXEMfrCiXSalh4CfF2bJC4-qGSV8NDTNzLce75S6rM26rdhJUWDvFDb15oI-28Th6pos7cmDZ3gnPINC1hXau7xxfKM8EipcIRqQmc0sJo2rA-AjVBxz3S5Z3cIX54OK-0Z5ug2XMjoJEUh-bBjlM9sZPrazICsQWyDl0Jrve9YFSGBk8FO0zlUlkGs47dBXrqihN0xan6gb93jWK73Pm1g5flK6NDqJXZ28K_CJoiw0kvzi8kGQFN18FJhsnvCW9Jlqmdia3ojdovU8clbtdrvnK4SFNyONaMqwjIcd1g6CmtijMueoE4KRIAnMSlE4PdU0VNbiKfwSMaObbuBakgCY4nNpPBAB_bmpED0fdFN-h0v2x40LeelLPVijVBTRtI3TM_SLalhCazliDl9_rzSzxXoOV5_mTVSVoN6kzXxBtdkJ9UYuL_4OCcqJafF92Btnw7VpiOVOVHrkdpcmyue-_-35DpCUFVBKQwzz48ytp1ugRLtyfxlFcVuzcjVOcaHLg9N1vz3RtobP9mf-YhyunScqQZxuVYBzNQvhxXBSLJt5dik3fczwH_l2p6VfOYzD15WueKmCps66nXSfJAvoGTYGrHwzYghRhx9KQFHiYhs0dOXTglLXEqkCaykz1BCxeKECw6UxF2uoDTKsC0UZSf1YJwesgh5F1tNQvJYWasSBh5GHN9t3HsdLAu7zD7LE7Gf7vsauNlWde9-dvopyoKSqUIZr3m00" alt="Complete Architecture Overview" loading="lazy">
+            </div>
+          </div>
+          <div class="diagram-card-footer">All components, relationships, and external systems in a single view.</div>
+        </div>
+      </div>
+      <div class="diagram-group">
+        <div class="diagram-card">
+          <div class="diagram-card-header">
+            <h3>Demand Forecasting System Context</h3>
+            <span class="diagram-type-badge type-systemContext">System Context</span>
+          </div>
+          <div class="diagram-card-body">
+            <div class="diagram-img-wrapper" onclick="openLightbox(this.querySelector('img'))">
+              <button class="diagram-zoom-btn" aria-label="Zoom diagram" onclick="event.stopPropagation();openLightbox(this.parentElement.querySelector('img'))"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></button>
+              <img src="https://www.plantuml.com/plantuml/svg/RL7BRjj03BpxArYTOi2nBZdrb4Hsq1O9e4e9UWpeNLfQT1_2BkL4VrzGgXqXqMrto9aXXxU9CNBlxEgRyShscg1bxjBtF8_ujcqCj_sXJnHLy4oUjogulBFeXNETM5jpo8kRwrAWbwV7t65YYdbnyre8uvstdQYlIeef-DVzEr_L7DHVgSPWBSKDP2C27r2sWQoYr0MVpC4I74E4DFPOEf5D48xGnQ1xnGcC1mI5J4s8GxQUE-sGiLQ6F9l46yZa3nT0NAPcCFuKx8cqY6cn29tn3N1Bu52rnXDOmkW5T46JpTQhUaXCxcf73hr-294K9ZQ-4PyHWnaeNa-F4nUwIDeediGyjtOuRmDwPCxKaV4FHcf3d-YymGKGrIAu3lq0MYflbyfPOSnXNvNJRmFPlYgX3aUMLk6Vtz0dqi0177fiw4DAmY7FKxYhYkpN0ovbSEVH3ecIUFnuVYxhRBrCdW_tia3uTCJblCUJZTGpwslRvomhGfsct8unE27Vc-PtJt60k_BdVw7PU4lM2oA_TlU5H7LBNlVE_WC0" alt="Demand Forecasting System Context" loading="lazy">
+            </div>
+          </div>
+          <div class="diagram-card-footer">Shows the Demand Forecasting system in its environment with external actors and systems.</div>
+        </div>
+      </div>
+      <div class="diagram-group">
+        <div class="diagram-card">
+          <div class="diagram-card-header">
+            <h3>Demand Forecasting Container View</h3>
+            <span class="diagram-type-badge type-container">Container</span>
+          </div>
+          <div class="diagram-card-body">
+            <div class="diagram-img-wrapper" onclick="openLightbox(this.querySelector('img'))">
+              <button class="diagram-zoom-btn" aria-label="Zoom diagram" onclick="event.stopPropagation();openLightbox(this.parentElement.querySelector('img'))"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></button>
+              <img src="https://www.plantuml.com/plantuml/svg/fLDDRzim3BtdLt0-jK3QN7hQgMsIOIjQm8jJz1Wm5kC8aqb3ejFwtm-oapJB1v9YDuaItoCV7--3ejUwTBrlbdDN6uAbQXM-3mOUtsyBgyjwNWVokR0IwsqkvQ1oo37d9gXnTZuOtjsaCVJwyZmeCIZvmV1kDXHMj4p-jehulPHy49wDF_GgKyd_n7Slpf7lGz96u3EKz26PKAY4WvqxWeLu2EqVHojo0MG1bHTJvnh0CY3ag5I8RvBhNQOHAcQv9LORj0z9lCCs45cwps1v9Mv59eAPI26LvG9qIL1YlhHCu0Wzns0fXbnotSkQe5HUZQX4DZ_4Kuv1BHUHfut1JZ1olJntkL1vCZRN3enrwPfDDs3Qp1rqL7n3Jqkf0sqws0OYwb3A2ha14r_UjoyRX5Q7yIJjRdr8nfCKCbbe_1hpDsUe0nbGWH8P2_g4Yk8GQoTkRqBkS8076inIyWln9N9E8mpBkQ0tVKWU65qJA4JYdzDfcYNNnn5tAtuzah0tsUD3QEVOfbwOzTMop-B53-EFoeb7jSAdcZciO-qGuTHMv2pJCVJDELFnM4Hxl7ch5EA-j0y1L29PCKc7_ydr4fqxeS86zKqVacT14zP-NdWfsvKTPzEJD2t0rAFbTZpd6TQzvCZ66bHQatKTVObgRuSc54jlzsLJ-QCjVjVa6tX8Vvs47Q_GrUqSdsH-sJmwgkqupixYBCK9WwwrYZsTLMUVuwWw0LtqaIrgt_dr8eKExBuFthdcdFGxot-voF-0FeqUeyYzUs9Jb-ul" alt="Demand Forecasting Container View" loading="lazy">
+            </div>
+          </div>
+          <div class="diagram-card-footer">Internal containers and data flows within the Demand Forecasting system.</div>
+        </div>
+      </div>
+      <div class="diagram-group">
+        <div class="diagram-card">
+          <div class="diagram-card-header">
+            <h3>GCP Active-Active Multi-Region Deployment</h3>
+            <span class="diagram-type-badge type-deployment">Deployment</span>
+          </div>
+          <div class="diagram-card-body">
+            <div class="diagram-img-wrapper" onclick="openLightbox(this.querySelector('img'))">
+              <button class="diagram-zoom-btn" aria-label="Zoom diagram" onclick="event.stopPropagation();openLightbox(this.parentElement.querySelector('img'))"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></button>
+              <img src="https://www.plantuml.com/plantuml/svg/nLPDRziu4BtxLqnrIW6xngBjfQUwSf8Da1fQszaz4ZGrbebIf4eEungB_lU2bEqgKlmHjDwzQORaUvn7Fce-EkAMVAbwhwGMokS8AwBAVHWEBL-_AIIj_C8xjC9eGarlX2c7bU8wh1auofLS3DDtWooa7ZxV3qlk2EqmVSV6M2cpASEYAX3qVYROnEHubSUO5Q9YXJ8BhlgGt1fJA8HK6P_3RSmc8PrcsmZkzD9oHzOByXQJr_1l3w0DBSCa9W8AoxNhGr8ZZYUpfCqISZNAzuD8zVvOb8QfHO2eT_FdV9xDuDxm73vnnRL0so6u_aPeDLSmgYeb1ITfT6l9AVww4f7hVINfUD8X2hdpaBWjZTrZZKBKGQkpExplnuxFEoPGa-NgZpQATuFTqEuWfrX8eu-Ud7TCwbgrMkwxRNH2wlsqUPeD7yRP2sKETKHzDAUzEfFH76uvuPflEdoJqVmSqCTAiAMqkEOgNFA_inHkjc47iZa8Kw_GdR_jg9amMgFukV-xHh9x-J4FDn9RqmupRa_TEvPpufKrWWdbW-Vxa8otAKZhL9TkE-4iWaUqXDyObwnId9R6ba6xc8JH7MJRP5V1tPIpMCAvE38MzuBTx39mzTahaeFwmeBcvVlN7RRzxBFOb35Vq397FfUc3ybzZ64MumRsq_mvo0jPVFLeDtr8FidYh_09LmypQ9RGtFrkqdaEHszDXMoDZZeMhyS6SUm57aV_ltWS_GKyZlxI7jzl-x_pEFeBUpoeTdcFet-1nz7Rjx_aSVINyZZwvpr-_V0IZ_UcgBhjqQ4kPuhEg4Tq89H4JM3ngqT73YWM4bkd1c87uF33DpMUq47EtMfXkCs1B5ykfG0oe947lM65ND5g0xP-JFgGn7Rh2MMZCpfCbdAnGWTSv-3GXdeSSPAYGS-TGtAmjAOyHhHjd0xf5JiyTF3Fw2QoZSTc1fKrX29sVRLiCnJUIjf0PfGKcoSqxSxd-FzMEh9o4PLSS1AhXeg1g9XcQHlzkLVan1DZZNE3-X3YqrKXMgcBS5ITjx_zp4sGriP-WQnUysGtxJ_0xwtrG3adMgOZjRPRsTEbzZwYpdsfVW00" alt="GCP Active-Active Multi-Region Deployment" loading="lazy">
+            </div>
+          </div>
+          <div class="diagram-card-footer">Active-active deployment across us-central1 (Iowa) and europe-west1 (Belgium) with Global HTTPS Load Balancer, Cloud CDN, Cloud Armor WAF, cross-region VPC peering, and multi-region Firestore/BigQuery replication.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <h2><span class="section-icon" style="background:var(--purple-subtle);color:var(--purple)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></span>Software Systems</h2>
+      <p>3 software systems composing this architecture.</p>
+      
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>System</th><th>Group</th><th>Disposition</th><th>Classification</th><th>Containers</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          
+            <tr>
+              <td><strong>Demand Forecasting</strong></td>
+              <td style="font-size:12px">Supply Chain Analytics</td>
+              <td><span class="badge" style="background:#dafbe1;color:#1a7f37;border-color:#1a7f37;font-size:11px">Invest</span></td>
+              <td style="font-size:12px">Confidential</td>
+              <td style="text-align:center;font-weight:600">7</td>
+              <td style="max-width:280px;font-size:12px;color:var(--text-secondary)">ML model predicting monthly product demand</td>
+            </tr>
+            <tr>
+              <td><strong>Data Warehouse</strong></td>
+              <td style="font-size:12px">Data Platform</td>
+              <td><span class="badge" style="background:#fff8c5;color:#9a6700;border-color:#bf8700;font-size:11px">Tolerate</span></td>
+              <td style="font-size:12px">Confidential</td>
+              <td style="text-align:center;font-weight:600">1</td>
+              <td style="max-width:280px;font-size:12px;color:var(--text-secondary)">Company data warehouse</td>
+            </tr>
+            <tr>
+              <td><strong>ERP Software</strong></td>
+              <td style="font-size:12px">Enterprise Applications</td>
+              <td><span class="badge" style="background:#fff8c5;color:#9a6700;border-color:#bf8700;font-size:11px">Tolerate</span></td>
+              <td style="font-size:12px">Internal Use</td>
+              <td style="text-align:center;font-weight:600">0</td>
+              <td style="max-width:280px;font-size:12px;color:var(--text-secondary)">Software used to manage warehouse inventory</td>
+            </tr>
+        </tbody>
+      </table>
+    </div>
+    </div>
+
+    <div class="detail-section">
+      <h2><span class="section-icon" style="background:var(--success-subtle);color:var(--success)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg></span>Containers</h2>
+      <p>8 containers across all systems.</p>
+      
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Container</th><th>System</th><th>Technology</th><th>Description</th><th>Type</th></tr>
+        </thead>
+        <tbody>
+          
+            <tr>
+              <td><strong>Forecast Storage</strong></td>
+              <td style="color:var(--text-secondary)">Demand Forecasting</td>
+              <td><span class="tech-badge">Cloud Firestore</span></td>
+              <td style="max-width:300px;font-size:12px;color:var(--text-secondary)">OLTP database storing predicted demand per product per month</td>
+              <td style="font-size:12px;color:var(--text-tertiary)">database</td>
+            </tr>
+          
+            <tr>
+              <td><strong>Model Registry</strong></td>
+              <td style="color:var(--text-secondary)">Demand Forecasting</td>
+              <td><span class="tech-badge">Vertex AI Model Registry</span></td>
+              <td style="max-width:300px;font-size:12px;color:var(--text-secondary)">Storage for experiments, model artifacts, and metadata</td>
+              <td style="font-size:12px;color:var(--text-tertiary)">other</td>
+            </tr>
+          
+            <tr>
+              <td><strong>Prediction Pipeline</strong></td>
+              <td style="color:var(--text-secondary)">Demand Forecasting</td>
+              <td><span class="tech-badge">PySpark on Dataproc</span></td>
+              <td style="max-width:300px;font-size:12px;color:var(--text-secondary)">Scheduled monthly pipeline predicting demand for all products</td>
+              <td style="font-size:12px;color:var(--text-tertiary)">batch</td>
+            </tr>
+          
+            <tr>
+              <td><strong>Model Training</strong></td>
+              <td style="color:var(--text-secondary)">Demand Forecasting</td>
+              <td><span class="tech-badge">Vertex AI</span></td>
+              <td style="max-width:300px;font-size:12px;color:var(--text-secondary)">Pipeline that trains a new model based on input data</td>
+              <td style="font-size:12px;color:var(--text-tertiary)">batch</td>
+            </tr>
+          
+            <tr>
+              <td><strong>Performance Dashboard</strong></td>
+              <td style="color:var(--text-secondary)">Demand Forecasting</td>
+              <td><span class="tech-badge">Looker Studio</span></td>
+              <td style="max-width:300px;font-size:12px;color:var(--text-secondary)">Dashboard showing KPIs for demand predictions</td>
+              <td style="font-size:12px;color:var(--text-tertiary)">UI</td>
+            </tr>
+          
+            <tr>
+              <td><strong>Evaluation Job</strong></td>
+              <td style="color:var(--text-secondary)">Demand Forecasting</td>
+              <td><span class="tech-badge">PySpark on Dataproc</span></td>
+              <td style="max-width:300px;font-size:12px;color:var(--text-secondary)">Compares real demand with predictions and creates dashboards</td>
+              <td style="font-size:12px;color:var(--text-tertiary)">batch</td>
+            </tr>
+          
+            <tr>
+              <td><strong>Data Exploration Service</strong></td>
+              <td style="color:var(--text-secondary)">Demand Forecasting</td>
+              <td><span class="tech-badge">Vertex AI Workbench</span></td>
+              <td style="max-width:300px;font-size:12px;color:var(--text-secondary)">Notebook environment for exploratory analysis</td>
+              <td style="font-size:12px;color:var(--text-tertiary)">other</td>
+            </tr>
+          
+            <tr>
+              <td><strong>Sales Data</strong></td>
+              <td style="color:var(--text-secondary)">Data Warehouse</td>
+              <td><span class="tech-badge">BigQuery</span></td>
+              <td style="max-width:300px;font-size:12px;color:var(--text-secondary)">Tables containing historical sales figures</td>
+              <td style="font-size:12px;color:var(--text-tertiary)">database</td>
+            </tr>
+          
+        </tbody>
+      </table>
+    </div>
+    </div>
+
+    <div class="detail-section">
+      <h2><span class="section-icon" style="background:var(--orange-subtle);color:var(--orange)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>Actors &amp; Personas</h2>
+      <p>2 actors interact with this system.</p>
+      
+    <div class="people-grid">
+      
+        <div class="person-card">
+          <div class="person-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+          <h4>Stock Controller</h4>
+          <p>Responsible for stock levels of products in a category</p>
+        </div>
+      
+        <div class="person-card">
+          <div class="person-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+          <h4>Data Scientist</h4>
+          <p>Person involved in developing the machine learning model</p>
+        </div>
+      
+    </div>
+    </div>
+
+    <div class="detail-section">
+      <h2><span class="section-icon" style="background:var(--warning-subtle);color:var(--warning)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></span>Codebase Metrics</h2>
+      
+    <div class="stats-row" style="grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));">
+      <div class="stat-card"><div class="stat-value" style="font-size:24px">1</div><div class="stat-label">Repositories</div></div>
+      <div class="stat-card"><div class="stat-value" style="font-size:24px">18.6K</div><div class="stat-label">Lines of Code</div></div>
+      <div class="stat-card"><div class="stat-value" style="font-size:24px">7</div><div class="stat-label">Deployable Units</div></div>
+      <div class="stat-card"><div class="stat-value" style="font-size:24px">5</div><div class="stat-label">Domain Modules</div></div>
+      <div class="stat-card"><div class="stat-value" style="font-size:24px">42</div><div class="stat-label">Domain Objects</div></div>
+      <div class="stat-card"><div class="stat-value" style="font-size:24px">85</div><div class="stat-label">Domain Behaviors</div></div>
+    </div>
+      <div style="margin-top:20px"><h3 style="font-size:14px;font-weight:600;margin-bottom:10px">Technology Tags</h3><div style="display:flex;flex-wrap:wrap;gap:6px"><span class="tag">analytics</span><span class="tag">batch</span><span class="tag">dashboard</span><span class="tag">data</span><span class="tag">database</span><span class="tag">erp</span><span class="tag">evaluation</span><span class="tag">exploration</span><span class="tag">external</span><span class="tag">forecasting</span><span class="tag">gcp</span><span class="tag">ml</span><span class="tag">notebook</span><span class="tag">registry</span><span class="tag">training</span><span class="tag">ui</span><span class="tag">warehouse</span></div></div>
+    </div>
+
+  </div>
+</section>
+
+
+<footer>
+  <div class="container">
+    <p>Architecture as Code &mdash; auto-generated from <a href="https://github.com/muthub-ai/aac">YAML models</a> via CI/CD pipeline</p>
+    <p style="margin-top:4px;font-size:11px;color:var(--text-tertiary)">Built with C4 Model &bull; PlantUML &bull; Asciidoctor &bull; GitHub Actions</p>
+  </div>
+</footer>
+
+<div class="lightbox-overlay" id="lightboxOverlay" onclick="closeLightbox()">
+  <button class="lightbox-close" onclick="closeLightbox()" aria-label="Close">&times;</button>
+  <div class="lightbox-img-container" onclick="event.stopPropagation()">
+    <img id="lightboxImg" src="" alt="">
+  </div>
+  <div class="lightbox-toolbar" onclick="event.stopPropagation()">
+    <button id="lbZoomOut" aria-label="Zoom out" title="Zoom out (-)">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+    </button>
+    <span class="lb-zoom-level" id="lbZoomLevel">100%</span>
+    <button id="lbZoomIn" aria-label="Zoom in" title="Zoom in (+)">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+    </button>
+    <span class="lb-sep"></span>
+    <button id="lbZoomReset" aria-label="Reset zoom" title="Fit to screen (0)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg>
+    </button>
+  </div>
+</div>
+
+<script>
+(function(){
+  var overlay = document.getElementById('lightboxOverlay');
+  var lbImg = document.getElementById('lightboxImg');
+  var zoomLabel = document.getElementById('lbZoomLevel');
+  var btnIn = document.getElementById('lbZoomIn');
+  var btnOut = document.getElementById('lbZoomOut');
+  var btnReset = document.getElementById('lbZoomReset');
+  var zoom = 1;
+  var MIN_ZOOM = 0.25;
+  var MAX_ZOOM = 5;
+  var ZOOM_STEP = 0.25;
+
+  function applyZoom() {
+    lbImg.style.transform = 'scale(' + zoom + ')';
+    zoomLabel.textContent = Math.round(zoom * 100) + '%';
+    btnIn.disabled = zoom >= MAX_ZOOM;
+    btnOut.disabled = zoom <= MIN_ZOOM;
+  }
+
+  window.openLightbox = function(img) {
+    if (!img) return;
+    lbImg.src = img.src;
+    lbImg.alt = img.alt;
+    zoom = 1;
+    applyZoom();
+    overlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  };
+
+  window.closeLightbox = function() {
+    overlay.classList.remove('active');
+    document.body.style.overflow = '';
+    zoom = 1;
+    applyZoom();
+  };
+
+  btnIn.addEventListener('click', function() {
+    if (zoom < MAX_ZOOM) { zoom = Math.min(MAX_ZOOM, +(zoom + ZOOM_STEP).toFixed(2)); applyZoom(); }
+  });
+  btnOut.addEventListener('click', function() {
+    if (zoom > MIN_ZOOM) { zoom = Math.max(MIN_ZOOM, +(zoom - ZOOM_STEP).toFixed(2)); applyZoom(); }
+  });
+  btnReset.addEventListener('click', function() {
+    zoom = 1; applyZoom();
+  });
+
+  overlay.addEventListener('wheel', function(e) {
+    if (!overlay.classList.contains('active')) return;
+    e.preventDefault();
+    var delta = e.deltaY < 0 ? ZOOM_STEP : -ZOOM_STEP;
+    zoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, +(zoom + delta).toFixed(2)));
+    applyZoom();
+  }, { passive: false });
+
+  document.addEventListener('keydown', function(e) {
+    if (!overlay.classList.contains('active')) return;
+    if (e.key === 'Escape') closeLightbox();
+    else if (e.key === '+' || e.key === '=') { btnIn.click(); e.preventDefault(); }
+    else if (e.key === '-' || e.key === '_') { btnOut.click(); e.preventDefault(); }
+    else if (e.key === '0') { btnReset.click(); e.preventDefault(); }
+  });
+})();
+</script>
+</body>
+</html>

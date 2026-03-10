@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>E-Commerce Platform — Architecture as Code</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232563eb' stroke-width='2'><path d='M12 2L2 7l10 5 10-5-10-5z'/><path d='M2 17l10 5 10-5'/><path d='M2 12l10 5 10-5'/></svg>">
+  <style>
+:root {
+  --bg: #f6f8fa; --bg-alt: #ffffff; --card: #ffffff; --card-hover: #f8fafc;
+  --text: #1f2328; --text-secondary: #656d76; --text-tertiary: #8c959f;
+  --border: #d0d7de; --border-muted: #e8ebef;
+  --accent: #2563eb; --accent-hover: #1d4ed8; --accent-subtle: rgba(37,99,235,0.08);
+  --success: #1a7f37; --success-subtle: rgba(26,127,55,0.08);
+  --warning: #bf8700; --warning-subtle: rgba(191,135,0,0.08);
+  --danger: #cf222e; --danger-subtle: rgba(207,34,46,0.08);
+  --purple: #8250df; --purple-subtle: rgba(130,80,223,0.08);
+  --orange: #f78166; --orange-subtle: rgba(247,129,102,0.08);
+  --code-bg: #f0f3f6; --shadow: 0 1px 3px rgba(31,35,40,0.04), 0 1px 2px rgba(31,35,40,0.06);
+  --shadow-md: 0 4px 12px rgba(31,35,40,0.08); --radius: 12px; --radius-sm: 8px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0d1117; --bg-alt: #161b22; --card: #161b22; --card-hover: #1c2128;
+    --text: #e6edf3; --text-secondary: #8b949e; --text-tertiary: #6e7681;
+    --border: #30363d; --border-muted: #21262d;
+    --accent: #58a6ff; --accent-hover: #79c0ff; --accent-subtle: rgba(88,166,255,0.1);
+    --success: #3fb950; --success-subtle: rgba(63,185,80,0.1);
+    --warning: #d29922; --warning-subtle: rgba(210,153,34,0.1);
+    --danger: #f85149; --danger-subtle: rgba(248,81,73,0.1);
+    --purple: #bc8cff; --purple-subtle: rgba(188,140,255,0.1);
+    --orange: #f78166; --orange-subtle: rgba(247,129,102,0.1);
+    --code-bg: #1c2128; --shadow: 0 1px 3px rgba(0,0,0,0.2); --shadow-md: 0 4px 12px rgba(0,0,0,0.3);
+  }
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Noto Sans, Helvetica, Arial, sans-serif;
+  background: var(--bg); color: var(--text); line-height: 1.6; -webkit-font-smoothing: antialiased;
+}
+a { color: var(--accent); text-decoration: none; transition: color 0.15s; }
+a:hover { color: var(--accent-hover); }
+code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace; }
+img { max-width: 100%; height: auto; }
+
+/* ── Layout ─────────────────────── */
+.container { max-width: 1152px; margin: 0 auto; padding: 0 24px; }
+@media (min-width: 640px) { .container { padding: 0 40px; } }
+
+/* ── Nav ────────────────────────── */
+.nav { position: sticky; top: 0; z-index: 50; background: var(--bg-alt); border-bottom: 1px solid var(--border); backdrop-filter: blur(12px); }
+.nav-inner { display: flex; align-items: center; height: 56px; gap: 16px; }
+.nav-brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 15px; color: var(--text); text-decoration: none; }
+.nav-brand svg { width: 28px; height: 28px; color: var(--accent); }
+.nav-links { display: flex; gap: 4px; margin-left: auto; }
+.nav-link { padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 500; color: var(--text-secondary); transition: all 0.15s; }
+.nav-link:hover { color: var(--text); background: var(--accent-subtle); }
+.nav-link.active { color: var(--accent); background: var(--accent-subtle); }
+
+/* ── Hero ───────────────────────── */
+.hero { padding: 80px 0 60px; text-align: center; position: relative; overflow: hidden; }
+.hero::before { content: ''; position: absolute; top: -200px; left: 50%; transform: translateX(-50%); width: 800px; height: 600px; background: radial-gradient(ellipse, var(--accent-subtle) 0%, transparent 70%); pointer-events: none; }
+.hero-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; letter-spacing: 0.02em; background: var(--accent-subtle); color: var(--accent); margin-bottom: 20px; }
+.hero h1 { font-size: 48px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; margin-bottom: 16px; }
+@media (max-width: 640px) { .hero h1 { font-size: 32px; } }
+.hero h1 span { color: var(--accent); }
+.hero p { font-size: 18px; color: var(--text-secondary); max-width: 640px; margin: 0 auto 40px; line-height: 1.5; }
+
+/* ── Stats Row ──────────────────── */
+.stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 60px; }
+@media (max-width: 640px) { .stats-row { grid-template-columns: repeat(2, 1fr); } }
+.stat-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; text-align: center; box-shadow: var(--shadow); }
+.stat-value { font-size: 32px; font-weight: 800; letter-spacing: -0.02em; color: var(--accent); }
+.stat-label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-top: 4px; }
+
+/* ── System Cards ───────────────── */
+.systems-section { padding-bottom: 80px; }
+.section-header { margin-bottom: 32px; }
+.section-header h2 { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 4px; }
+.section-header p { color: var(--text-secondary); font-size: 15px; }
+.system-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px; }
+.system-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow); transition: all 0.2s ease; display: flex; flex-direction: column; text-decoration: none; color: inherit; }
+.system-card:hover { border-color: var(--accent); box-shadow: var(--shadow-md); transform: translateY(-2px); color: inherit; }
+.system-card-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 12px; }
+.system-card h3 { font-size: 17px; font-weight: 700; letter-spacing: -0.01em; }
+.system-card:hover h3 { color: var(--accent); }
+.system-card-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 16px; flex: 1; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.system-card-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+.tag { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 500; background: var(--accent-subtle); color: var(--accent); }
+.system-card-footer { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding-top: 14px; border-top: 1px solid var(--border-muted); }
+.system-card-stat { text-align: center; }
+.system-card-stat .val { font-size: 16px; font-weight: 700; color: var(--text); }
+.system-card-stat .lbl { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-tertiary); }
+
+/* ── Badge ──────────────────────── */
+.badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; border: 1px solid; }
+.group-badge { background: var(--purple-subtle); color: var(--purple); border-color: transparent; font-size: 10px; padding: 1px 8px; border-radius: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; }
+
+/* ── System Detail Page ─────────── */
+.detail-hero { padding: 48px 0 32px; border-bottom: 1px solid var(--border); }
+.breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-tertiary); margin-bottom: 16px; }
+.breadcrumb a { color: var(--text-secondary); }
+.breadcrumb a:hover { color: var(--accent); }
+.detail-hero h1 { font-size: 36px; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 12px; }
+.detail-hero .desc { font-size: 16px; color: var(--text-secondary); line-height: 1.6; max-width: 720px; }
+.detail-meta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 20px; }
+.meta-item { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 8px; font-size: 12px; font-weight: 500; background: var(--card); border: 1px solid var(--border); }
+.meta-icon { width: 14px; height: 14px; }
+
+/* ── Detail Sections ────────────── */
+.detail-content { padding: 40px 0 80px; }
+.detail-section { margin-bottom: 56px; }
+.detail-section h2 { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 8px; padding-bottom: 12px; border-bottom: 2px solid var(--border); }
+.detail-section h2 .section-icon { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 6px; margin-right: 8px; vertical-align: middle; }
+.detail-section > p { color: var(--text-secondary); font-size: 14px; margin-bottom: 24px; }
+
+/* ── Diagram ────────────────────── */
+.diagram-group { margin-bottom: 40px; }
+.diagram-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
+.diagram-card-header { padding: 16px 20px; border-bottom: 1px solid var(--border-muted); display: flex; align-items: center; justify-content: space-between; }
+.diagram-card-header h3 { font-size: 15px; font-weight: 600; }
+.diagram-type-badge { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 3px 10px; border-radius: 4px; }
+.type-systemContext { background: var(--accent-subtle); color: var(--accent); }
+.type-container { background: var(--success-subtle); color: var(--success); }
+.type-deployment { background: var(--purple-subtle); color: var(--purple); }
+.type-full { background: var(--orange-subtle); color: var(--orange); }
+.diagram-card-body { padding: 20px; background: var(--bg); text-align: center; min-height: 200px; }
+.diagram-card-body img { border-radius: 8px; max-height: 600px; }
+.diagram-card-footer { padding: 12px 20px; font-size: 12px; color: var(--text-tertiary); border-top: 1px solid var(--border-muted); }
+
+/* ── Table ──────────────────────── */
+.table-wrap { overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--border); background: var(--card); box-shadow: var(--shadow); }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead { background: var(--bg); }
+th { padding: 10px 16px; text-align: left; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-secondary); border-bottom: 1px solid var(--border); white-space: nowrap; }
+td { padding: 12px 16px; border-bottom: 1px solid var(--border-muted); vertical-align: top; }
+tr:last-child td { border-bottom: none; }
+tr:hover { background: var(--card-hover); }
+.tech-badge { display: inline-block; padding: 1px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; background: var(--code-bg); color: var(--text-secondary); border: 1px solid var(--border-muted); }
+
+/* ── People cards ───────────────── */
+.people-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+.person-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px; box-shadow: var(--shadow); }
+.person-card h4 { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+.person-card p { font-size: 12px; color: var(--text-secondary); }
+.person-icon { width: 36px; height: 36px; border-radius: 50%; background: var(--accent-subtle); display: flex; align-items: center; justify-content: center; margin-bottom: 10px; color: var(--accent); }
+
+/* ── Pipeline Section ───────────── */
+.pipeline-stages { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+.pipeline-stage { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px; text-align: center; box-shadow: var(--shadow); }
+.pipeline-stage .stage-num { width: 28px; height: 28px; border-radius: 50%; background: var(--accent); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; margin-bottom: 8px; }
+.pipeline-stage h4 { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+.pipeline-stage p { font-size: 11px; color: var(--text-secondary); }
+
+/* ── Footer ─────────────────────── */
+footer { border-top: 1px solid var(--border); padding: 32px 0; text-align: center; color: var(--text-tertiary); font-size: 13px; }
+footer a { color: var(--text-secondary); }
+
+/* ── Lightbox / Click-to-zoom ───── */
+.diagram-img-wrapper { position: relative; display: inline-block; cursor: zoom-in; }
+.diagram-img-wrapper img { display: block; transition: filter 0.15s; }
+.diagram-img-wrapper:hover img { filter: brightness(0.97); }
+.diagram-zoom-btn {
+  position: absolute; top: 10px; right: 10px; width: 32px; height: 32px; border-radius: 8px;
+  background: rgba(0,0,0,0.55); color: #fff; border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; transition: opacity 0.2s; z-index: 2; pointer-events: none;
+}
+.diagram-img-wrapper:hover .diagram-zoom-btn { opacity: 1; pointer-events: auto; }
+.diagram-zoom-btn svg { width: 16px; height: 16px; }
+
+.lightbox-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0,0,0,0.82); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; visibility: hidden; transition: opacity 0.25s ease, visibility 0.25s ease;
+}
+.lightbox-overlay.active { opacity: 1; visibility: visible; }
+.lightbox-img-container {
+  position: relative; overflow: auto; max-width: 94vw; max-height: calc(100vh - 80px);
+  display: flex; align-items: center; justify-content: center;
+}
+.lightbox-overlay img {
+  border-radius: 8px; box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+  transform-origin: center center; transition: transform 0.2s ease;
+  max-width: 92vw; max-height: 88vh; cursor: grab;
+}
+.lightbox-overlay img.lb-dragging { cursor: grabbing; transition: none; }
+.lightbox-close {
+  position: absolute; top: 16px; right: 20px; width: 38px; height: 38px;
+  border-radius: 50%; background: rgba(255,255,255,0.12); color: #fff;
+  border: 1px solid rgba(255,255,255,0.12); cursor: pointer; font-size: 20px; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s; z-index: 10002;
+}
+.lightbox-close:hover { background: rgba(255,255,255,0.25); }
+.lightbox-toolbar {
+  position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 2px;
+  background: rgba(30,30,30,0.85); backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.1); border-radius: 10px;
+  padding: 4px; z-index: 10002; user-select: none;
+}
+.lightbox-toolbar button {
+  width: 36px; height: 36px; border: none; border-radius: 8px;
+  background: transparent; color: #fff; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; font-weight: 500; transition: background 0.12s;
+}
+.lightbox-toolbar button:hover { background: rgba(255,255,255,0.15); }
+.lightbox-toolbar button:active { background: rgba(255,255,255,0.25); }
+.lightbox-toolbar button:disabled { opacity: 0.3; cursor: default; }
+.lightbox-toolbar button:disabled:hover { background: transparent; }
+.lightbox-toolbar .lb-zoom-level {
+  min-width: 48px; text-align: center; font-size: 12px; font-weight: 600;
+  color: rgba(255,255,255,0.7); letter-spacing: 0.02em; padding: 0 4px;
+}
+.lightbox-toolbar .lb-sep {
+  width: 1px; height: 20px; background: rgba(255,255,255,0.15); margin: 0 2px;
+}
+</style>
+  
+</head>
+<body>
+
+<nav class="nav">
+  <div class="container nav-inner">
+    <a href="../index.html" class="nav-brand">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+      Architecture as Code
+    </a>
+    <div class="nav-links">
+      <a href="../index.html" class="nav-link ">Overview</a>
+      <a href="../index.html#systems" class="nav-link active">Systems</a>
+      <a href="../patterns/index.html" class="nav-link ">Patterns</a>
+      <a href="../standards/index.html" class="nav-link ">Standards</a>
+      <a href="../waivers/index.html" class="nav-link ">Waivers</a>
+      <a href="../index.html#pipeline" class="nav-link">Pipeline</a>
+      <a href="https://github.com/muthub-ai/aac" class="nav-link" target="_blank" rel="noopener">GitHub &nearr;</a>
+    </div>
+  </div>
+</nav>
+
+<section class="detail-hero">
+  <div class="container">
+    <div class="breadcrumb">
+      <a href="../index.html">Home</a>
+      <span style="width:16px;height:16px;display:inline-flex"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg></span>
+      <span>E-Commerce Platform</span>
+    </div>
+    <h1>E-Commerce Platform</h1>
+    <p class="desc">Enterprise e-commerce platform deployed on Google Cloud Platform (GCP), enabling customers to browse products, manage accounts, and place orders with integrated inventory management, content management, and third-party payment, email, and shipping services.</p>
+    <div class="detail-meta"><span class="meta-item"><span class="badge" style="background:#dafbe1;color:#1a7f37;border-color:#1a7f37">Invest</span></span><span class="meta-item" style="color:#cf222e"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Confidential</span><span class="meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg> 187.3K LoC</span><span class="meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m8 17 4 4 4-4"/></svg> 10 deployable units</span><span class="meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 3v6m0 6v6"/></svg> release/v2.4</span><span class="meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> today</span></div>
+  </div>
+</section>
+
+<section class="detail-content">
+  <div class="container">
+
+    <div class="detail-section">
+      <h2><span class="section-icon" style="background:var(--accent-subtle);color:var(--accent)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></span>Architecture Diagrams</h2>
+      <p>C4 model diagrams rendered from declarative YAML definitions. Each view shows a different perspective of the system architecture.</p>
+      
+      <div class="diagram-group">
+        <div class="diagram-card">
+          <div class="diagram-card-header">
+            <h3>Complete Architecture Overview</h3>
+            <span class="diagram-type-badge type-full">Full</span>
+          </div>
+          <div class="diagram-card-body">
+            <div class="diagram-img-wrapper" onclick="openLightbox(this.querySelector('img'))">
+              <button class="diagram-zoom-btn" aria-label="Zoom diagram" onclick="event.stopPropagation();openLightbox(this.parentElement.querySelector('img'))"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></button>
+              <img src="https://www.plantuml.com/plantuml/svg/jLXTR-Es4dtFhvZhfmHmaYxG2nHzgbVsvgQ9iuwrRHy5XXhRH2XIbwJiDOhzxyMG-hBa3-szxPiq8i-SuGmFX_h5EcPSaSchVmd5PP4YR9pBxS_tzuRjxjR2ROgtmgBXMZbKxexhx3wNJD6SM-jIATxkenzl5sJwRVvydp7hqDn7FoPJpANUPpGf9mTNZI5vqIbUf_uzMVCyMKlznkGOHWzQhoL297MHmeEtZiWSBSetU5Ghmwmp1NU5mT4D_7a5q8KMD2ZXX9AaoevX512dB_6ewuLi0UNRIQJ0B_5BayWtWWXi_lFbooA6PyrI-CWaKnnDpy7igqEZc8H9dal1cHDQTQPSyXyYuQcg8uccBpr7P1k6n4ocJOqreRSUMh1MUD_EfQ-m2KVb39CVajo8Z9bz5wsmjzKGk5w4CJTLQfUu5bgTpIMvyDG5oshYZvDvZ_PZYie9jmUcKfXmZjR2d2csHeAyk3wrdqmhuRGHQbsx-voZyTcp41V2OS_tl9xZlJ_hzLgezH2V5hb1bsIUA6KczeQIUJyvdSy3F6npdYXqEstUnp3wVH71ItZhOV--YCu0bcalRFBmD4iYMT1-9uYd6KmAftCXjOFItabryF9KlA5HwD32JAs5mcRU8B-UPVpwd2oqTMk3yUjpdQBuzHaQyw7xPiHAc_Qe3_yUxlUJC6YTDbW3rfQZmVR6l30djWXpdUBD8BSpoQmJt0EDOLI-bi1Q0MsW0y-78wxBLulCy0tyTFVrPdYqoq8bqJokOrqM2g9v336QhU3d8buMwlkIETzty-Wjvr8O1lnqzyCmbSB2w1oJ7Lht8R6EgVIj9rDXpAqV0zTn6FGzEeN5SFteEFWRb0IBq_lyZBVpExu9p6Xh4-CN8J5O7sOK87sw3Ui3o-PJNxXUd-7au8i5WqLRTPAuIU9nzJaIyV-bFbWSKv-aZE6a2YsHfLMWbwIeEtemfrfZUdHQwZClf1ETfJyhL-q9myYqzQf5vRXkXLAeyjKcT4d588gMtx4wfPArIkQ4eftS98CKhLqWNfwEraQfR1VAefQtKoNnxMg1ncgLpBwwwwYmJcV-AAuU2N82j5zfTJ45Ndu0lGAtGS1RhhCC3KV89NChRJBORJIy6RspQ24tEYsuisC8ZOcbMS80urmNoeszDkMISRIWJOh6ZcxQd2Pf9fImpZ3dsys3Ts8Nxwt335ZR3ZlXDh0gf2G_rBuPiTuu2qvtIPDxeRQed3RxaYEb1Ap7xR29mXLcNlTOfQ7TPCtBECl8GGhhX5hRCQHekH6vb-ynY8o6XGN8c7b76WNb9MbqSnK2kvv59LKgwDlg1S9Ndt7QPCVImAJKEuzPvip77nBJoqkL4DlAI9cGkx9IiTvpXINOXwVPk97aSNVZ1w23FNZNXFLOhVaOHlLpgyjk1TXTKD5CjKxpTv2uHMd7i6C6Dxgm25A7uw2CXWuQLC9kF3ATP2kfT-S2yzFgs5gyorRc8EqN-9Of7PR_Z3aqWiaEkKPfV6aVsUKDHr-f2-QLvO4vt35QvD80fSNhOtMhpCjlkT6qMuY7RSJCY1nll2DkC1KEE3EffvsAjN1Cmev9YGwSOSeoxkFhq9bbJCXI8CaplLQ2UK05_PSKfTYYsRTee4eVZ4W3aPQdQeu5M_0Di596QDLNmcHL6TYDo7CAJ6adLkAWF79cxKuRgXEBhaizBcSkZDwADDoiAh3ATX12xOgmfIRf5DoNWnyB6wPIITy3qLKXLqBAp9T8plWxxKPd67_tZPy7OTRTPa9YlJ34yMg9il-RujJVXYLQBRTeWKj1kJRutmAjrqHYxtzXj11x0BtRsb8Nr04nAOdjQYKuoKjvTuVGuX6o_xzn7ljaJ_R99rPlqH1ssN2NsB3ReAhz2Gk5sY2JRhC_xhNr0wGNIyJuXc9HgQyujEIBP8jPgWXO6PqD2ktWtyYfLFYVE6ZXZyadxt8wrJ6LXqDVqML6OkI5eRyG2oq5tn-uwLx6JxJkeJKgbulw-1pHNmXwYpdgDFgBCF30QHV-n7-1SqxxIpZ0wUaxmycRV7KZG0ifS-mmVwrUMIXQ1exsi7Kwk53yBsIgc-XP7g4vgoXSOj0qPtL7aFo1RvCy7yFeOwVRwdTLuMZh5kqnqBb-4n83xcy4gXLatWOfLdhT1kcqQEs6fVf4RTqOHiSdj5k1wkniMhAQTqMvquA50_d4cTkRtL-xnZB9HNDSpjaxMfWi7e4pAIkL_3N-_7BVZlteilrTaEtPZNKHGfn-zFN5qbATAECx8wZK0l3HU-JKqF4nq5DL7GDTDLU-UFeqqCLdAiv_43_sbxscyGZlxPrILyXo5d-Xx7IHnz3lfKAVH33XauMjOFM-k2UeFaod1wAEnbQzIyqYddzPzAUsjqYqGVxUtY52NV9yf8M937fPecObH42DvIMWiDcMw8n0tqkKsupITdHkJJofd_mMEMeNmpV9gVb7x1UhwzVfnwWIbtbCLtnFiNo-E3r-VQPcx1TKQP79lm00" alt="Complete Architecture Overview" loading="lazy">
+            </div>
+          </div>
+          <div class="diagram-card-footer">All components, relationships, and external systems in a single view.</div>
+        </div>
+      </div>
+      <div class="diagram-group">
+        <div class="diagram-card">
+          <div class="diagram-card-header">
+            <h3>E-Commerce System - System Context</h3>
+            <span class="diagram-type-badge type-systemContext">System Context</span>
+          </div>
+          <div class="diagram-card-body">
+            <div class="diagram-img-wrapper" onclick="openLightbox(this.querySelector('img'))">
+              <button class="diagram-zoom-btn" aria-label="Zoom diagram" onclick="event.stopPropagation();openLightbox(this.parentElement.querySelector('img'))"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></button>
+              <img src="https://www.plantuml.com/plantuml/svg/ZPHDR-D638Rl-HMiJmaWsvSzzRHRrKqNkmRSE3ql9YFA8ZmV0abPyRylHb-MxM2tjvcXI3waNlApg65jl7luZO9rJO5GgTRo-thDfbqTIAlchH5a6uDYq9MDVbqx4vBFKhHmzBREFortwUdVxVUrDwB8w_pJZpnvlEkgJj4VTiWImu_DkpxcZMZqo1ainkCYWyKNO3nGyiO2x620M89M2BYqqNjaYr0xesLa3sqLuOrZAoXGSomQgvA1Dy4SK98NCHXhOnCq0nEAv6bH87A1B8kdETENmbCWKJOQ4zZLFT7jpwBemSpVeIMje6oSItbG19WEbGfel8LEwIcSC6Zayy3eCIX85pVHz1aUD_dWay5Yinmlq5iJIHxvutuOvs9BuJ0rhmFfEtJNeB4pCclDq9aL_8crYsSi80PupdVGI0hx_6sJGUvYKy3-d-_ZyIzY58sCVQ2DCw9aU-FgKjRNiVWC5jCPjfT6N0hS3dzmGBxqBGFHQ8_Wy8HECcWDOnKRGN3H6gKOXceOQuU1fEeYjv6FfOljpmhhtARQPjpvTj_rl5F__-CTHYM30iKorGCO-VHL3-WD7r5JRcyKcOoxWUjHNfhGQsmYWp8oRCzNZ9s0T-QSi9wDOcjIauS765uIwEPTaODnK0-sccEIRU8Gv1DPXCUzCjNur2MoZ0KfMCD5XrtGWTGuQ8rpgA1iWXZRrNU3i_66tBwFcJAdAmptAnJiB0KwEY6VPnWOYcUceWUPPHfz1AIn5PXXdbFNIs8_oa0ggkjKM8XA9Lt9epOYRUIa4q6zHTyFdZkE9ogwDJK-mVXsLSAKAiLsCUqmifqSkc-XCg5moTw3beqhoJdVIQGszfYcKTdO8uL33vXcQEd9uTIOnFZmWcwsFEUBue-RDNY_xdgf9-w_Nrzt-yLJ5-rcxSr3ZgQqAZDOVEmmd-fn32vhRaevEC_2tykrbsAgeJS9dCXClEkNpVxrFioDp99eP9J7b7s_VTtTkyxHymhjSKvEuLUPFr19pcWKfTD3Nq6QtLy5wXVC2oeJdb36xG4bHt_d-_0PGz5uzny0" alt="E-Commerce System - System Context" loading="lazy">
+            </div>
+          </div>
+          <div class="diagram-card-footer">Shows the E-Commerce System in context with its users and external dependencies including payment processing, email delivery, shipping, inventory management, and content management systems.</div>
+        </div>
+      </div>
+      <div class="diagram-group">
+        <div class="diagram-card">
+          <div class="diagram-card-header">
+            <h3>Inventory Management System - System Context</h3>
+            <span class="diagram-type-badge type-systemContext">System Context</span>
+          </div>
+          <div class="diagram-card-body">
+            <div class="diagram-img-wrapper" onclick="openLightbox(this.querySelector('img'))">
+              <button class="diagram-zoom-btn" aria-label="Zoom diagram" onclick="event.stopPropagation();openLightbox(this.parentElement.querySelector('img'))"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></button>
+              <img src="https://www.plantuml.com/plantuml/svg/VP91Rzim38Nl-HMSJotWs9UUTkhWUTsm5iYQx5meCXCBaKI3fEhctmzAuiOTXjqa4j_ZUvJkHGrh2dxnoKNhKuVGgmxokQxPZDNUQP-sIP0jHSMebQLG3zx4p2n5E--sTNEtNENIxwV7EXXHvBgvUsaoyQRLaDKNAsIX-DA-wSsNBhZeHDaeSGd5XtjHGh4-Yc80Cw_3wBI7NV8UZBKe0kpslGeeWVO8kBGK0h95CB435rynAl4HWebcZm6ZWfnqfRXTd2VSjCs5AQ5ebzC5pjtif27-83rueplY0CPx6btSWqsY591FHhPCeo0CJ5soAkLbU7PCAUP2zZPuOn68EsIfu2iEdexO0KLuQ5QG9Ci-_6nBQ3ob3jQ_7gVZDySeIendeTORKMVFpUeQwySKleJY_GnFrqLS0vwBCbc-xgq4KR87yFYANaeO3MDFIH0yMQEEuYKDu-0nEkbFoYFnOUTf_5-m4_QUBVjUFAF_-rlCtsPg8KisNTp-2vYddc9Tly5f-WoUoS_1faTxc7CkPkZxPhDQry_jUfFTtcFiKl1_0000" alt="Inventory Management System - System Context" loading="lazy">
+            </div>
+          </div>
+          <div class="diagram-card-footer">Shows the Inventory Management System and its interactions with administrators and the E-Commerce System.</div>
+        </div>
+      </div>
+      <div class="diagram-group">
+        <div class="diagram-card">
+          <div class="diagram-card-header">
+            <h3>Content Management System - System Context</h3>
+            <span class="diagram-type-badge type-systemContext">System Context</span>
+          </div>
+          <div class="diagram-card-body">
+            <div class="diagram-img-wrapper" onclick="openLightbox(this.querySelector('img'))">
+              <button class="diagram-zoom-btn" aria-label="Zoom diagram" onclick="event.stopPropagation();openLightbox(this.parentElement.querySelector('img'))"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></button>
+              <img src="https://www.plantuml.com/plantuml/svg/ZP51Rzim38Nl-HMSJotWs9UUTYhWUItG14ZZx5meCfC8aqI3f9Rctm-odMLeCM0tYjHx-lZqA6fOK_2BBovQdtg4a-eWN-kQpRawEZsbVH9aIr4nQcKfr8CtCMkMehrt-xfvM6vowyTwLGSZYbmt3szDLhnhDMJtnGPPABwrxthNJ5Ph4yqHkOHYRi3SAKeefb9WOEgJLV1ErCMZbD2ZM7Q3EefIWWlvMWaczX0C_yHy2sROudxHNKGntBKDXO1iiOIYNLuFC4sB4O4HS6clay4RFH07CDxJUVHCeXIG1PHWptGMlD992M7a1MCjfQWpqE2DHI3kaQM2RpXukc0F5E6fsK2IRFlqqfRGU4ezTA-hQ_dTCOeIusJKUYFgx3IiRcirw-vJV26NjyK-1Zb7ytyv1gF8plWFz1FZDaKuEptTwE503EjBzxhAZ8ij-az_FH7_0sgA95CNzwFwhs-RX5jKTlWBvO_am3Jk-RpRRRfwstQx_FGZnZu5_ni0" alt="Content Management System - System Context" loading="lazy">
+            </div>
+          </div>
+          <div class="diagram-card-footer">Shows the Content Management System and its interactions with content managers and the E-Commerce System.</div>
+        </div>
+      </div>
+      <div class="diagram-group">
+        <div class="diagram-card">
+          <div class="diagram-card-header">
+            <h3>E-Commerce System - Container View</h3>
+            <span class="diagram-type-badge type-container">Container</span>
+          </div>
+          <div class="diagram-card-body">
+            <div class="diagram-img-wrapper" onclick="openLightbox(this.querySelector('img'))">
+              <button class="diagram-zoom-btn" aria-label="Zoom diagram" onclick="event.stopPropagation();openLightbox(this.parentElement.querySelector('img'))"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></button>
+              <img src="https://www.plantuml.com/plantuml/svg/jLLDSzis4BtxLsnricTewv9JJt5erKqJDQhfJ8uU25Y96E63irYAqR_lBBz4IMxZGt835jotRnSFZ-yJA-BQkwlVRD2kDWWbSvL-dyz9DNTRosMzhXEIZe4ny9sEVbuv5IJdDh5nTZtFtzsk9FHr-NdkLMAaUVxk9O-1bGr8TvNWNwsGKWmlY-zydTU9eqVAO3OiPndCxe5mQoKV3UZ-0E86k4J0MnszHz88bLEyYUIXAIEiAJO94rGKJQqvPU1LK5jCacK9bDQn3fo12aOoDIQ8P93Ix6RAwTvu6snYKXo5sCbUs1M7nEX1JUFGM2vXKpidTJ0b8BijEG77Sz9IteOz1evqw3bw30ofnHKsNONhHTxdP31Rt0uRw4w5IHxfzNaevs9ZmtOSNakacz35W8R9fCbe-idSmGDMBXxGG0pmcA-WJWBx-6cHGUvYRQ3uv_Em_CCI9ew47T32gSHMTuTtnxO-3irdC1lNi3mEujZWih_1dl9nRXaaZde73lVeKWQD8YnZdH1Sr8fj37qtX9N3O5FP8ZUHTXiNc_zhh4qRUvlmpfT5E_DM_s_Zsp-M30mcJRRgYLalNtK4lQ8TijJsYf6iScVaEYfFTUWqDZA3JIHO7auujW9UgOFGUbICZP8Xzm7e8q9qyPsHWd9GzMSLHP6jy4X8UwiHhWicM-5DMqWJ6ikW5PcMjh5Royf1evn31YOLaj9jVsTq5bvPLtIOKbcsqEzFg61xOj3PFT9XGWE3UIHhEYAJIaDEWbJh4bJ_dcNg6qj-a44gRLL9Oo6otTWJULGgfIQIw2GXdrCl-imLnRqrhKqD8HXY9osCfGJRHV4mgrivjDz2gO9nSjuHtTHkOvtphKGgfNVo6fcKtjcmxGZA6xhrrk4u6E5uzOHkOfwZKRnym_LzLMKm-t3cXfUkrobUwF_v_BmgPZV_2RgCQ-kmm_qge360RsDWSBZ6ASYPXKvzR3WIsyrWzdh2r2669tMqp95tdtpP_J5oNzdZErYg7IQuNtq4hPmJInIKluelVy-dx5zj_6T1JhEFqLLtImyVCfWzeJ89DXHzUsSDMSO1-FZuLp7nbb2M3oIwU6EbuNxVM6gqT2WUFhsnn1UHro_4Br2HBe-EqksdMXyLyhGedkLspf4pk3J9pW05fZjAiBTgLFPSe2vXpinDh2eDfZIoA9RFgylKgSZp4lLkgd4RVbJv5M_A2PKCM5oewq3-63y2wdvhJyXaSOzf-6UrrtQHU_KUWwcz-nS0" alt="E-Commerce System - Container View" loading="lazy">
+            </div>
+          </div>
+          <div class="diagram-card-footer">Shows the internal containers of the E-Commerce System including the React web application, React Native mobile app, Node.js API gateway, Cloud SQL product database, Cloud Firestore customer and order databases, and Elastic Cloud search service on GCP.</div>
+        </div>
+      </div>
+      <div class="diagram-group">
+        <div class="diagram-card">
+          <div class="diagram-card-header">
+            <h3>Inventory Management System - Container View</h3>
+            <span class="diagram-type-badge type-container">Container</span>
+          </div>
+          <div class="diagram-card-body">
+            <div class="diagram-img-wrapper" onclick="openLightbox(this.querySelector('img'))">
+              <button class="diagram-zoom-btn" aria-label="Zoom diagram" onclick="event.stopPropagation();openLightbox(this.parentElement.querySelector('img'))"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></button>
+              <img src="https://www.plantuml.com/plantuml/svg/VP9FRzim3CNl-HISJotWn9UUTchgUbstTikIx5oeCXCBaKI3fElrsmzo_hb5qPj4uVtu7iLhKSFQ1J_vugBrNOtGgBRojIZOzBEjqwPxxWJPKbICEhCKYjQRc3HJqTgxvwAycYvIwU_ZGn6CA79HNZsL5DMuY3nh4t-oG1QAJzK_lPZNmKKdoaQ9SyZUtBCSijMhA0OmuphqJXlOTDw3iHP5WDssKG4bq0O1fvP2GBO89jRWuWj69Nw5OABPOi2e80DNiil9liD5LHuqEMJLz7Y1_MjoKXA_GRVUw8OuWF6UUXUtO3jH2iY3aMUcNX1QfhgpAlcXUN9CNKo5vAtrnY8GryWoWrjiFRrY3HJXhbn09mbxzxFAeVJKrR3wyt0yVdECeiIu1rNUY3gxVvoTOzqVm-UGdSxmU1x4EU2-A4VBvxdb84fs1nvVq4iElM5ig1C4JzQeetX8mzXwZ4wQWTmJxpQU-i-23R9JjkHxiaJ_VYt6VtDyGfPaEhlyI31EVOnrNeEX-qWyme-5PODsDzQvc4JVr-l5gbXMg_L1Vj8ydKxpjXsnndKtEDgXm7nn3zPudxObSN-iVlyg1lXdNFSXz_OcXso9fXROC8LXgZqxnHFyzgPCmxt6M7V1_mS0" alt="Inventory Management System - Container View" loading="lazy">
+            </div>
+          </div>
+          <div class="diagram-card-footer">Shows the internal containers of the Inventory Management System including the Angular frontend, Spring Boot API, and Cloud SQL for PostgreSQL database on GCP.</div>
+        </div>
+      </div>
+      <div class="diagram-group">
+        <div class="diagram-card">
+          <div class="diagram-card-header">
+            <h3>Content Management System - Container View</h3>
+            <span class="diagram-type-badge type-container">Container</span>
+          </div>
+          <div class="diagram-card-body">
+            <div class="diagram-img-wrapper" onclick="openLightbox(this.querySelector('img'))">
+              <button class="diagram-zoom-btn" aria-label="Zoom diagram" onclick="event.stopPropagation();openLightbox(this.parentElement.querySelector('img'))"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></button>
+              <img src="https://www.plantuml.com/plantuml/svg/ZP5FRzim3CNl-HISJotWs9UUTkhcUXsm64ZYx1me4fC8qn-3f9Rbsm-odMLeCM0tYjHx-F7ncKMH9EyM7spGBXc4iyZ07-kQrAKwMJcdGs8a7ODWa4f7NmzEXQnPiXXd3tNpj5pdrlTkLNl5WbGtJ_ic1b4s85L3zb-iaJY6VVjB7fh9h5D1dP1AAEO6p9sYX68g6GQA9ca1PrbiE7491bcJ7SJ6m2LOdx-Le881h-W7vbymunQFY_xAWlwXRQBtI1fBADhbxG7Jj1WH206N-ZOPd99Z90_AkNWPFHDBz4WC4k50yS9ue-CI_CWBIkkOWin0WrCQ8P91uWfUS73nYWPYWDTc3OcpxUktjeJ6nMIWtwnkvHTBo1899wFMAHQhfs5rNwlf-dVn-LpU5tiRv1pD_-NebI1PvTxGJupR5E1YvNodXsCawAxzPfKP5rjqxsuz4Vy3QeeaKnUFe_gliqt2BGfP_8dyHtAaEExvTRTRz_MsxNUpjkdwVTFrduPX5EVwvVDeeGoFid7P2rd1VDDiqczM6VmPWqdU_GO0" alt="Content Management System - Container View" loading="lazy">
+            </div>
+          </div>
+          <div class="diagram-card-footer">Shows the internal containers of the CMS including the WordPress application on Cloud Run and Cloud SQL for MySQL database.</div>
+        </div>
+      </div>
+      <div class="diagram-group">
+        <div class="diagram-card">
+          <div class="diagram-card-header">
+            <h3>E-Commerce System - GCP Production Deployment</h3>
+            <span class="diagram-type-badge type-deployment">Deployment</span>
+          </div>
+          <div class="diagram-card-body">
+            <div class="diagram-img-wrapper" onclick="openLightbox(this.querySelector('img'))">
+              <button class="diagram-zoom-btn" aria-label="Zoom diagram" onclick="event.stopPropagation();openLightbox(this.parentElement.querySelector('img'))"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></button>
+              <img src="https://www.plantuml.com/plantuml/svg/hLPDR-Cs4BtxLqnzIe0uRe0jiEXfNTcR1h5TnzfkZmHDpIf4ALBbHxB68l-z82dBjcJP2jeZHyFtvejFyybOggqhnE0dBfbm6SApjQNvTJpMzFKsv_RPRPn1pPIqAEqjKyMu55JwEoDZCy4tu-J3QELDVoxcuu8QYtgSV21JB8NQ5lvIwGa6UmDPgWolid0cEIj9BjI6YXiOtYkL2uH4A9V1VR0ElJbPLITuaDyqDLOxPft6uJNy600qeRbt8ioZa4oQ6nX6nEao7JPPl2sYl7KYnVX8A0qH6myHe_dzovTL2dD5C_YD2YePwXR1xBj5BQc0ILaApgZbIZQkNEAFcR1CrfaaqsMBoDlw8L5TA5rZJVofXHQjExotS-rpXZ2KLbDnHqhD2wgtJJHdHZiNk5f5d-jTQzUOSoNFzj9JXD0vBUh07oQBLjWF6KhBxHQep63261e32offZXxoOdrgda99RfNcCg_f_YXHX-uPI1stsE9Ur7S2-rpbEPTv7qw3JACbHGZKToODXYhoTdCQdtiml9ICIBIlIlzz0yElgmIMyTJ2_hfApW1MRNU6t3_EI2ASV-yUud464sTLoOMoKDaRhOuiZsw3Mg950pEPSudxUxruGvJfqvoibB6vnlHfNhSeVPh3tdnCl_VuflIXrzql_Na_Sut6AeqrO6qvcMpBPqajVq5Og0olUz7E13MMim1q0yFgM04h2Vu17J4VUrnLHuDKisVuUFlzkd-sQoT9iaZhNDTEGh988KNzmjcvZDTElg-PYsspZy5oheNHuUFjp_rK2frM9P9NDFQE64jbjcd9LFGP1H-uIgFJUtGANN_zQ13y3qg2hlkTds4x_-BtYMbb3D6X24HZ_JFp2VfFerWVMEy_jONhQGwTpXS71jsXwf1qtyJJwdCYu_-aFkXEgG-fSkXKeJNIR9Ve9IbgUlUEgTQOLZW7whDmml96wS_ArU65Vi4SwjL1AATrAux2hb-70LrICKYIzJkgKodPmSXqA5hd8-cbQ8S34kJfv6nKodPXB6fvwng9jy5WZQAzx7Rjh6iqIhoW0IOuIWiQ_t5eh06hF7jOX5k8rQhOXHbsMZJmr-HpKAhfLALGQcMHXJqtGgV8dFPBsKe9phP7DCtTf4F9ugH4yV621ILYq4Uhe19pY5-73TrRHSSZqYPynvfqZhHQT2-I3ZwXp5mX_WK0" alt="E-Commerce System - GCP Production Deployment" loading="lazy">
+            </div>
+          </div>
+          <div class="diagram-card-footer">Shows the production deployment of the E-Commerce System on Google Cloud Platform in the us-central1 region, including GKE Autopilot for application workloads, Cloud SQL for PostgreSQL, Cloud Firestore for document storage, and Elastic Cloud for search.</div>
+        </div>
+      </div>
+      <div class="diagram-group">
+        <div class="diagram-card">
+          <div class="diagram-card-header">
+            <h3>Inventory Management System - GCP Production Deployment</h3>
+            <span class="diagram-type-badge type-deployment">Deployment</span>
+          </div>
+          <div class="diagram-card-body">
+            <div class="diagram-img-wrapper" onclick="openLightbox(this.querySelector('img'))">
+              <button class="diagram-zoom-btn" aria-label="Zoom diagram" onclick="event.stopPropagation();openLightbox(this.parentElement.querySelector('img'))"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></button>
+              <img src="https://www.plantuml.com/plantuml/svg/hLPDR-Cs4BtxLqnzIe0uRe0jiEXfNTcR1h5TnzfkZmHDpIf4ALBbHxB68l-z82dBjcJP2jeZHyFtvejFyybOggqhnE0dBfbm6SApjQNvTJpMzFKsv_RPRPn1pPIqAEqjKyMu55JwEoDZCy4tu-J3QELDVoxcuu8QYtgSV21JB8NQ5lvIwGa6UmDPgWolid0cEIj9BjI6YXiOtYkL2uH4A9V1VR0ElJbPLITuaDyqDLOxPft6uJNy600qeRbt8ioZa4oQ6nX6nEao7JPPl2sYl7KYnVX8A0qH6myHe_dzovTL2dD5C_YD2YePwXR1xBj5BQc0ILaApgZbIZQkNEAFcR1CrfaaqsMBoDlw8L5TA5rZJVofXHQjExotS-rpXZ2KLbDnHqhD2wgtJJHdHZiNk5f5d-jTQzUOSoNFzj9JXD0vBUh07oQBLjWF6KhBxHQep63261e32offZXxoOdrgda99RfNcCg_f_YXHX-uPI1stsE9Ur7S2-rpbEPTv7qw3JACbHGZKToODXYhoTdCQdtiml9ICIBIlIlzz0yElgmIMyTJ2_hfApW1MRNU6t3_EI2ASV-yUud464sTLoOMoKDaRhOuiZsw3Mg950pEPSudxUxruGvJfqvoibB6vnlHfNhSeVPh3tdnCl_VuflIXrzql_Na_Sut6AeqrO6qvcMpBPqajVq5Og0olUz7E13MMim1q0yFgM04h2Vu17J4VUrnLHuDKisVuUFlzkd-sQoT9iaZhNDTEGh988KNzmjcvZDTElg-PYsspZy5oheNHuUFjp_rK2frM9P9NDFQE64jbjcd9LFGP1H-uIgFJUtGANN_zQ13y3qg2hlkTds4x_-BtYMbb3D6X24HZ_JFp2VfFerWVMEy_jONhQGwTpXS71jsXwf1qtyJJwdCYu_-aFkXEgG-fSkXKeJNIR9Ve9IbgUlUEgTQOLZW7whDmml96wS_ArU65Vi4SwjL1AATrAux2hb-70LrICKYIzJkgKodPmSXqA5hd8-cbQ8S34kJfv6nKodPXB6fvwng9jy5WZQAzx7Rjh6iqIhoW0IOuIWiQ_t5eh06hF7jOX5k8rQhOXHbsMZJmr-HpKAhfLALGQcMHXJqtGgV8dFPBsKe9phP7DCtTf4F9ugH4yV621ILYq4Uhe19pY5-73TrRHSSZqYPynvfqZhHQT2-I3ZwXp5mX_WK0" alt="Inventory Management System - GCP Production Deployment" loading="lazy">
+            </div>
+          </div>
+          <div class="diagram-card-footer">Shows the production deployment of the Inventory Management System on Google Cloud Platform using GKE Autopilot and Cloud SQL for PostgreSQL.</div>
+        </div>
+      </div>
+      <div class="diagram-group">
+        <div class="diagram-card">
+          <div class="diagram-card-header">
+            <h3>CMS - GCP Production Deployment</h3>
+            <span class="diagram-type-badge type-deployment">Deployment</span>
+          </div>
+          <div class="diagram-card-body">
+            <div class="diagram-img-wrapper" onclick="openLightbox(this.querySelector('img'))">
+              <button class="diagram-zoom-btn" aria-label="Zoom diagram" onclick="event.stopPropagation();openLightbox(this.parentElement.querySelector('img'))"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></button>
+              <img src="https://www.plantuml.com/plantuml/svg/hLPDR-Cs4BtxLqnzIe0uRe0jiEXfNTcR1h5TnzfkZmHDpIf4ALBbHxB68l-z82dBjcJP2jeZHyFtvejFyybOggqhnE0dBfbm6SApjQNvTJpMzFKsv_RPRPn1pPIqAEqjKyMu55JwEoDZCy4tu-J3QELDVoxcuu8QYtgSV21JB8NQ5lvIwGa6UmDPgWolid0cEIj9BjI6YXiOtYkL2uH4A9V1VR0ElJbPLITuaDyqDLOxPft6uJNy600qeRbt8ioZa4oQ6nX6nEao7JPPl2sYl7KYnVX8A0qH6myHe_dzovTL2dD5C_YD2YePwXR1xBj5BQc0ILaApgZbIZQkNEAFcR1CrfaaqsMBoDlw8L5TA5rZJVofXHQjExotS-rpXZ2KLbDnHqhD2wgtJJHdHZiNk5f5d-jTQzUOSoNFzj9JXD0vBUh07oQBLjWF6KhBxHQep63261e32offZXxoOdrgda99RfNcCg_f_YXHX-uPI1stsE9Ur7S2-rpbEPTv7qw3JACbHGZKToODXYhoTdCQdtiml9ICIBIlIlzz0yElgmIMyTJ2_hfApW1MRNU6t3_EI2ASV-yUud464sTLoOMoKDaRhOuiZsw3Mg950pEPSudxUxruGvJfqvoibB6vnlHfNhSeVPh3tdnCl_VuflIXrzql_Na_Sut6AeqrO6qvcMpBPqajVq5Og0olUz7E13MMim1q0yFgM04h2Vu17J4VUrnLHuDKisVuUFlzkd-sQoT9iaZhNDTEGh988KNzmjcvZDTElg-PYsspZy5oheNHuUFjp_rK2frM9P9NDFQE64jbjcd9LFGP1H-uIgFJUtGANN_zQ13y3qg2hlkTds4x_-BtYMbb3D6X24HZ_JFp2VfFerWVMEy_jONhQGwTpXS71jsXwf1qtyJJwdCYu_-aFkXEgG-fSkXKeJNIR9Ve9IbgUlUEgTQOLZW7whDmml96wS_ArU65Vi4SwjL1AATrAux2hb-70LrICKYIzJkgKodPmSXqA5hd8-cbQ8S34kJfv6nKodPXB6fvwng9jy5WZQAzx7Rjh6iqIhoW0IOuIWiQ_t5eh06hF7jOX5k8rQhOXHbsMZJmr-HpKAhfLALGQcMHXJqtGgV8dFPBsKe9phP7DCtTf4F9ugH4yV621ILYq4Uhe19pY5-73TrRHSSZqYPynvfqZhHQT2-I3ZwXp5mX_WK0" alt="CMS - GCP Production Deployment" loading="lazy">
+            </div>
+          </div>
+          <div class="diagram-card-footer">Shows the production deployment of the Content Management System on Google Cloud Platform using Cloud Run for the WordPress application and Cloud SQL for MySQL.</div>
+        </div>
+      </div>
+      <div class="diagram-group">
+        <div class="diagram-card">
+          <div class="diagram-card-header">
+            <h3>Full Platform - GCP Production Deployment</h3>
+            <span class="diagram-type-badge type-deployment">Deployment</span>
+          </div>
+          <div class="diagram-card-body">
+            <div class="diagram-img-wrapper" onclick="openLightbox(this.querySelector('img'))">
+              <button class="diagram-zoom-btn" aria-label="Zoom diagram" onclick="event.stopPropagation();openLightbox(this.parentElement.querySelector('img'))"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></button>
+              <img src="https://www.plantuml.com/plantuml/svg/hLPDR-Cs4BtxLqnzIe0uRe0jiEXfNTcR1h5TnzfkZmHDpIf4ALBbHxB68l-z82dBjcJP2jeZHyFtvejFyybOggqhnE0dBfbm6SApjQNvTJpMzFKsv_RPRPn1pPIqAEqjKyMu55JwEoDZCy4tu-J3QELDVoxcuu8QYtgSV21JB8NQ5lvIwGa6UmDPgWolid0cEIj9BjI6YXiOtYkL2uH4A9V1VR0ElJbPLITuaDyqDLOxPft6uJNy600qeRbt8ioZa4oQ6nX6nEao7JPPl2sYl7KYnVX8A0qH6myHe_dzovTL2dD5C_YD2YePwXR1xBj5BQc0ILaApgZbIZQkNEAFcR1CrfaaqsMBoDlw8L5TA5rZJVofXHQjExotS-rpXZ2KLbDnHqhD2wgtJJHdHZiNk5f5d-jTQzUOSoNFzj9JXD0vBUh07oQBLjWF6KhBxHQep63261e32offZXxoOdrgda99RfNcCg_f_YXHX-uPI1stsE9Ur7S2-rpbEPTv7qw3JACbHGZKToODXYhoTdCQdtiml9ICIBIlIlzz0yElgmIMyTJ2_hfApW1MRNU6t3_EI2ASV-yUud464sTLoOMoKDaRhOuiZsw3Mg950pEPSudxUxruGvJfqvoibB6vnlHfNhSeVPh3tdnCl_VuflIXrzql_Na_Sut6AeqrO6qvcMpBPqajVq5Og0olUz7E13MMim1q0yFgM04h2Vu17J4VUrnLHuDKisVuUFlzkd-sQoT9iaZhNDTEGh988KNzmjcvZDTElg-PYsspZy5oheNHuUFjp_rK2frM9P9NDFQE64jbjcd9LFGP1H-uIgFJUtGANN_zQ13y3qg2hlkTds4x_-BtYMbb3D6X24HZ_JFp2VfFerWVMEy_jONhQGwTpXS71jsXwf1qtyJJwdCYu_-aFkXEgG-fSkXKeJNIR9Ve9IbgUlUEgTQOLZW7whDmml96wS_ArU65Vi4SwjL1AATrAux2hb-70LrICKYIzJkgKodPmSXqA5hd8-cbQ8S34kJfv6nKodPXB6fvwng9jy5WZQAzx7Rjh6iqIhoW0IOuIWiQ_t5eh06hF7jOX5k8rQhOXHbsMZJmr-HpKAhfLALGQcMHXJqtGgV8dFPBsKe9phP7DCtTf4F9ugH4yV621ILYq4Uhe19pY5-73TrRHSSZqYPynvfqZhHQT2-I3ZwXp5mX_WK0" alt="Full Platform - GCP Production Deployment" loading="lazy">
+            </div>
+          </div>
+          <div class="diagram-card-footer">Comprehensive view of the entire e-commerce platform deployment on Google Cloud Platform in us-central1, showing all systems including E-Commerce, Inventory, and CMS with their GKE, Cloud SQL, Cloud Firestore, Elastic Cloud, and Cloud Run infrastructure.</div>
+        </div>
+      </div>
+      <div class="diagram-group">
+        <div class="diagram-card">
+          <div class="diagram-card-header">
+            <h3>E-Commerce Platform - GCP Active-Passive Multi-Region Deployment</h3>
+            <span class="diagram-type-badge type-deployment">Deployment</span>
+          </div>
+          <div class="diagram-card-body">
+            <div class="diagram-img-wrapper" onclick="openLightbox(this.querySelector('img'))">
+              <button class="diagram-zoom-btn" aria-label="Zoom diagram" onclick="event.stopPropagation();openLightbox(this.parentElement.querySelector('img'))"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></button>
+              <img src="https://www.plantuml.com/plantuml/svg/hLPDR-Cs4BtxLqnzIe0uRe0jiEXfNTcR1h5TnzfkZmHDpIf4ALBbHxB68l-z82dBjcJP2jeZHyFtvejFyybOggqhnE0dBfbm6SApjQNvTJpMzFKsv_RPRPn1pPIqAEqjKyMu55JwEoDZCy4tu-J3QELDVoxcuu8QYtgSV21JB8NQ5lvIwGa6UmDPgWolid0cEIj9BjI6YXiOtYkL2uH4A9V1VR0ElJbPLITuaDyqDLOxPft6uJNy600qeRbt8ioZa4oQ6nX6nEao7JPPl2sYl7KYnVX8A0qH6myHe_dzovTL2dD5C_YD2YePwXR1xBj5BQc0ILaApgZbIZQkNEAFcR1CrfaaqsMBoDlw8L5TA5rZJVofXHQjExotS-rpXZ2KLbDnHqhD2wgtJJHdHZiNk5f5d-jTQzUOSoNFzj9JXD0vBUh07oQBLjWF6KhBxHQep63261e32offZXxoOdrgda99RfNcCg_f_YXHX-uPI1stsE9Ur7S2-rpbEPTv7qw3JACbHGZKToODXYhoTdCQdtiml9ICIBIlIlzz0yElgmIMyTJ2_hfApW1MRNU6t3_EI2ASV-yUud464sTLoOMoKDaRhOuiZsw3Mg950pEPSudxUxruGvJfqvoibB6vnlHfNhSeVPh3tdnCl_VuflIXrzql_Na_Sut6AeqrO6qvcMpBPqajVq5Og0olUz7E13MMim1q0yFgM04h2Vu17J4VUrnLHuDKisVuUFlzkd-sQoT9iaZhNDTEGh988KNzmjcvZDTElg-PYsspZy5oheNHuUFjp_rK2frM9P9NDFQE64jbjcd9LFGP1H-uIgFJUtGANN_zQ13y3qg2hlkTds4x_-BtYMbb3D6X24HZ_JFp2VfFerWVMEy_jONhQGwTpXS71jsXwf1qtyJJwdCYu_-aFkXEgG-fSkXKeJNIR9Ve9IbgUlUEgTQOLZW7whDmml96wS_ArU65Vi4SwjL1AATrAux2hb-70LrICKYIzJkgKodPmSXqA5hd8-cbQ8S34kJfv6nKodPXB6fvwng9jy5WZQAzx7Rjh6iqIhoW0IOuIWiQ_t5eh06hF7jOX5k8rQhOXHbsMZJmr-HpKAhfLALGQcMHXJqtGgV8dFPBsKe9phP7DCtTf4F9ugH4yV621ILYq4Uhe19pY5-73TrRHSSZqYPynvfqZhHQT2-I3ZwXp5mX_WK0" alt="E-Commerce Platform - GCP Active-Passive Multi-Region Deployment" loading="lazy">
+            </div>
+          </div>
+          <div class="diagram-card-footer">Active-passive deployment across us-central1 (Primary) and europe-west1 (Standby) with Global HTTPS Load Balancer with failover routing, Cloud CDN, Cloud Armor WAF, cross-region VPC peering, and database replication for disaster recovery.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <h2><span class="section-icon" style="background:var(--purple-subtle);color:var(--purple)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></span>Software Systems</h2>
+      <p>6 software systems composing this architecture.</p>
+      
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>System</th><th>Group</th><th>Disposition</th><th>Classification</th><th>Containers</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          
+            <tr>
+              <td><strong>E-Commerce System</strong></td>
+              <td style="font-size:12px">E-Commerce</td>
+              <td><span class="badge" style="background:#dafbe1;color:#1a7f37;border-color:#1a7f37;font-size:11px">Invest</span></td>
+              <td style="font-size:12px">Confidential</td>
+              <td style="text-align:center;font-weight:600">7</td>
+              <td style="max-width:280px;font-size:12px;color:var(--text-secondary)">Core e-commerce platform allowing customers to browse products, manage accounts, and place orders. Deployed on GCP using GKE, Cloud SQL, Cloud Firestore, and Elastic Cloud.</td>
+            </tr>
+            <tr>
+              <td><strong>Inventory Management System</strong></td>
+              <td style="font-size:12px">Operations</td>
+              <td><span class="badge" style="background:#dafbe1;color:#1a7f37;border-color:#1a7f37;font-size:11px">Invest</span></td>
+              <td style="font-size:12px">Internal Use</td>
+              <td style="text-align:center;font-weight:600">3</td>
+              <td style="max-width:280px;font-size:12px;color:var(--text-secondary)">Manages product inventory, stock levels, warehouse locations, and replenishment workflows. Deployed on GCP using GKE and Cloud SQL.</td>
+            </tr>
+            <tr>
+              <td><strong>Content Management System</strong></td>
+              <td style="font-size:12px">Content</td>
+              <td><span class="badge" style="background:#fff8c5;color:#9a6700;border-color:#bf8700;font-size:11px">Tolerate</span></td>
+              <td style="font-size:12px">Internal Use</td>
+              <td style="text-align:center;font-weight:600">2</td>
+              <td style="max-width:280px;font-size:12px;color:var(--text-secondary)">Manages product content, descriptions, images, and marketing materials. Deployed on Cloud Run with Cloud SQL for MySQL.</td>
+            </tr>
+            <tr>
+              <td><strong>Payment Gateway</strong></td>
+              <td style="font-size:12px">External</td>
+              <td><span class="badge" style="background:#dafbe1;color:#1a7f37;border-color:#1a7f37;font-size:11px">Invest</span></td>
+              <td style="font-size:12px">Restricted</td>
+              <td style="text-align:center;font-weight:600">0</td>
+              <td style="max-width:280px;font-size:12px;color:var(--text-secondary)">External payment processing service (Stripe) for credit card and digital wallet transactions.</td>
+            </tr>
+            <tr>
+              <td><strong>Email Service</strong></td>
+              <td style="font-size:12px">External</td>
+              <td><span class="badge" style="background:#fff8c5;color:#9a6700;border-color:#bf8700;font-size:11px">Tolerate</span></td>
+              <td style="font-size:12px">Internal Use</td>
+              <td style="text-align:center;font-weight:600">0</td>
+              <td style="max-width:280px;font-size:12px;color:var(--text-secondary)">External email delivery service (SendGrid) for transactional emails such as order confirmations, shipping notifications, and password resets.</td>
+            </tr>
+            <tr>
+              <td><strong>Shipping Provider</strong></td>
+              <td style="font-size:12px">External</td>
+              <td><span class="badge" style="background:#fff8c5;color:#9a6700;border-color:#bf8700;font-size:11px">Tolerate</span></td>
+              <td style="font-size:12px">Internal Use</td>
+              <td style="text-align:center;font-weight:600">0</td>
+              <td style="max-width:280px;font-size:12px;color:var(--text-secondary)">External shipping and logistics provider handling order fulfillment, package tracking, and last-mile delivery.</td>
+            </tr>
+        </tbody>
+      </table>
+    </div>
+    </div>
+
+    <div class="detail-section">
+      <h2><span class="section-icon" style="background:var(--success-subtle);color:var(--success)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg></span>Containers</h2>
+      <p>12 containers across all systems.</p>
+      
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Container</th><th>System</th><th>Technology</th><th>Description</th><th>Type</th></tr>
+        </thead>
+        <tbody>
+          
+            <tr>
+              <td><strong>Web Application</strong></td>
+              <td style="color:var(--text-secondary)">E-Commerce System</td>
+              <td><span class="tech-badge">React, TypeScript</span></td>
+              <td style="max-width:300px;font-size:12px;color:var(--text-secondary)">Single-page application providing e-commerce functionality to customers including product catalog with filtering and search, shopping cart management, checkout process, and account management. Built with React and TypeScript, served via Nginx on GKE.</td>
+              <td style="font-size:12px;color:var(--text-tertiary)">UI</td>
+            </tr>
+          
+            <tr>
+              <td><strong>Mobile Application</strong></td>
+              <td style="color:var(--text-secondary)">E-Commerce System</td>
+              <td><span class="tech-badge">React Native</span></td>
+              <td style="max-width:300px;font-size:12px;color:var(--text-secondary)">Cross-platform mobile application providing e-commerce functionality to mobile users with native-like experience. Built with React Native, distributed via App Store and Google Play. Mobile backend-for-frontend served from GKE.</td>
+              <td style="font-size:12px;color:var(--text-tertiary)">UI</td>
+            </tr>
+          
+            <tr>
+              <td><strong>API Gateway</strong></td>
+              <td style="color:var(--text-secondary)">E-Commerce System</td>
+              <td><span class="tech-badge">Node.js, Express</span></td>
+              <td style="max-width:300px;font-size:12px;color:var(--text-secondary)">Backend API serving web and mobile clients. Includes controllers for authentication and authorization, product data retrieval, order creation and management, and payment processing. Deployed as a containerized Node.js service on GKE.</td>
+              <td style="font-size:12px;color:var(--text-tertiary)">API</td>
+            </tr>
+          
+            <tr>
+              <td><strong>Product Database</strong></td>
+              <td style="color:var(--text-secondary)">E-Commerce System</td>
+              <td><span class="tech-badge">Cloud SQL for PostgreSQL</span></td>
+              <td style="max-width:300px;font-size:12px;color:var(--text-secondary)">Stores product catalog information including pricing, descriptions, categories, and images metadata. Hosted on Cloud SQL for PostgreSQL.</td>
+              <td style="font-size:12px;color:var(--text-tertiary)">database</td>
+            </tr>
+          
+            <tr>
+              <td><strong>Customer Database</strong></td>
+              <td style="color:var(--text-secondary)">E-Commerce System</td>
+              <td><span class="tech-badge">Cloud Firestore</span></td>
+              <td style="max-width:300px;font-size:12px;color:var(--text-secondary)">Stores customer profiles, preferences, addresses, and account information. Migrated from MongoDB to Cloud Firestore for serverless scalability.</td>
+              <td style="font-size:12px;color:var(--text-tertiary)">database</td>
+            </tr>
+          
+            <tr>
+              <td><strong>Order Database</strong></td>
+              <td style="color:var(--text-secondary)">E-Commerce System</td>
+              <td><span class="tech-badge">Cloud Firestore</span></td>
+              <td style="max-width:300px;font-size:12px;color:var(--text-secondary)">Stores order history, order line items, payment references, and fulfillment status. Migrated from MongoDB to Cloud Firestore.</td>
+              <td style="font-size:12px;color:var(--text-tertiary)">database</td>
+            </tr>
+          
+            <tr>
+              <td><strong>Search Service</strong></td>
+              <td style="color:var(--text-secondary)">E-Commerce System</td>
+              <td><span class="tech-badge">Elastic Cloud on GCP</span></td>
+              <td style="max-width:300px;font-size:12px;color:var(--text-secondary)">Provides full-text product search with faceted filtering, autocomplete, and relevance ranking. Powered by Elastic Cloud on GCP.</td>
+              <td style="font-size:12px;color:var(--text-tertiary)">other</td>
+            </tr>
+          
+            <tr>
+              <td><strong>Inventory Application</strong></td>
+              <td style="color:var(--text-secondary)">Inventory Management System</td>
+              <td><span class="tech-badge">Angular</span></td>
+              <td style="max-width:300px;font-size:12px;color:var(--text-secondary)">Web application used by warehouse staff and the operations team to manage inventory levels, monitor stock, and trigger replenishment.</td>
+              <td style="font-size:12px;color:var(--text-tertiary)">UI</td>
+            </tr>
+          
+            <tr>
+              <td><strong>Inventory API</strong></td>
+              <td style="color:var(--text-secondary)">Inventory Management System</td>
+              <td><span class="tech-badge">Java, Spring Boot</span></td>
+              <td style="max-width:300px;font-size:12px;color:var(--text-secondary)">Backend service providing inventory management functionality including stock tracking, warehouse management, and replenishment workflows.</td>
+              <td style="font-size:12px;color:var(--text-tertiary)">API</td>
+            </tr>
+          
+            <tr>
+              <td><strong>Inventory Database</strong></td>
+              <td style="color:var(--text-secondary)">Inventory Management System</td>
+              <td><span class="tech-badge">Cloud SQL for PostgreSQL</span></td>
+              <td style="max-width:300px;font-size:12px;color:var(--text-secondary)">Stores inventory levels, warehouse locations, stock movement history, and replenishment schedules. Hosted on Cloud SQL for PostgreSQL.</td>
+              <td style="font-size:12px;color:var(--text-tertiary)">database</td>
+            </tr>
+          
+            <tr>
+              <td><strong>CMS Application</strong></td>
+              <td style="color:var(--text-secondary)">Content Management System</td>
+              <td><span class="tech-badge">WordPress on Cloud Run</span></td>
+              <td style="max-width:300px;font-size:12px;color:var(--text-secondary)">WordPress-based content management interface used by content managers to create and maintain product descriptions, images, and marketing content. Containerized and deployed on Cloud Run.</td>
+              <td style="font-size:12px;color:var(--text-tertiary)">UI</td>
+            </tr>
+          
+            <tr>
+              <td><strong>CMS Database</strong></td>
+              <td style="color:var(--text-secondary)">Content Management System</td>
+              <td><span class="tech-badge">Cloud SQL for MySQL</span></td>
+              <td style="max-width:300px;font-size:12px;color:var(--text-secondary)">Stores content pages, media metadata, and WordPress configuration. Hosted on Cloud SQL for MySQL.</td>
+              <td style="font-size:12px;color:var(--text-tertiary)">database</td>
+            </tr>
+          
+        </tbody>
+      </table>
+    </div>
+    </div>
+
+    <div class="detail-section">
+      <h2><span class="section-icon" style="background:var(--orange-subtle);color:var(--orange)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>Actors &amp; Personas</h2>
+      <p>3 actors interact with this system.</p>
+      
+    <div class="people-grid">
+      
+        <div class="person-card">
+          <div class="person-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+          <h4>Customer</h4>
+          <p>A registered customer of the e-commerce platform who browses products, manages their account, and places orders</p>
+        </div>
+      
+        <div class="person-card">
+          <div class="person-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+          <h4>Administrator</h4>
+          <p>System administrator with full access rights to the e-commerce and inventory management systems</p>
+        </div>
+      
+        <div class="person-card">
+          <div class="person-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+          <h4>Content Manager</h4>
+          <p>Manages product listings, descriptions, images, and marketing content</p>
+        </div>
+      
+    </div>
+    </div>
+
+    <div class="detail-section">
+      <h2><span class="section-icon" style="background:var(--warning-subtle);color:var(--warning)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></span>Codebase Metrics</h2>
+      
+    <div class="stats-row" style="grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));">
+      <div class="stat-card"><div class="stat-value" style="font-size:24px">5</div><div class="stat-label">Repositories</div></div>
+      <div class="stat-card"><div class="stat-value" style="font-size:24px">187.3K</div><div class="stat-label">Lines of Code</div></div>
+      <div class="stat-card"><div class="stat-value" style="font-size:24px">10</div><div class="stat-label">Deployable Units</div></div>
+      <div class="stat-card"><div class="stat-value" style="font-size:24px">12</div><div class="stat-label">Domain Modules</div></div>
+      <div class="stat-card"><div class="stat-value" style="font-size:24px">134</div><div class="stat-label">Domain Objects</div></div>
+      <div class="stat-card"><div class="stat-value" style="font-size:24px">295</div><div class="stat-label">Domain Behaviors</div></div>
+    </div>
+      <div style="margin-top:20px"><h3 style="font-size:14px;font-weight:600;margin-bottom:10px">Technology Tags</h3><div style="display:flex;flex-wrap:wrap;gap:6px"><span class="tag">api</span><span class="tag">backend</span><span class="tag">cms</span><span class="tag">communications</span><span class="tag">content</span><span class="tag">core</span><span class="tag">customer-facing</span><span class="tag">database</span><span class="tag">external</span><span class="tag">frontend</span><span class="tag">gcp-managed</span><span class="tag">gcp-marketplace</span><span class="tag">internal</span><span class="tag">logistics</span><span class="tag">mobile</span><span class="tag">nosql</span><span class="tag">operations</span><span class="tag">payments</span><span class="tag">search</span><span class="tag">web</span></div></div>
+    </div>
+
+  </div>
+</section>
+
+
+<footer>
+  <div class="container">
+    <p>Architecture as Code &mdash; auto-generated from <a href="https://github.com/muthub-ai/aac">YAML models</a> via CI/CD pipeline</p>
+    <p style="margin-top:4px;font-size:11px;color:var(--text-tertiary)">Built with C4 Model &bull; PlantUML &bull; Asciidoctor &bull; GitHub Actions</p>
+  </div>
+</footer>
+
+<div class="lightbox-overlay" id="lightboxOverlay" onclick="closeLightbox()">
+  <button class="lightbox-close" onclick="closeLightbox()" aria-label="Close">&times;</button>
+  <div class="lightbox-img-container" onclick="event.stopPropagation()">
+    <img id="lightboxImg" src="" alt="">
+  </div>
+  <div class="lightbox-toolbar" onclick="event.stopPropagation()">
+    <button id="lbZoomOut" aria-label="Zoom out" title="Zoom out (-)">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+    </button>
+    <span class="lb-zoom-level" id="lbZoomLevel">100%</span>
+    <button id="lbZoomIn" aria-label="Zoom in" title="Zoom in (+)">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+    </button>
+    <span class="lb-sep"></span>
+    <button id="lbZoomReset" aria-label="Reset zoom" title="Fit to screen (0)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg>
+    </button>
+  </div>
+</div>
+
+<script>
+(function(){
+  var overlay = document.getElementById('lightboxOverlay');
+  var lbImg = document.getElementById('lightboxImg');
+  var zoomLabel = document.getElementById('lbZoomLevel');
+  var btnIn = document.getElementById('lbZoomIn');
+  var btnOut = document.getElementById('lbZoomOut');
+  var btnReset = document.getElementById('lbZoomReset');
+  var zoom = 1;
+  var MIN_ZOOM = 0.25;
+  var MAX_ZOOM = 5;
+  var ZOOM_STEP = 0.25;
+
+  function applyZoom() {
+    lbImg.style.transform = 'scale(' + zoom + ')';
+    zoomLabel.textContent = Math.round(zoom * 100) + '%';
+    btnIn.disabled = zoom >= MAX_ZOOM;
+    btnOut.disabled = zoom <= MIN_ZOOM;
+  }
+
+  window.openLightbox = function(img) {
+    if (!img) return;
+    lbImg.src = img.src;
+    lbImg.alt = img.alt;
+    zoom = 1;
+    applyZoom();
+    overlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  };
+
+  window.closeLightbox = function() {
+    overlay.classList.remove('active');
+    document.body.style.overflow = '';
+    zoom = 1;
+    applyZoom();
+  };
+
+  btnIn.addEventListener('click', function() {
+    if (zoom < MAX_ZOOM) { zoom = Math.min(MAX_ZOOM, +(zoom + ZOOM_STEP).toFixed(2)); applyZoom(); }
+  });
+  btnOut.addEventListener('click', function() {
+    if (zoom > MIN_ZOOM) { zoom = Math.max(MIN_ZOOM, +(zoom - ZOOM_STEP).toFixed(2)); applyZoom(); }
+  });
+  btnReset.addEventListener('click', function() {
+    zoom = 1; applyZoom();
+  });
+
+  overlay.addEventListener('wheel', function(e) {
+    if (!overlay.classList.contains('active')) return;
+    e.preventDefault();
+    var delta = e.deltaY < 0 ? ZOOM_STEP : -ZOOM_STEP;
+    zoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, +(zoom + delta).toFixed(2)));
+    applyZoom();
+  }, { passive: false });
+
+  document.addEventListener('keydown', function(e) {
+    if (!overlay.classList.contains('active')) return;
+    if (e.key === 'Escape') closeLightbox();
+    else if (e.key === '+' || e.key === '=') { btnIn.click(); e.preventDefault(); }
+    else if (e.key === '-' || e.key === '_') { btnOut.click(); e.preventDefault(); }
+    else if (e.key === '0') { btnReset.click(); e.preventDefault(); }
+  });
+})();
+</script>
+</body>
+</html>
