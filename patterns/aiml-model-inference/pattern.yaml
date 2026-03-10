@@ -19,13 +19,13 @@ pattern:
       - Model Serving
 
   components:
-    - id: model-registry
+    - componentId: model-registry
       name: Vertex AI Model Registry
       type: ai-ml
       description: Centralized versioned model artifact repository
       technology: Vertex AI Model Registry
 
-    - id: model-artifacts
+    - componentId: model-artifacts
       name: Model Artifact Storage
       type: storage
       description: Trained model binaries and serving containers
@@ -34,7 +34,7 @@ pattern:
         bucket_class: Standard
         versioning: enabled
 
-    - id: vertex-endpoint
+    - componentId: vertex-endpoint
       name: Vertex AI Endpoint
       type: ai-ml
       description: Managed prediction endpoint with traffic splitting
@@ -44,7 +44,7 @@ pattern:
           model-v2: 90
           model-v3-canary: 10
 
-    - id: prediction-service
+    - componentId: prediction-service
       name: Prediction Service
       type: compute
       description: Autoscaled model serving replicas
@@ -55,19 +55,19 @@ pattern:
         min_replicas: 1
         max_replicas: 20
 
-    - id: model-monitoring
+    - componentId: model-monitoring
       name: Model Monitoring
       type: monitoring
       description: Continuous monitoring for data drift, feature skew, and prediction quality
       technology: Vertex AI Model Monitoring
 
-    - id: feature-store
+    - componentId: feature-store
       name: Feature Store
       type: database
       description: Low-latency online feature serving for model inputs
       technology: Vertex AI Feature Store
 
-    - id: ci-cd-pipeline
+    - componentId: ci-cd-pipeline
       name: ML CI/CD Pipeline
       type: automation
       description: Automated model training, evaluation, and deployment pipeline
@@ -75,23 +75,26 @@ pattern:
 
   validation:
     rules:
-      - type: required_components
-        components:
+      - id: require-core-ml-components
+        type: required_components
+        componentIds:
           - model-registry
           - vertex-endpoint
           - model-monitoring
-      - type: resource_policy
-        resource: ai-ml
-        constraint: model_monitoring.enabled == true
+      - id: enforce-model-monitoring
+        type: resource_policy
+        selector:
+          componentKinds: ["ai-ml"]
+        allowedResourceTypes: ["ai-ml"]
         message: All production endpoints must have model monitoring enabled
 
   resiliency_patterns:
-    type: active-passive
-    regions:
-      primary: us-central1
-      secondary: us-east1
-    rpo: "< 30min"
-    rto: "< 5min"
+    - name: active-passive
+      description: "Active-passive deployment with RPO < 30min and RTO < 5min"
+      regions:
+        active: [us-central1]
+        passive: [us-east1]
+        datacenters_per_region: 1
 
   advantages:
     - Fully managed endpoints with automatic scaling

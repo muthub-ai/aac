@@ -20,13 +20,13 @@ pattern:
       - Data Warehouse
 
   components:
-    - id: source-systems
+    - componentId: source-systems
       name: Source Systems
       type: external
       description: Upstream operational databases and SaaS applications
       technology: Various (PostgreSQL, MySQL, Salesforce, SAP)
 
-    - id: pubsub-ingestion
+    - componentId: pubsub-ingestion
       name: Cloud Pub/Sub
       type: messaging
       description: Real-time event streaming ingestion layer
@@ -34,7 +34,7 @@ pattern:
       properties:
         throughput: "100K msgs/sec"
 
-    - id: gcs-data-lake
+    - componentId: gcs-data-lake
       name: Cloud Storage Data Lake
       type: storage
       description: Raw and staged data landing zone in GCS buckets
@@ -43,7 +43,7 @@ pattern:
         storage_class: Standard
         lifecycle_policy: "30d → Nearline → 90d → Coldline"
 
-    - id: dataflow-etl
+    - componentId: dataflow-etl
       name: Cloud Dataflow
       type: compute
       description: Managed Apache Beam pipelines for ETL/ELT processing
@@ -52,7 +52,7 @@ pattern:
         autoscaling: true
         max_workers: 50
 
-    - id: bigquery-warehouse
+    - componentId: bigquery-warehouse
       name: BigQuery Data Warehouse
       type: database
       description: Partitioned and clustered analytical datasets
@@ -62,19 +62,19 @@ pattern:
         clustering: [customer_id, region]
         pricing_model: capacity
 
-    - id: bigquery-ml
+    - componentId: bigquery-ml
       name: BigQuery ML
       type: ai-ml
       description: In-warehouse machine learning model training
       technology: BigQuery ML
 
-    - id: looker-bi
+    - componentId: looker-bi
       name: Looker
       type: application
       description: Business intelligence dashboards and exploration
       technology: Looker
 
-    - id: iam-security
+    - componentId: iam-security
       name: IAM Column-level Security
       type: security
       description: Fine-grained access control on sensitive columns
@@ -82,22 +82,25 @@ pattern:
 
   validation:
     rules:
-      - type: required_components
-        components:
+      - id: require-core-data-components
+        type: required_components
+        componentIds:
           - bigquery-warehouse
           - iam-security
-      - type: resource_policy
-        resource: database
-        constraint: partitioning != null
+      - id: enforce-partitioning
+        type: resource_policy
+        selector:
+          componentKinds: ["database"]
+        allowedResourceTypes: ["database"]
         message: BigQuery datasets must use time-based partitioning
 
   resiliency_patterns:
-    type: active-passive
-    regions:
-      primary: us-central1
-      secondary: us-east1
-    rpo: "< 1h"
-    rto: "< 15min"
+    - name: active-passive
+      description: "Active-passive deployment with RPO < 1h and RTO < 15min"
+      regions:
+        active: [us-central1]
+        passive: [us-east1]
+        datacenters_per_region: 1
 
   advantages:
     - Petabyte-scale analytics without infrastructure management

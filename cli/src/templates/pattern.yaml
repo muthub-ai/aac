@@ -16,19 +16,19 @@ pattern:
       - pattern
 
   components:
-    - id: frontend
+    - componentId: frontend
       name: Web Frontend
       type: compute
       description: User-facing web application.
       technology: React / Next.js
 
-    - id: api
+    - componentId: api
       name: API Service
       type: compute
       description: Backend API handling business logic.
       technology: Node.js
 
-    - id: database
+    - componentId: database
       name: Data Store
       type: database
       description: Persistent relational data store.
@@ -36,15 +36,33 @@ pattern:
 
   validation:
     rules:
-      - id: rule-001
-        description: "All components must define a technology field."
-        severity: ERROR
+      - id: require-core-components
+        type: required_components
+        componentIds:
+          - frontend
+          - api
+          - database
 
   resiliency_patterns:
-    - pattern: circuit-breaker
-      description: "Circuit breaker between frontend and API service."
-      implementation: "Library-based (e.g., opossum for Node.js)"
+    - name: active-passive
+      description: "Active-passive deployment across two regions."
+      regions:
+        active: [us-central1]
+        passive: [us-east1]
+        datacenters_per_region: 1
 
-  cost_profile:
-    estimate: "Low-Medium"
-    notes: "Standard compute + managed database pricing."
+  advantages:
+    - Clear separation of concerns between frontend, API, and data layers
+    - Horizontally scalable compute tier
+
+  considerations:
+    - Network latency between regions
+    - Data replication consistency
+
+  gettingStarted:
+    - step: 1
+      title: Provision the frontend and API compute resources.
+    - step: 2
+      title: Configure the data store with replication enabled.
+    - step: 3
+      title: Set up load balancing and health checks.
