@@ -20,13 +20,13 @@ pattern:
       - High Availability
 
   components:
-    - id: vpc-network
+    - componentId: vpc-network
       name: Global VPC Network
       type: network
       description: Shared VPC spanning multiple regions with custom subnets
       technology: Cloud VPC
 
-    - id: subnet-region-a
+    - componentId: subnet-region-a
       name: Regional Subnet A
       type: network
       description: Private subnet in primary region (e.g., us-central1)
@@ -35,7 +35,7 @@ pattern:
         cidr: "10.0.1.0/24"
         region: us-central1
 
-    - id: subnet-region-b
+    - componentId: subnet-region-b
       name: Regional Subnet B
       type: network
       description: Private subnet in secondary region (e.g., us-east1)
@@ -44,7 +44,7 @@ pattern:
         cidr: "10.0.2.0/24"
         region: us-east1
 
-    - id: mig-region-a
+    - componentId: mig-region-a
       name: MIG Region A
       type: compute
       description: Regional Managed Instance Group running API service
@@ -54,7 +54,7 @@ pattern:
         max_replicas: 10
         machine_type: e2-standard-4
 
-    - id: mig-region-b
+    - componentId: mig-region-b
       name: MIG Region B
       type: compute
       description: Regional Managed Instance Group running API service
@@ -64,13 +64,13 @@ pattern:
         max_replicas: 10
         machine_type: e2-standard-4
 
-    - id: internal-lb
+    - componentId: internal-lb
       name: Internal HTTP(S) Load Balancer
       type: networking
       description: Global internal Application Load Balancer with global access
       technology: Cloud Load Balancing
 
-    - id: health-check
+    - componentId: health-check
       name: Health Check
       type: monitoring
       description: HTTP health check for backend service instances
@@ -80,7 +80,7 @@ pattern:
         port: 8080
         check_interval_sec: 10
 
-    - id: autoscaler
+    - componentId: autoscaler
       name: Autoscaler
       type: compute
       description: CPU-based autoscaling policy for MIGs
@@ -90,23 +90,25 @@ pattern:
 
   validation:
     rules:
-      - type: required_components
-        components:
+      - id: require-core-infra-components
+        type: required_components
+        componentIds:
           - vpc-network
           - internal-lb
           - health-check
-      - type: resource_policy
-        resource: compute
-        constraint: min_replicas >= 2
+      - id: enforce-min-replicas
+        type: resource_policy
+        selector:
+          componentKinds: ["compute"]
+        allowedResourceTypes: ["compute"]
         message: Production workloads must have at least 2 replicas per region
 
   resiliency_patterns:
-    type: active-active
-    regions:
-      primary: us-central1
-      secondary: us-east1
-    rpo: "0"
-    rto: "< 30s"
+    - name: active-active
+      description: "Active-active multi-regional deployment with RPO 0 and RTO < 30s"
+      regions:
+        active: [us-central1, us-east1]
+        datacenters_per_region: 1
 
   advantages:
     - High availability across regions

@@ -1,0 +1,52 @@
+{
+  "name": "@muthub-ai/aac",
+  "version": "1.0.2",
+  "description": "Architecture as Code CLI — validate, scaffold, and manage architecture artifacts",
+  "type": "module",
+  "bin": {
+    "aac": "./dist/bin/aac.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup && node scripts/copy-templates.js",
+    "build:binary": "node scripts/build-binary.js",
+    "prepublishOnly": "npm run build",
+    "typecheck": "tsc --noEmit",
+    "test": "cd .. && npx vitest run cli/"
+  },
+  "keywords": [
+    "architecture",
+    "c4-model",
+    "yaml",
+    "json-schema",
+    "validation",
+    "cli",
+    "scaffold"
+  ],
+  "author": "muthub-ai",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/muthub-ai/aac.git",
+    "directory": "cli"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "ajv": "^8.18.0",
+    "ajv-formats": "^3.0.1",
+    "chalk": "^5.6.2",
+    "commander": "^14.0.3",
+    "js-yaml": "^4.1.1"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^20",
+    "tsup": "^8.5.0",
+    "typescript": "^5"
+  }
+}

@@ -1,0 +1,68 @@
+pattern:
+  id: my-pattern
+  version: "1.0.0"
+  name: "My Architecture Pattern"
+  description: >-
+    Brief description of what this pattern solves and when to use it.
+
+  category: compute
+  exposure: internal
+
+  metadata:
+    owner_team: Platform Team
+    approved_date: "2025-01-01"
+    tags:
+      - architecture
+      - pattern
+
+  components:
+    - componentId: frontend
+      name: Web Frontend
+      type: compute
+      description: User-facing web application.
+      technology: React / Next.js
+
+    - componentId: api
+      name: API Service
+      type: compute
+      description: Backend API handling business logic.
+      technology: Node.js
+
+    - componentId: database
+      name: Data Store
+      type: database
+      description: Persistent relational data store.
+      technology: PostgreSQL
+
+  validation:
+    rules:
+      - id: require-core-components
+        type: required_components
+        componentIds:
+          - frontend
+          - api
+          - database
+
+  resiliency_patterns:
+    - name: active-passive
+      description: "Active-passive deployment across two regions."
+      regions:
+        active: [us-central1]
+        passive: [us-east1]
+        datacenters_per_region: 1
+
+  advantages:
+    - Clear separation of concerns between frontend, API, and data layers
+    - Horizontally scalable compute tier
+
+  considerations:
+    - Network latency between regions
+    - Data replication consistency
+
+  gettingStarted:
+    - step: 1
+      title: Provision the frontend and API compute resources.
+    - step: 2
+      title: Configure the data store with replication enabled.
+    - step: 3
+      title: Set up load balancing and health checks.

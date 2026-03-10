@@ -1,0 +1,41 @@
+metadata:
+  schemaVersion: 2
+  standardId: "STD-DOMAIN-001"
+  name: "My Architecture Standard"
+  architectureDomain: "Application Architecture"
+  architecturePrinciple:
+    - "Modular and Composable Architecture"
+  l4Domain: "Application Architecture"
+  l3Domain: "Design Patterns"
+  l2Domain: "Service Design"
+  standardOwner: "Architecture Team"
+  assignedArchitect: "Lead Architect"
+  lifecycleCategory: "DRAFT"
+  publicationStatus: "DRAFT"
+  version: "1.0"
+  approvalDate: "2025-01-01"
+  tags:
+    - architecture
+    - standard
+
+scope:
+  inScope:
+    - "All new application services"
+  outOfScope:
+    - "Legacy systems scheduled for decommission"
+
+requirements:
+  - id: "REQ-001"
+    statement: "All services MUST implement health check endpoints."
+    severity: "MUST"
+    rationale: "Enables automated monitoring and orchestration liveness probes."
+    verification: "Automated integration test confirming /healthz returns 200."
+
+guidelines:
+  - id: "GUIDE-001"
+    text: "Prefer async messaging over synchronous REST for cross-domain communication."
+
+solutions:
+  - id: "SOL-001"
+    name: "Health Check Library"
+    description: "Shared library providing standardized health check endpoints."

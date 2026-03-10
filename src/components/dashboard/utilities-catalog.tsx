@@ -1,14 +1,28 @@
 'use client';
 
-import { Wrench } from 'lucide-react';
-import { PlaceholderCatalog } from '@/components/dashboard/placeholder-catalog';
+import { useState } from 'react';
+import { UTILITIES } from '@/lib/data/utilities-data';
+import { UtilitySidebar, UtilityMobileStrip } from '@/components/dashboard/utilities/utility-sidebar';
+import { CliDocumentation } from '@/components/dashboard/utilities/cli-documentation';
+import { ComingSoonUtility } from '@/components/dashboard/utilities/coming-soon-utility';
 
 export function UtilitiesCatalog() {
+  const [activeUtility, setActiveUtility] = useState('cli');
+
+  const utility = UTILITIES.find((u) => u.id === activeUtility);
+
   return (
-    <PlaceholderCatalog
-      icon={Wrench}
-      title="Utilities"
-      description="Developer tools, validators, diagram generators, and productivity helpers for architecture-as-code workflows."
-    />
+    <>
+      <UtilityMobileStrip active={activeUtility} onChange={setActiveUtility} />
+
+      <div className="mt-4 flex gap-8 lg:mt-0">
+        <UtilitySidebar active={activeUtility} onChange={setActiveUtility} />
+
+        <div className="min-w-0 flex-1">
+          {activeUtility === 'cli' && <CliDocumentation />}
+          {activeUtility !== 'cli' && utility && <ComingSoonUtility utility={utility} />}
+        </div>
+      </div>
+    </>
   );
 }

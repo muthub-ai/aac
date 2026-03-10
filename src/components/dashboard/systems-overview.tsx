@@ -33,7 +33,7 @@ export function SystemsOverview({ systems, standards, waivers }: SystemsOverview
     { id: 'patterns', label: 'Pattern Catalog', icon: Puzzle, count: 6 },
     { id: 'standards', label: 'Standards Catalog', icon: ShieldCheck, count: standards.length },
     { id: 'waivers', label: 'Waiver Registry', icon: FileWarning, count: waivers.length },
-    { id: 'utilities', label: 'Utilities', icon: Wrench },
+    { id: 'utilities', label: 'Utilities', icon: Wrench, count: 3 },
   ];
 
   return (

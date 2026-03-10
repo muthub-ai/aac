@@ -47,3 +47,8 @@ build/microsite/
 # generated diagrams (rebuilt by CI)
 src/docs/diagrams/*
 !src/docs/diagrams/.gitkeep
+
+# CLI build artifacts
+cli/dist/
+cli/bin-release/
+cli/node_modules/
