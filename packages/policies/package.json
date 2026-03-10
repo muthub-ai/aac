@@ -1,0 +1,15 @@
+{
+  "name": "@muthub-ai/aac-policies",
+  "version": "1.0.0",
+  "description": "OPA Rego policies for Architecture as Code enterprise governance",
+  "private": true,
+  "scripts": {
+    "fmt": "opa fmt --fail .",
+    "check": "opa check .",
+    "test": "opa test -v ./rules/",
+    "test:coverage": "opa test --coverage --format json ./rules/",
+    "bundle": "bash scripts/build-bundle.sh"
+  },
+  "keywords": ["opa", "rego", "architecture", "governance", "policy"],
+  "license": "MIT"
+}

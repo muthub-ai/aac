@@ -1,0 +1,14 @@
+{
+  "approved_unmanaged_databases": [
+    {
+      "technology": "Cloud SQL",
+      "provider": "GCP",
+      "justification": "Legacy migration — scheduled for managed upgrade Q4 2026"
+    },
+    {
+      "technology": "Self-hosted PostgreSQL",
+      "provider": "On-Premises",
+      "justification": "Air-gapped environment — no cloud connectivity"
+    }
+  ]
+}

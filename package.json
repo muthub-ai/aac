@@ -20,7 +20,9 @@
     "build:patterns": "tsx scripts/build-pattern-pages.ts",
     "build:standards": "tsx scripts/build-standard-pages.ts",
     "validate:waivers": "tsx scripts/validate-waivers.ts",
-    "build:waivers": "tsx scripts/build-waiver-pages.ts"
+    "build:waivers": "tsx scripts/build-waiver-pages.ts",
+    "policy:test": "cd packages/policies && npm test",
+    "policy:fmt": "cd packages/policies && npm run fmt"
   },
   "dependencies": {
     "@base-ui/react": "^1.2.0",
