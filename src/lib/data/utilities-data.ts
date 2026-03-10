@@ -1,4 +1,4 @@
-import { Terminal, Bot, Server, Shield, Sparkles, GitBranch } from 'lucide-react';
+import { Terminal, Bot, Server, Shield, Sparkles, GitBranch, ArrowRightLeft } from 'lucide-react';
 import type { UtilityInfo } from '@/types/utility';
 
 export const UTILITIES: UtilityInfo[] = [
@@ -39,6 +39,22 @@ export const UTILITIES: UtilityInfo[] = [
       'Pattern recommendation engine',
       'Pull request review integration',
       'Context-aware architecture Q&A',
+    ],
+  },
+  {
+    id: 'aac2iac',
+    name: 'aac2iac',
+    tagline: 'Convert Architecture as Code models into deployable Infrastructure as Code artifacts',
+    icon: ArrowRightLeft,
+    color: 'chart-3',
+    status: 'coming-soon',
+    features: [
+      'Generate Terraform / OpenTofu modules from C4 system models',
+      'Emit CloudFormation and Pulumi stacks from architecture YAML',
+      'Map C4 containers to cloud-native resource templates',
+      'Policy-aware generation honoring enterprise governance rules',
+      'Pluggable provider backends (AWS, Azure, GCP)',
+      'Diff mode: detect drift between architecture and live infrastructure',
     ],
   },
   {
@@ -133,5 +149,6 @@ export const UTILITY_COLORS: Record<string, { bg: string; text: string; border: 
   success: { bg: 'bg-success/10', text: 'text-success', border: 'border-success/20' },
   'chart-4': { bg: 'bg-chart-4/10', text: 'text-chart-4', border: 'border-chart-4/20' },
   'chart-2': { bg: 'bg-chart-2/10', text: 'text-chart-2', border: 'border-chart-2/20' },
+  'chart-3': { bg: 'bg-chart-3/10', text: 'text-chart-3', border: 'border-chart-3/20' },
   'chart-1': { bg: 'bg-chart-1/10', text: 'text-chart-1', border: 'border-chart-1/20' },
 };
