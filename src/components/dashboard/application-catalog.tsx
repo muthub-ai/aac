@@ -6,7 +6,6 @@ import { Plus, Search, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { SystemCard } from '@/components/dashboard/system-card';
 import type { SystemData } from '@/types/system';
 import { cn } from '@/lib/utils';
-import { PipelineVisualization } from './pipeline-visualization';
 
 interface ApplicationCatalogProps {
   systems: SystemData[];
@@ -287,10 +286,6 @@ export function ApplicationCatalog({ systems }: ApplicationCatalogProps) {
         </div>
       )}
 
-      {/* Pipeline Visualization */}
-      <div className="mt-8">
-        <PipelineVisualization />
-      </div>
     </div>
   );
 }

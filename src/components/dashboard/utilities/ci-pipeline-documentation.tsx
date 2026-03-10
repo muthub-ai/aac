@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { ArrowRight, ChevronDown, ChevronRight, AlertTriangle, CheckCircle2, ShieldCheck } from 'lucide-react';
+import { CiPipelineVisualization } from './ci-pipeline-visualization';
 import { UTILITIES } from '@/lib/data/utilities-data';
 import {
   QUICK_START_STEPS,
@@ -40,37 +41,7 @@ function SectionHeader({ id, children }: { id: string; children: React.ReactNode
   );
 }
 
-const PIPELINE_DIAGRAM = `                         ┌───────────────────────┐
-                         │    ① QUALITY GATE      │
-                         │    Lint + Unit Tests    │
-                         └───────────┬───────────┘
-                                     │
-                         ┌───────────▼───────────┐
-                         │  ② SCHEMA VALIDATION   │
-                         │  aac validate model/   │
-                         └───────────┬───────────┘
-                                     │
-            ┌────────────────────────┼────────────────────────┐
-            │                        │                        │
-  ┌─────────▼──────────┐  ┌─────────▼──────────┐  ┌─────────▼──────────┐
-  │ ③a APP ARCHITECTURE│  │ ③b PATTERN         │  │ ③c STANDARDS       │
-  │ 5 Compliance Rules │  │    CONFORMANCE      │  │    COMPLIANCE      │
-  └─────────┬──────────┘  └─────────┬──────────┘  └─────────┬──────────┘
-            │                        │                        │
-            └────────────────────────┼────────────────────────┘
-                                     │
-                         ┌───────────▼───────────┐
-                         │  ④ POLICY ENGINE       │
-                         │  OPA Rego (3 policies) │
-                         └───────────┬───────────┘
-                                     │
-                         ┌───────────▼───────────┐
-                         │  ⑤ BUILD & PACKAGE     │
-                         └───────────┬───────────┘
-                                     │
-                         ┌───────────▼───────────┐
-                         │  ⑥ DEPLOY              │
-                         └───────────────────────┘`;
+
 
 function StageCard({ stage }: { stage: PipelineStage }) {
   const [expanded, setExpanded] = useState(false);
@@ -195,9 +166,7 @@ export function CiPipelineDocumentation() {
           <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs text-foreground">patterns/**</code>,{' '}
           <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs text-foreground">standards/**</code>).
         </p>
-        <CodeBlock title="Pipeline Architecture" language="text" showPrompt={false}>
-          {PIPELINE_DIAGRAM}
-        </CodeBlock>
+        <CiPipelineVisualization />
         <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
           <div className="rounded-lg border border-border bg-card p-4 text-center">
             <div className="text-2xl font-bold text-ring">8</div>
