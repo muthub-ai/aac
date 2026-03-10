@@ -1,0 +1,12 @@
+{
+  "id": "my-system",
+  "name": "My System",
+  "repoCount": 1,
+  "linesOfCode": 0,
+  "deployableUnits": 1,
+  "domainModules": 1,
+  "domainObjects": 0,
+  "domainBehaviors": 0,
+  "lastScan": "2025-01-01T00:00:00Z",
+  "branchName": "main"
+}

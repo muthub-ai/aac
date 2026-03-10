@@ -19,13 +19,20 @@ npm run test:coverage # Vitest with coverage
 - `src/store/` - Zustand state (use-graph-store.ts)
 - `src/types/` - TypeScript types (c4.ts, system.ts, yaml-schema.ts)
 - `model/` - System YAML + metadata files (4 systems)
+- `cli/` - Standalone CLI tool (`aac` command)
+  - `cli/bin/aac.ts` - Commander.js entry point
+  - `cli/src/commands/` - validate, init, create commands
+  - `cli/src/utils/` - logger, config, exit-codes
+  - `cli/src/templates/` - YAML/JSON scaffolding templates
+  - `cli/src/schema-manager.ts` - Remote schema fetch with ETag caching
+  - `cli/src/validator.ts` - AJV-based validation engine
 
 ## Test Infrastructure
 
 - **Runner:** Vitest v3 with `globals: true`
 - **Environment:** `node` by default; `jsdom` for export tests (via inline comment)
 - **Tests live alongside source:** `*.test.ts` next to the module they test
-- **Key test targets:** yaml-to-graph, graph-to-yaml, system-schema, validate-new-system, dagre-layout, drawio-export, utils
+- **Key test targets:** yaml-to-graph, graph-to-yaml, system-schema, validate-new-system, dagre-layout, drawio-export, utils, CLI (schema-manager, validator, commands, utils)
 
 ## CI/CD Pipeline Scripts
 
@@ -40,13 +47,36 @@ npm run build:diagrams     # Generate PlantUML + Draw.io diagrams from models
 - AsciiDoc docs: `src/docs/` (generated diagrams go in `src/docs/diagrams/`)
 - Scripts use `tsx` for TypeScript execution and relative imports (not `@/*` alias)
 
+## CLI Tool (`aac`)
+
+```bash
+npm run cli -- --help                        # Show help
+npm run cli -- validate model/               # Validate all system YAML in model/
+npm run cli -- validate standards/           # Validate all standards
+npm run cli -- validate waivers/             # Validate all waivers
+npm run cli -- validate patterns/            # Validate all patterns
+npm run cli -- validate file.yaml --type standard  # Validate a single file
+npm run cli -- validate standards/ --output json   # JSON output
+npm run cli -- validate standards/ --force-refresh # Skip ETag cache
+npm run cli -- init                          # Scaffold project directories + .aacrc
+npm run cli -- create standard "My Standard" # Create standard from template
+npm run cli -- create system "My System"     # Create system (subdir + metadata.json)
+npm run cli -- create waiver "My Waiver"     # Create waiver from template
+npm run cli -- create pattern "My Pattern"   # Create pattern from template
+```
+
+- **Schema type inference:** auto-detects from directory (`model/` -> system, `standards/` -> standard, etc.)
+- **ETag caching:** schemas cached in `~/.aac/cache/schemas/` with ETag validation
+- **Exit codes:** 0 = success, 1 = system error, 2 = validation failed
+- **Dependencies:** commander, chalk (ajv/ajv-formats already present)
+
 ## Git Workflow
 
 - **Always work in a feature branch.** Never commit directly to `main`. Create a descriptive branch (e.g., `standards`, `fix-nav-links`) before making any changes.
 - **Ask the user if anything is unclear** before proceeding — do not guess at requirements or make assumptions about ambiguous requests.
 - **Before merging to `main`**, run the full verification suite and ensure everything passes:
   ```bash
-  npm run test:run           # 288 tests must pass
+  npm run test:run           # 348 tests must pass
   npm run build              # Production build must succeed
   npm run lint               # No lint errors
   npm run validate:models    # All YAML models must be valid

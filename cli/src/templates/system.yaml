@@ -1,0 +1,48 @@
+name: my-system
+description: Brief description of this application system.
+model:
+  softwareSystems:
+    - name: My System
+      description: The primary software system.
+      tags: internal
+      containers:
+        - name: Web Application
+          description: The web front-end.
+          technology: React / Next.js
+          tags: web
+        - name: API Server
+          description: The back-end API service.
+          technology: Node.js / Express
+          tags: api
+        - name: Database
+          description: Persistent data store.
+          technology: PostgreSQL
+          tags: database
+
+  people:
+    - name: End User
+      description: A user of the system.
+      relationships:
+        - destination: My System.Web Application
+          description: Uses
+          technology: HTTPS
+
+  deploymentNodes:
+    - name: Cloud Provider
+      description: Production cloud environment.
+      technology: GCP / AWS
+      children:
+        - name: Kubernetes Cluster
+          description: Container orchestration.
+          technology: GKE / EKS
+          containerInstances:
+            - containerName: Web Application
+            - containerName: API Server
+
+views:
+  systemContextViews:
+    - softwareSystemName: My System
+      description: System Context diagram for My System.
+  containerViews:
+    - softwareSystemName: My System
+      description: Container diagram for My System.

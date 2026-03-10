@@ -1,0 +1,38 @@
+exceptionId: EXC-DOMAIN-001
+title: "Brief title describing the waiver reason"
+targetAppId: my-system
+targetAppName: My System
+violatedStandardId: STD-DOMAIN-001
+violatedStandardName: "My Architecture Standard"
+violatedRequirementIds:
+  - REQ-001
+status: PENDING_REVIEW
+rationale: >-
+  Describe why this exception is needed, what constraint prevents compliance,
+  and what business impact drives the request.
+financialImpact:
+  complianceCost: "$0"
+  delayCost: "$0"
+  riskExposureCost: "$0"
+  summary: >-
+    Brief financial summary of compliance cost vs. risk exposure.
+riskSeverity: MEDIUM
+riskDescription: >-
+  Describe the security, reliability, or operational risk introduced by
+  this exception.
+compensatingControls:
+  - control: "Describe the compensating control in place."
+    effectiveness: MEDIUM
+    verificationMethod: "How the control effectiveness is verified."
+requestedBy: "Requesting Engineer"
+requestedDate: "2025-01-01"
+remediationPlan:
+  description: >-
+    Describe the plan to remediate this exception and achieve full compliance.
+  targetDate: "2025-06-01"
+  assignedTeam: "Platform Team"
+  progressPercent: 0
+domain: "Application Architecture"
+tags:
+  - waiver
+  - architecture

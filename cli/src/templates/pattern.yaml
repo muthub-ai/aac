@@ -1,0 +1,50 @@
+pattern:
+  id: my-pattern
+  version: "1.0.0"
+  name: "My Architecture Pattern"
+  description: >-
+    Brief description of what this pattern solves and when to use it.
+
+  category: compute
+  exposure: internal
+
+  metadata:
+    owner_team: Platform Team
+    approved_date: "2025-01-01"
+    tags:
+      - architecture
+      - pattern
+
+  components:
+    - id: frontend
+      name: Web Frontend
+      type: compute
+      description: User-facing web application.
+      technology: React / Next.js
+
+    - id: api
+      name: API Service
+      type: compute
+      description: Backend API handling business logic.
+      technology: Node.js
+
+    - id: database
+      name: Data Store
+      type: database
+      description: Persistent relational data store.
+      technology: PostgreSQL
+
+  validation:
+    rules:
+      - id: rule-001
+        description: "All components must define a technology field."
+        severity: ERROR
+
+  resiliency_patterns:
+    - pattern: circuit-breaker
+      description: "Circuit breaker between frontend and API service."
+      implementation: "Library-based (e.g., opossum for Node.js)"
+
+  cost_profile:
+    estimate: "Low-Medium"
+    notes: "Standard compute + managed database pricing."
