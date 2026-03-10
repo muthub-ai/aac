@@ -7,6 +7,7 @@ import { ValuePropsSection } from '@/components/landing/value-props-section';
 import { LifecycleSection } from '@/components/landing/lifecycle-section';
 import { MetricsSection } from '@/components/landing/metrics-section';
 import { PipelineSection } from '@/components/landing/pipeline-section';
+import { UtilitiesSection } from '@/components/landing/utilities-section';
 import { LandingFooter } from '@/components/landing/landing-footer';
 import type { ExecutiveMetrics } from '@/lib/metrics/compute-metrics';
 
@@ -30,6 +31,7 @@ export function LandingPage({ metrics }: LandingPageProps) {
       <LifecycleSection />
       <MetricsSection liveMetrics={metrics.liveMetrics} trendHistory={metrics.trendHistory} />
       <PipelineSection />
+      <UtilitiesSection />
       <LandingFooter />
     </div>
   );

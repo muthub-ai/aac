@@ -33,6 +33,12 @@ export function LandingFooter() {
             <a href="#metrics" className="transition-colors hover:text-foreground">
               Metrics
             </a>
+            <a href="#pipeline" className="transition-colors hover:text-foreground">
+              Pipeline
+            </a>
+            <a href="#utilities" className="transition-colors hover:text-foreground">
+              Utilities
+            </a>
           </div>
         </div>
       </div>
