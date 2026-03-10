@@ -242,13 +242,13 @@ export function CliDocumentation() {
             <h4 className="mb-3 text-xs font-semibold text-foreground">Cache Behavior</h4>
             <div className="space-y-2">
               {[
-                { scenario: 'Cached + ETag matches', behavior: 'Returns cached schema instantly (no download)', color: 'success' },
-                { scenario: 'Cached + ETag differs', behavior: 'Downloads new schema, updates cache', color: 'ring' },
-                { scenario: 'Cached + offline', behavior: 'Falls back to cached schema with a warning', color: 'warning' },
-                { scenario: 'No cache + offline', behavior: 'Exits with error (code 1)', color: 'destructive' },
+                { scenario: 'Cached + ETag matches', behavior: 'Returns cached schema instantly (no download)', dotClass: 'bg-success' },
+                { scenario: 'Cached + ETag differs', behavior: 'Downloads new schema, updates cache', dotClass: 'bg-ring' },
+                { scenario: 'Cached + offline', behavior: 'Falls back to cached schema with a warning', dotClass: 'bg-warning' },
+                { scenario: 'No cache + offline', behavior: 'Exits with error (code 1)', dotClass: 'bg-destructive' },
               ].map((item) => (
                 <div key={item.scenario} className="flex items-start gap-3">
-                  <span className={cn('mt-1.5 h-2 w-2 shrink-0 rounded-full', `bg-${item.color}`)} />
+                  <span className={cn('mt-1.5 h-2 w-2 shrink-0 rounded-full', item.dotClass)} />
                   <div className="min-w-0">
                     <span className="text-xs font-medium text-foreground">{item.scenario}</span>
                     <span className="mx-1.5 text-xs text-muted-foreground/50">&mdash;</span>

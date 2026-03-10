@@ -18,78 +18,67 @@ export function UtilityHero({ utility }: UtilityHeroProps) {
   return (
     <div
       className={cn(
-        'relative overflow-hidden rounded-2xl border',
-        colors.border,
-        'bg-gradient-to-br from-card via-card to-background',
+        'relative overflow-hidden rounded-2xl border border-border bg-card',
       )}
     >
-      {/* Decorative gradient overlay */}
-      <div
-        className={cn(
-          'pointer-events-none absolute inset-0 opacity-30',
-          `bg-[radial-gradient(ellipse_80%_50%_at_20%_-10%,var(--${utility.color})/0.15,transparent)]`,
-        )}
-      />
-
       <div className="relative px-6 py-8 sm:px-8 sm:py-10">
         <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:gap-8">
           {/* Icon */}
           <div
             className={cn(
-              'flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl',
+              'flex h-14 w-14 shrink-0 items-center justify-center rounded-xl',
               colors.bg,
             )}
           >
-            <Icon className={cn('h-8 w-8', colors.text)} strokeWidth={1.6} />
+            <Icon className={cn('h-7 w-7', colors.text)} strokeWidth={1.6} />
           </div>
 
           {/* Content */}
           <div className="min-w-0 flex-1 space-y-4">
             {/* Title row */}
-            <div className="flex flex-wrap items-center gap-3">
-              {utility.packageName && (
-                <span className="font-mono text-xs font-medium text-muted-foreground">
-                  {utility.packageName}
-                </span>
-              )}
-              {isAvailable && utility.version && (
-                <span
-                  className={cn(
-                    'inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold',
-                    'bg-success/10 text-success',
-                  )}
-                >
-                  v{utility.version}
-                </span>
-              )}
-              {utility.status === 'coming-soon' && (
-                <span
-                  className={cn(
-                    'inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold',
-                    'bg-warning/10 text-warning',
-                  )}
-                >
-                  <span className="h-1.5 w-1.5 rounded-full bg-warning" />
-                  Coming Soon
-                </span>
-              )}
-              {utility.status === 'beta' && (
-                <span
-                  className={cn(
-                    'inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold',
-                    'bg-chart-5/10 text-chart-5',
-                  )}
-                >
-                  Beta
-                </span>
-              )}
-            </div>
-
             <div>
-              <h2 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
-                {utility.name}
-              </h2>
-              <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+              <div className="flex flex-wrap items-center gap-3">
+                <h2 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
+                  {utility.name}
+                </h2>
+                {isAvailable && utility.version && (
+                  <span
+                    className={cn(
+                      'inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold',
+                      'bg-success/10 text-success',
+                    )}
+                  >
+                    v{utility.version}
+                  </span>
+                )}
+                {utility.status === 'coming-soon' && (
+                  <span
+                    className={cn(
+                      'inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold',
+                      'bg-warning/10 text-warning',
+                    )}
+                  >
+                    <span className="h-1.5 w-1.5 rounded-full bg-warning" />
+                    Coming Soon
+                  </span>
+                )}
+                {utility.status === 'beta' && (
+                  <span
+                    className={cn(
+                      'inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold',
+                      'bg-chart-5/10 text-chart-5',
+                    )}
+                  >
+                    Beta
+                  </span>
+                )}
+              </div>
+              {utility.packageName && (
+                <p className="mt-1 font-mono text-xs text-muted-foreground">
+                  {utility.packageName}
+                </p>
+              )}
+              <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground">
                 {utility.tagline}
               </p>
             </div>
@@ -103,7 +92,7 @@ export function UtilityHero({ utility }: UtilityHeroProps) {
 
             {/* Links */}
             {utility.links && utility.links.length > 0 && (
-              <div className="flex flex-wrap items-center gap-2 pt-1">
+              <div className="flex flex-wrap items-center gap-2">
                 {utility.links.map((link) => (
                   <a
                     key={link.label}
