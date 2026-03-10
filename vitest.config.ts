@@ -7,6 +7,6 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    include: ['src/**/*.test.{ts,tsx}', 'cli/**/*.test.ts'],
+    include: ['src/**/*.test.{ts,tsx}', 'cli/**/*.test.ts', 'mcp-server/**/*.test.ts'],
   },
 });

@@ -1,0 +1,51 @@
+{
+  "name": "@muthub-ai/aac-mcp-server",
+  "version": "1.0.0",
+  "description": "Architecture as Code MCP Server — expose enterprise architecture governance to AI coding agents via Model Context Protocol",
+  "type": "module",
+  "bin": {
+    "aac-mcp": "./dist/bin/aac-mcp.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc && chmod +x dist/bin/aac-mcp.js",
+    "prepublishOnly": "npm run build",
+    "typecheck": "tsc --noEmit",
+    "test": "cd .. && npx vitest run mcp-server/"
+  },
+  "keywords": [
+    "architecture",
+    "c4-model",
+    "mcp",
+    "model-context-protocol",
+    "yaml",
+    "json-schema",
+    "validation",
+    "governance"
+  ],
+  "author": "muthub-ai",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/muthub-ai/aac.git",
+    "directory": "mcp-server"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "ajv": "^8.18.0",
+    "ajv-formats": "^3.0.1",
+    "js-yaml": "^4.1.1",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^20",
+    "typescript": "^5"
+  }
+}

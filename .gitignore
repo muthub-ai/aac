@@ -52,3 +52,7 @@ src/docs/diagrams/*
 cli/dist/
 cli/bin-release/
 cli/node_modules/
+
+# MCP server build artifacts
+mcp-server/dist/
+mcp-server/node_modules/
