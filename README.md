@@ -6,15 +6,17 @@
 
 <p align="center">
   Define, validate, visualize, and govern enterprise system architectures from declarative YAML.<br />
-  A full-lifecycle platform with an interactive diagram editor, CLI toolchain, AI-native MCP server, governance pipeline, and auto-published documentation site.
+  A full-lifecycle platform with an interactive diagram editor, CLI toolchain, AI-native MCP server, OPA policy engine, Copilot Spaces integration, governance pipeline, and auto-published documentation site.
 </p>
 
 <p align="center">
   <a href="https://aac.muthub.org/"><img src="https://img.shields.io/badge/Live%20Site-aac.muthub.org-2563eb?style=flat-square" alt="Live Site" /></a>
   <img src="https://img.shields.io/badge/Next.js-16.1-black?logo=next.js&style=flat-square" alt="Next.js 16.1" />
   <img src="https://img.shields.io/badge/TypeScript-Strict-3178C6?logo=typescript&logoColor=white&style=flat-square" alt="TypeScript Strict" />
-  <img src="https://img.shields.io/badge/Tests-374%20passing-22C55E?logo=vitest&logoColor=white&style=flat-square" alt="374 tests passing" />
+  <img src="https://img.shields.io/badge/Tests-406%20passing-22C55E?logo=vitest&logoColor=white&style=flat-square" alt="406 tests passing" />
   <img src="https://img.shields.io/badge/MCP-1.0-8B5CF6?style=flat-square" alt="MCP Server" />
+  <img src="https://img.shields.io/badge/OPA-Rego-326DE6?logo=openpolicyagent&logoColor=white&style=flat-square" alt="OPA Rego" />
+  <img src="https://img.shields.io/badge/Copilot%20Spaces-RAG-000000?logo=github&logoColor=white&style=flat-square" alt="Copilot Spaces" />
 </p>
 
 ---
@@ -40,7 +42,7 @@ The result is a single source of truth that stays in sync with the codebase, enf
     │   patterns/       ──>  MCP Server         ──> Published Documentation   │
     │   standards/      ──>  CI/CD Pipeline     ──> PlantUML + Draw.io Export │
     │   waivers/        ──>  JSON Schema + Zod  ──> PR Feedback (diagrams)    │
-    │   schema/                                     GitHub Pages              │
+    │   schema/         ──>  OPA Policy Engine  ──> GitHub Pages              │
     │                                                                          │
     └──────────────────────────────────────────────────────────────────────────┘
 ```
@@ -50,10 +52,12 @@ The result is a single source of truth that stays in sync with the codebase, enf
 | **Interactive Diagram Editor** | Bidirectional sync between a Monaco YAML editor and a React Flow canvas. Edit YAML and the diagram updates; drag a node and the YAML updates. |
 | **CLI Toolchain** | `aac init`, `aac create`, `aac validate` -- scaffold projects, generate boilerplate, validate artifacts against live schemas with ETag caching. |
 | **MCP Server** | Expose architecture data to AI coding agents via the Model Context Protocol. 10 resources, 3 tools, 2 guided prompts. Works with VS Code Copilot, Cursor, Claude Desktop. |
+| **Policy Engine** | OPA Rego policies for enterprise governance: security (KMS encryption), integration (API gateway), and FinOps (autoscaling). Built-in test framework with 100% coverage target. |
+| **Context Driven Dev** | GitHub Copilot Spaces for RAG-powered, context-grounded code generation. Domain-specific Spaces inject enterprise standards and patterns into the AI context window. |
 | **Pattern Catalog** | 6 reusable architecture patterns with C4 diagrams, NFR targets, cost profiles, and getting-started guides. |
 | **Standards Catalog** | 9 enterprise standards with RFC 2119 requirements, verification methods, and approved solutions. |
 | **Waiver Registry** | 10 architecture exceptions with risk assessments, compensating controls, financial impact, and remediation plans. |
-| **Governance Pipeline** | 8-job CI/CD pipeline: schema validation, 5-rule compliance linter, diagram generation, and auto-publish to GitHub Pages. |
+| **Governance Pipeline** | 9-job CI/CD pipeline: schema validation, 5-rule compliance linter, OPA policy checks, diagram generation, and auto-publish to GitHub Pages. |
 
 ---
 
@@ -116,6 +120,37 @@ Or add to your IDE's MCP configuration (VS Code, Cursor, Claude Desktop):
 }
 ```
 
+### Policy Engine (OPA/Rego)
+
+```bash
+# Install OPA
+brew install opa
+
+# Run policy tests
+cd packages/policies && npm test
+
+# Check coverage
+npm run test:coverage
+
+# Build deployable bundle
+npm run bundle
+```
+
+### Context Driven Development (Copilot Spaces)
+
+Two pre-configured Copilot Spaces provide context-grounded code generation:
+
+| Space | URL |
+|-------|-----|
+| **Data & AI Architecture Standards** | [github.com/copilot/spaces/muthub-ai/2](https://github.com/copilot/spaces/muthub-ai/2) |
+| **Infrastructure Resilience Patterns** | [github.com/copilot/spaces/muthub-ai/1](https://github.com/copilot/spaces/muthub-ai/1) |
+
+```
+Using the Copilot Space "Data & AI Architecture Standards",
+write the Terraform for a compliant BigQuery data pipeline
+with KMS encryption and model monitoring enabled.
+```
+
 ---
 
 ## MCP Server
@@ -168,6 +203,71 @@ Exit codes: `0` success, `1` system error, `2` validation failed.
 
 ---
 
+## Policy Engine
+
+Enterprise architecture governance policies written in [Rego](https://www.openpolicyagent.org/docs/latest/policy-language/) and enforced by the [Open Policy Agent](https://www.openpolicyagent.org/) (OPA). Policies are unit-tested with OPA's built-in test framework and validated in CI on every pull request.
+
+### Policy Rules
+
+| Domain | Policy | Package | Severity |
+|--------|--------|---------|----------|
+| **Security** | Cryptography Key Management | `architecture.security` | High |
+| **Integration** | API Gateway Routing | `architecture.integration` | High |
+| **FinOps** | Cloud Workload Rightsizing | `architecture.finops` | Medium |
+
+### CI Pipeline Commands
+
+| Step | Command | Description |
+|------|---------|-------------|
+| Format | `opa fmt --fail .` | Strict Rego formatting compliance |
+| Syntax | `opa check .` | Compile policies, catch unresolved variables |
+| Test | `opa test -v ./rules/` | Run all `_test.rego` files (fails build on failure) |
+| Coverage | `opa test --coverage ./rules/` | Measure test coverage (100% target) |
+
+### Bundle Deployment
+
+```bash
+cd packages/policies && npm run bundle
+# Produces: dist/policies.tar.gz
+# Load with: opa run --server --bundle dist/policies.tar.gz
+```
+
+---
+
+## Context Driven Development
+
+[GitHub Copilot Spaces](https://github.com/copilot/spaces) provide Retrieval-Augmented Generation (RAG) that injects your enterprise standards and patterns directly into the AI's context window. Instead of generating generic code, Copilot retrieves your approved patterns and schemas before responding -- producing compliant code by design.
+
+### How It Works
+
+1. **Continuous Indexing** -- GitHub builds a semantic search index of attached repository folders. As standards merge to `main`, the index updates instantly.
+2. **Custom Instructions** -- Each Space has a permanent system prompt constraining the AI to your enterprise context.
+3. **Contextual Grounding** -- Copilot searches the indexed Space, retrieves exact YAML patterns, and appends them to the developer's prompt.
+
+### Domain Spaces
+
+| Space | Sources | URL |
+|-------|---------|-----|
+| **Data & AI Architecture Standards** | ML governance, Gen AI usage, data platform standards + AI/ML patterns | [muthub-ai/2](https://github.com/copilot/spaces/muthub-ai/2) |
+| **Infrastructure Resilience Patterns** | Multi-region, cloud rightsizing, IaC, cryptography standards + API patterns | [muthub-ai/1](https://github.com/copilot/spaces/muthub-ai/1) |
+
+### IDE Integration
+
+Configure the GitHub MCP server to access Spaces from VS Code or Cursor:
+
+```json
+{
+  "mcpServers": {
+    "github": {
+      "command": "gh",
+      "args": ["copilot", "mcp-server"]
+    }
+  }
+}
+```
+
+---
+
 ## Architecture
 
 ### Bidirectional Sync Flow
@@ -203,20 +303,21 @@ Each level maps to a custom React Flow node with C4-standard styling. Relationsh
 
 ### CI/CD Pipeline
 
-8-job pipeline with 4 parallel domain stages:
+9-job pipeline with 5 parallel domain stages:
 
 ```
                 ┌─────────────────┐
-                │   Lint & Test    │   ← Quality Gate (374 tests)
+                │   Lint & Test    │   ← Quality Gate (406 tests)
                 └────────┬────────┘
-          ┌──────────────┼──────────────┬──────────────┐
-          ▼              ▼              ▼              ▼
-   ┌────────────┐  ┌──────────┐  ┌───────────┐  ┌──────────┐
-   │    App     │  │ Patterns │  │ Standards │  │ Waivers  │
-   │Architecture│  │ Catalog  │  │ Catalog   │  │ Registry │
-   └─────┬──────┘  └────┬─────┘  └─────┬─────┘  └────┬─────┘
-         └───────────────┼──────────────┼─────────────┘
-                ┌────────▼────────┐
+     ┌───────────────────┼───────────────────┬──────────────┐
+     │           ┌───────┼───────┐           │              │
+     ▼           ▼       ▼       ▼           ▼              ▼
+┌──────────┐ ┌────────┐ ┌─────────┐ ┌──────────┐ ┌──────────┐
+│   App    │ │Patterns│ │Standards│ │ Waivers  │ │ Policies │
+│Architect.│ │Catalog │ │ Catalog │ │ Registry │ │ OPA/Rego │
+└────┬─────┘ └───┬────┘ └────┬────┘ └────┬─────┘ └────┬─────┘
+     └────────────┼──────────┼───────────┼────────────┘
+                ┌─▼──────────────┐
                 │    Assemble     │   ← Merge Artifacts
                 └────────┬────────┘
                 ┌────────┴────────┐
@@ -240,7 +341,7 @@ Each level maps to a custom React Flow node with C4-standard styling. Relationsh
 
 ```
 aac/
-├── .github/workflows/aac-pipeline.yml     # 8-job CI/CD pipeline
+├── .github/workflows/aac-pipeline.yml     # 9-job CI/CD pipeline
 ├── .vscode/mcp.json                       # VS Code MCP server configuration
 ├── model/                                 # System architecture definitions (4 systems)
 │   ├── demand-forecasting/
@@ -261,6 +362,10 @@ aac/
 │       ├── resources/                     #   10 resource endpoints
 │       ├── tools/                         #   3 tool handlers
 │       └── prompts/                       #   2 guided workflows
+├── packages/policies/                     # OPA Rego policy engine
+│   ├── rules/                             #   3 governance domains (security, integration, finops)
+│   ├── data/                              #   Static enterprise reference data
+│   └── scripts/                           #   Bundle build script
 ├── scripts/                               # Build & governance scripts (9 scripts)
 ├── src/
 │   ├── app/                               # Next.js App Router (/, /dashboard, /systems/[id])
@@ -276,7 +381,7 @@ aac/
 │   │   ├── validation/                    #   Zod schemas + validation
 │   │   ├── layout/                        #   Dagre auto-layout
 │   │   ├── export/                        #   Draw.io XML + PlantUML
-│   │   └── data/                          #   Pattern, CLI, MCP data
+│   │   └── data/                          #   Pattern, CLI, MCP, Policy Engine data
 │   ├── store/                             # Zustand store
 │   └── types/                             # TypeScript types
 └── build/                                 # Generated artifacts (gitignored)
@@ -297,8 +402,10 @@ aac/
 | **Validation** | [Zod v4](https://zod.dev) + [Ajv](https://ajv.js.org) (JSON Schema draft-07 & 2020-12) |
 | **MCP** | [@modelcontextprotocol/sdk](https://github.com/modelcontextprotocol/typescript-sdk) (stdio transport) |
 | **CLI** | [Commander.js](https://github.com/tj/commander.js), [Chalk](https://github.com/chalk/chalk) |
+| **Policy Engine** | [Open Policy Agent](https://www.openpolicyagent.org/) (Rego) |
+| **Context Driven Dev** | [GitHub Copilot Spaces](https://github.com/copilot/spaces) (RAG) |
 | **Animation** | [Framer Motion](https://www.framer.com/motion/) |
-| **Testing** | [Vitest](https://vitest.dev) (374 tests across 21 suites) |
+| **Testing** | [Vitest](https://vitest.dev) (406 tests across 23 suites) |
 | **Documentation** | Custom static site generator, [Asciidoctor.js](https://docs.asciidoctor.org/asciidoctor.js/) |
 | **CI/CD** | GitHub Actions, [GitHub Pages](https://pages.github.com) |
 | **Runtime** | Node.js 22, TypeScript 5 (`strict: true`, zero `any`) |
@@ -324,6 +431,8 @@ aac/
 | `npm run build:patterns` | Generate pattern catalog pages |
 | `npm run build:standards` | Generate standards catalog pages |
 | `npm run build:waivers` | Generate waiver registry pages |
+| `npm run policy:test` | Run OPA Rego policy unit tests |
+| `npm run policy:fmt` | Check Rego formatting compliance |
 
 ---
 
@@ -354,16 +463,16 @@ aac create system "Order Management"
 
 ## Testing
 
-374 tests across 21 suites:
+406 tests across 23 suites:
 
 | Area | Suites | Tests | Scope |
 |------|--------|-------|-------|
-| **App** (`src/lib/`) | 12 | 296 | Parser, validation, layout, export, graph filtering, utilities |
+| **App** (`src/lib/`) | 14 | 328 | Parser, validation, layout, export, graph filtering, utilities, policy engine data, copilot spaces data |
 | **CLI** (`cli/src/`) | 6 | 52 | Commands (init, create, validate), schema manager, config, logger |
 | **MCP Server** (`mcp-server/src/`) | 3 | 26 | Schema loader, validator (AJV + draft-2020-12), repo resolver |
 
 ```bash
-npm run test:run                  # All 374 tests
+npm run test:run                  # All 406 tests
 cd mcp-server && npm test         # MCP server tests only
 ```
 
@@ -379,7 +488,7 @@ The Next.js dashboard at `/dashboard` provides 5 tabs:
 | **Pattern Catalog** | 6 patterns with search, category filters, and detail drawer |
 | **Standards Catalog** | 9 standards with domain tags and compliance status |
 | **Waiver Registry** | 10 waivers with risk severity badges and lifecycle status |
-| **Utilities** | CLI documentation, MCP Server documentation, and upcoming tools |
+| **Utilities** | CLI documentation, MCP Server documentation, Policy Engine documentation, Context Driven Dev documentation, and upcoming tools |
 
 ---
 
@@ -392,7 +501,7 @@ The Next.js dashboard at `/dashboard` provides 5 tabs:
 | `/dashboard?tab=patterns` | Pattern catalog |
 | `/dashboard?tab=standards` | Standards catalog |
 | `/dashboard?tab=waivers` | Waiver registry |
-| `/dashboard?tab=utilities` | Developer utilities (CLI, MCP Server) |
+| `/dashboard?tab=utilities` | Developer utilities (CLI, MCP Server, Policy Engine, Context Driven Dev) |
 | `/systems/:id` | Interactive diagram editor |
 
 ---
@@ -401,6 +510,8 @@ The Next.js dashboard at `/dashboard` provides 5 tabs:
 
 - [C4 Model](https://c4model.com/) by Simon Brown
 - [Model Context Protocol](https://modelcontextprotocol.io) by Anthropic
+- [Open Policy Agent](https://www.openpolicyagent.org/) by the CNCF
+- [GitHub Copilot Spaces](https://github.com/copilot/spaces) for context-driven development
 - [React Flow](https://reactflow.dev/) for the interactive canvas
 - [Shadcn UI](https://ui.shadcn.com/) for accessible component primitives
 

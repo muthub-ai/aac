@@ -1,4 +1,4 @@
-import { Terminal, Bot, Server } from 'lucide-react';
+import { Terminal, Bot, Server, Shield, Sparkles } from 'lucide-react';
 import type { UtilityInfo } from '@/types/utility';
 
 export const UTILITIES: UtilityInfo[] = [
@@ -63,10 +63,54 @@ export const UTILITIES: UtilityInfo[] = [
       'Works with Cursor, Claude Desktop, and any MCP-compatible IDE',
     ],
   },
+  {
+    id: 'policy-engine',
+    name: 'Policy Engine',
+    tagline: 'OPA Rego policies for enterprise architecture governance at scale',
+    icon: Shield,
+    color: 'chart-4',
+    status: 'available',
+    version: '1.0.0',
+    links: [
+      { label: 'GitHub', url: 'https://github.com/muthub-ai/aac' },
+      { label: 'OPA Docs', url: 'https://www.openpolicyagent.org/docs/latest/' },
+    ],
+    features: [
+      'Rego policies for security, integration, and FinOps governance',
+      'Built-in OPA test framework with 100% coverage target',
+      'CI/CD pipeline integration with format, syntax, and test checks',
+      'Deployable OPA bundle for server or sidecar consumption',
+      'Static enterprise reference data for cross-policy decisions',
+      'Three governance domains: Security, Integration, FinOps',
+    ],
+  },
+  {
+    id: 'copilot-spaces',
+    name: 'Context Driven Dev',
+    tagline: 'GitHub Copilot Spaces for context-grounded, compliant code generation',
+    icon: Sparkles,
+    color: 'chart-2',
+    status: 'available',
+    version: '1.0.0',
+    links: [
+      { label: 'Standards Space', url: 'https://github.com/copilot/spaces/muthub-ai/2' },
+      { label: 'Patterns Space', url: 'https://github.com/copilot/spaces/muthub-ai/1' },
+    ],
+    features: [
+      'Context-grounded code generation from enterprise standards',
+      'RAG-powered retrieval of approved patterns and schemas',
+      'Domain-specific Spaces for Data/AI and Infrastructure',
+      'IDE integration via MCP server in VS Code and Cursor',
+      'Zero context switching — governance surfaced during coding',
+      'Eliminates AI hallucination with contextual grounding',
+    ],
+  },
 ];
 
 export const UTILITY_COLORS: Record<string, { bg: string; text: string; border: string }> = {
   ring: { bg: 'bg-ring/10', text: 'text-ring', border: 'border-ring/20' },
   'chart-5': { bg: 'bg-chart-5/10', text: 'text-chart-5', border: 'border-chart-5/20' },
   success: { bg: 'bg-success/10', text: 'text-success', border: 'border-success/20' },
+  'chart-4': { bg: 'bg-chart-4/10', text: 'text-chart-4', border: 'border-chart-4/20' },
+  'chart-2': { bg: 'bg-chart-2/10', text: 'text-chart-2', border: 'border-chart-2/20' },
 };

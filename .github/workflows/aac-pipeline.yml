@@ -9,9 +9,10 @@
 #   3. Patterns         — pattern catalog page generation               (parallel)
 #   4. Standards        — schema validation, standards catalog pages    (parallel)
 #   5. Waivers          — schema validation, waiver registry pages      (parallel)
-#   6. Assemble         — merge all artifacts into a unified microsite
-#   7. PR Feedback      — post diagram previews to pull request comments
-#   8. Publish          — deploy microsite to GitHub Pages on merge to main
+#   6. Policies         — OPA Rego format, syntax, unit tests           (parallel)
+#   7. Assemble         — merge all artifacts into a unified microsite
+#   8. PR Feedback      — post diagram previews to pull request comments
+#   9. Publish          — deploy microsite to GitHub Pages on merge to main
 #
 # CRITICAL: This pipeline does NOT use Structurizr CLI/DSL anywhere.
 # All parsing, validation, and export is handled by our custom Node.js tooling.
@@ -79,7 +80,7 @@ jobs:
         run: npm run lint
 
       # --- Sub-stage: Unit Tests -------------------------------------------
-      - name: "Vitest — run full test suite (374 tests)"
+      - name: "Vitest — run full test suite (406 tests)"
         run: npm run test:run
 
   # =========================================================================
@@ -292,16 +293,63 @@ jobs:
           retention-days: 7
 
   # =========================================================================
+  # STAGE 2e — Policies (OPA/Rego)
+  # =========================================================================
+  # Validates Rego formatting, syntax, and runs unit tests for all
+  # enterprise governance policies. Runs in PARALLEL with other Stage 2 jobs.
+  # =========================================================================
+  policies:
+    name: "Policies"
+    runs-on: ubuntu-latest
+    needs: lint-and-test
+    steps:
+      # --- Setup -----------------------------------------------------------
+      - name: "Checkout repository"
+        uses: actions/checkout@v4
+
+      - name: "Install OPA CLI"
+        run: |
+          curl -L -o /usr/local/bin/opa https://openpolicyagent.org/downloads/latest/opa_linux_amd64_static
+          chmod 755 /usr/local/bin/opa
+          opa version
+
+      # --- Sub-stage: Format Check -----------------------------------------
+      # Ensures all Rego policies adhere to strict formatting standards.
+      # Fails if any file is not properly formatted.
+      # -------------------------------------------------------------------
+      - name: "Rego format check — opa fmt"
+        run: opa fmt --fail packages/policies/rules/
+
+      # --- Sub-stage: Syntax Check -----------------------------------------
+      # Compiles policies to catch syntax errors or unresolved variables.
+      # -------------------------------------------------------------------
+      - name: "Rego syntax check — opa check"
+        run: opa check packages/policies/rules/
+
+      # --- Sub-stage: Unit Tests -------------------------------------------
+      # Runs all _test.rego files with verbose output.
+      # Fails the build if any policy test does not pass.
+      # -------------------------------------------------------------------
+      - name: "Rego unit tests — opa test"
+        run: opa test -v packages/policies/rules/
+
+      # --- Sub-stage: Coverage Analysis ------------------------------------
+      # Measures test coverage for all governance rules.
+      # -------------------------------------------------------------------
+      - name: "Rego test coverage"
+        run: opa test --coverage --format json packages/policies/rules/
+
+  # =========================================================================
   # STAGE 3 — Assemble Microsite
   # =========================================================================
   # Merges documentation, pattern catalog, standards catalog, and waiver
-  # registry into a unified microsite for deployment. Waits for all four
+  # registry into a unified microsite for deployment. Waits for all five
   # parallel stages.
   # =========================================================================
   assemble:
     name: "Assemble Microsite"
     runs-on: ubuntu-latest
-    needs: [app-architecture, patterns, standards, waivers]
+    needs: [app-architecture, patterns, standards, waivers, policies]
     steps:
       # --- Sub-stage: Download Artifacts -----------------------------------
       - name: "Download documentation artifact"
