@@ -5,8 +5,9 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import {
   LayoutGrid, Puzzle, ShieldCheck, FileWarning,
-  Code2, GitFork, Box, ArrowRight,
+  Code2, GitFork, Box, Wrench, ArrowRight,
 } from 'lucide-react';
+import { UTILITIES } from '@/lib/data/utilities-data';
 import type { HeroCounts, TrendPoint } from '@/lib/metrics/compute-metrics';
 
 const container = {
@@ -124,6 +125,7 @@ export function HeroSection({ hero, trendHistory }: HeroSectionProps) {
     { icon: Code2, label: 'Lines of Code', value: hero.totalLoC },
     { icon: Box, label: 'Deployable Units', value: hero.totalDeployableUnits },
     { icon: GitFork, label: 'Repositories', value: hero.totalRepos },
+    { icon: Wrench, label: 'Utilities', value: UTILITIES.length },
   ];
 
   return (

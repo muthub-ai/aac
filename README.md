@@ -6,7 +6,7 @@
 
 <p align="center">
   Define, validate, visualize, and govern enterprise system architectures from declarative YAML.<br />
-  A full-lifecycle platform with an interactive diagram editor, CLI toolchain, AI-native MCP server, OPA policy engine, Copilot Spaces integration, governance pipeline, and auto-published documentation site.
+  A full-lifecycle platform with an interactive diagram editor, CLI toolchain, AI-native MCP server, OPA policy engine, Copilot Spaces integration, reference CI/CD pipeline, governance pipeline, and auto-published documentation site.
 </p>
 
 <p align="center">
@@ -43,6 +43,7 @@ The result is a single source of truth that stays in sync with the codebase, enf
     │   standards/      ──>  CI/CD Pipeline     ──> PlantUML + Draw.io Export │
     │   waivers/        ──>  JSON Schema + Zod  ──> PR Feedback (diagrams)    │
     │   schema/         ──>  OPA Policy Engine  ──> GitHub Pages              │
+    │                   ──>  Ref CI Pipeline    ──> App Repo Validation       │
     │                                                                          │
     └──────────────────────────────────────────────────────────────────────────┘
 ```
@@ -54,6 +55,7 @@ The result is a single source of truth that stays in sync with the codebase, enf
 | **MCP Server** | Expose architecture data to AI coding agents via the Model Context Protocol. 10 resources, 3 tools, 2 guided prompts. Works with VS Code Copilot, Cursor, Claude Desktop. |
 | **Policy Engine** | OPA Rego policies for enterprise governance: security (KMS encryption), integration (API gateway), and FinOps (autoscaling). Built-in test framework with 100% coverage target. |
 | **Context Driven Dev** | GitHub Copilot Spaces for RAG-powered, context-grounded code generation. Domain-specific Spaces inject enterprise standards and patterns into the AI context window. |
+| **Continuous Integration** | Reference GitHub Actions pipeline for app repos: schema validation, 5-rule compliance linter, 3 OPA policy checks, path-filtered triggers, and POSIX exit codes. |
 | **Pattern Catalog** | 6 reusable architecture patterns with C4 diagrams, NFR targets, cost profiles, and getting-started guides. |
 | **Standards Catalog** | 9 enterprise standards with RFC 2119 requirements, verification methods, and approved solutions. |
 | **Waiver Registry** | 10 architecture exceptions with risk assessments, compensating controls, financial impact, and remediation plans. |
@@ -65,7 +67,7 @@ The result is a single source of truth that stays in sync with the codebase, enf
 
 **[https://aac.muthub.org/](https://aac.muthub.org/)**
 
-Auto-published on every push to `main`. Includes system detail pages, pattern catalog, standards catalog, waiver registry, and pipeline visualization.
+Auto-published on every push to `main`. Includes system detail pages, pattern catalog, standards catalog, waiver registry, pipeline visualization, developer utilities, and executive scorecard.
 
 ---
 
@@ -373,7 +375,7 @@ aac/
 │   │   ├── canvas/                        #   React Flow canvas
 │   │   ├── dashboard/                     #   Catalogs, utilities, system cards
 │   │   ├── editor/                        #   Monaco YAML editor
-│   │   ├── landing/                       #   Landing page sections
+│   │   ├── landing/                       #   Landing page sections (10 sections)
 │   │   ├── nodes/                         #   C4 node renderers (6 types)
 │   │   └── ui/                            #   Shadcn primitives
 │   ├── lib/                               # Pure logic modules
@@ -478,6 +480,25 @@ cd mcp-server && npm test         # MCP server tests only
 
 ---
 
+## Landing Page
+
+The homepage (`/`) renders 10 data-driven sections:
+
+| Section | Description |
+|---------|-------------|
+| **Hero** | Animated counters for systems, patterns, standards, waivers + secondary stats (LoC, deployable units, repos, utilities) |
+| **Executive Scorecard** | 6 KPI gauge cards: compliance, risk, debt, remediation velocity, pattern reuse, cloud spend |
+| **Risk & Compliance** | Risk heat map by domain + standards coverage |
+| **Portfolio Summary** | Systems inventory table, pattern maturity bar chart, waiver lifecycle funnel |
+| **Why AaC** | 6 value-proposition cards explaining the Architecture as Code approach |
+| **Operational Lifecycle** | 5-step horizontal/vertical timeline: Define, Build, Test, Accept, Deploy |
+| **Operational Health** | 4 engineering quality metrics with sparkline trends |
+| **CI/CD Pipeline** | Interactive DAG visualization of the 9-job governance pipeline |
+| **Developer Utilities** | 6 utility cards (CLI, AI Agent, MCP Server, Policy Engine, Context Driven Dev, CI Pipeline) |
+| **Footer** | Anchor links to all sections + dashboard links |
+
+---
+
 ## Dashboard
 
 The Next.js dashboard at `/dashboard` provides 5 tabs:
@@ -488,7 +509,7 @@ The Next.js dashboard at `/dashboard` provides 5 tabs:
 | **Pattern Catalog** | 6 patterns with search, category filters, and detail drawer |
 | **Standards Catalog** | 9 standards with domain tags and compliance status |
 | **Waiver Registry** | 10 waivers with risk severity badges and lifecycle status |
-| **Utilities** | CLI documentation, MCP Server documentation, Policy Engine documentation, Context Driven Dev documentation, and upcoming tools |
+| **Utilities** | CLI documentation, MCP Server documentation, Policy Engine documentation, Context Driven Dev documentation, Continuous Integration reference pipeline, and upcoming tools |
 
 ---
 
@@ -501,7 +522,7 @@ The Next.js dashboard at `/dashboard` provides 5 tabs:
 | `/dashboard?tab=patterns` | Pattern catalog |
 | `/dashboard?tab=standards` | Standards catalog |
 | `/dashboard?tab=waivers` | Waiver registry |
-| `/dashboard?tab=utilities` | Developer utilities (CLI, MCP Server, Policy Engine, Context Driven Dev) |
+| `/dashboard?tab=utilities` | Developer utilities (CLI, MCP Server, Policy Engine, Context Driven Dev, CI Pipeline) |
 | `/systems/:id` | Interactive diagram editor |
 
 ---
