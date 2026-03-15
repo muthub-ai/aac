@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Internal Web Application — Architecture Pattern</title>
+  <meta name="description" content="Secure internal-facing web application hosted on Cloud Run behind Identity-Aware Proxy (IAP) for zero-trust employee access with corporate SSO, private VPC networking, and managed backing services.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232563eb' stroke-width='2'><path d='M12 2L2 7l10 5 10-5-10-5z'/><path d='M2 17l10 5 10-5'/><path d='M2 12l10 5 10-5'/></svg>">
+  <style>
+:root {
+  --bg: #f6f8fa; --bg-alt: #ffffff; --card: #ffffff; --card-hover: #f8fafc;
+  --text: #1f2328; --text-secondary: #656d76; --text-tertiary: #8c959f;
+  --border: #d0d7de; --border-muted: #e8ebef;
+  --accent: #2563eb; --accent-hover: #1d4ed8; --accent-subtle: rgba(37,99,235,0.08);
+  --success: #1a7f37; --success-subtle: rgba(26,127,55,0.08);
+  --warning: #bf8700; --warning-subtle: rgba(191,135,0,0.08);
+  --danger: #cf222e; --danger-subtle: rgba(207,34,46,0.08);
+  --purple: #8250df; --purple-subtle: rgba(130,80,223,0.08);
+  --orange: #f78166; --orange-subtle: rgba(247,129,102,0.08);
+  --code-bg: #f0f3f6; --shadow: 0 1px 3px rgba(31,35,40,0.04), 0 1px 2px rgba(31,35,40,0.06);
+  --shadow-md: 0 4px 12px rgba(31,35,40,0.08); --radius: 12px; --radius-sm: 8px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0d1117; --bg-alt: #161b22; --card: #161b22; --card-hover: #1c2128;
+    --text: #e6edf3; --text-secondary: #8b949e; --text-tertiary: #6e7681;
+    --border: #30363d; --border-muted: #21262d;
+    --accent: #58a6ff; --accent-hover: #79c0ff; --accent-subtle: rgba(88,166,255,0.1);
+    --success: #3fb950; --success-subtle: rgba(63,185,80,0.1);
+    --warning: #d29922; --warning-subtle: rgba(210,153,34,0.1);
+    --danger: #f85149; --danger-subtle: rgba(248,81,73,0.1);
+    --purple: #bc8cff; --purple-subtle: rgba(188,140,255,0.1);
+    --orange: #f78166; --orange-subtle: rgba(247,129,102,0.1);
+    --code-bg: #1c2128; --shadow: 0 1px 3px rgba(0,0,0,0.2); --shadow-md: 0 4px 12px rgba(0,0,0,0.3);
+  }
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Noto Sans, Helvetica, Arial, sans-serif;
+  background: var(--bg); color: var(--text); line-height: 1.6; -webkit-font-smoothing: antialiased;
+}
+a { color: var(--accent); text-decoration: none; transition: color 0.15s; }
+a:hover { color: var(--accent-hover); }
+img { max-width: 100%; height: auto; }
+
+/* ── Layout ─────────────────────── */
+.container { max-width: 1152px; margin: 0 auto; padding: 0 24px; }
+@media (min-width: 640px) { .container { padding: 0 40px; } }
+
+/* ── Nav (same as main site) ────── */
+.nav { position: sticky; top: 0; z-index: 50; background: var(--bg-alt); border-bottom: 1px solid var(--border); backdrop-filter: blur(12px); }
+.nav-inner { display: flex; align-items: center; height: 56px; gap: 16px; }
+.nav-brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 15px; color: var(--text); text-decoration: none; }
+.nav-brand svg { width: 28px; height: 28px; color: var(--accent); }
+.nav-links { display: flex; gap: 4px; margin-left: auto; }
+.nav-link { padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 500; color: var(--text-secondary); transition: all 0.15s; }
+.nav-link:hover { color: var(--text); background: var(--accent-subtle); }
+.nav-link.active { color: var(--accent); background: var(--accent-subtle); }
+
+/* ── Footer ─────────────────────── */
+footer { margin-top: 40px; padding: 24px 0; border-top: 1px solid var(--border); }
+footer p { font-size: 13px; color: var(--text-tertiary); text-align: center; }
+footer p + p { margin-top: 4px; }
+
+/* ── Breadcrumb ─────────────────── */
+.breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-tertiary); margin-bottom: 16px; }
+.breadcrumb a { color: var(--text-secondary); }
+.breadcrumb a:hover { color: var(--accent); }
+.breadcrumb svg { width: 12px; height: 12px; color: var(--text-tertiary); }
+
+/* ── Detail Hero ────────────────── */
+.detail-hero { padding: 48px 0 32px; border-bottom: 1px solid var(--border); }
+.detail-hero h1 { font-size: 36px; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 12px; }
+.detail-hero .desc { font-size: 16px; color: var(--text-secondary); line-height: 1.6; max-width: 720px; }
+.detail-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; border: 1px solid; }
+.tag { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 500; background: var(--accent-subtle); color: var(--accent); }
+
+/* ── Content Sections ───────────── */
+.detail-content { padding: 40px 0 20px; }
+.detail-section { margin-bottom: 48px; }
+.detail-section h2 { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 8px; padding-bottom: 12px; border-bottom: 2px solid var(--border); display: flex; align-items: center; gap: 8px; }
+.detail-section h2 .section-icon { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 6px; }
+.detail-section > p.section-desc { color: var(--text-secondary); font-size: 14px; margin-bottom: 20px; }
+
+/* ── Cards ──────────────────────── */
+.card-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+@media (min-width: 640px) { .card-grid { grid-template-columns: repeat(2, 1fr); } }
+.info-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px 20px; box-shadow: var(--shadow); }
+.info-card h3 { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+.info-card p { font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin: 0; }
+
+/* ── Pattern Catalog Cards ──────── */
+.pattern-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px; }
+.pattern-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow); transition: all 0.2s ease; display: flex; flex-direction: column; text-decoration: none; color: inherit; }
+.pattern-card:hover { border-color: var(--accent); box-shadow: var(--shadow-md); transform: translateY(-2px); color: inherit; }
+.pattern-card-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 12px; }
+.pattern-card h3 { font-size: 17px; font-weight: 700; letter-spacing: -0.01em; }
+.pattern-card:hover h3 { color: var(--accent); }
+.pattern-card-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 16px; flex: 1; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.pattern-card-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+.pattern-card-footer { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding-top: 14px; border-top: 1px solid var(--border-muted); }
+.pattern-card-stat { text-align: center; }
+.pattern-card-stat .val { font-size: 16px; font-weight: 700; color: var(--text); }
+.pattern-card-stat .lbl { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-tertiary); }
+.group-badge { background: var(--purple-subtle); color: var(--purple); border-color: transparent; font-size: 10px; padding: 1px 8px; border-radius: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; }
+
+/* ── Table ──────────────────────── */
+.table-wrap { overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--border); background: var(--card); box-shadow: var(--shadow); }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead { background: var(--bg); }
+th { padding: 10px 16px; text-align: left; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-secondary); border-bottom: 1px solid var(--border); }
+td { padding: 12px 16px; border-bottom: 1px solid var(--border-muted); vertical-align: top; }
+tr:last-child td { border-bottom: none; }
+tr:hover { background: var(--card-hover); }
+
+/* ── NFR Grid ───────────────────── */
+.nfr-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+.nfr-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px; box-shadow: var(--shadow); }
+.nfr-card .label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-secondary); }
+.nfr-card .value { font-size: 15px; font-weight: 700; color: var(--text); margin-top: 4px; }
+
+/* ── Pros / Cons ────────────────── */
+.pros-cons { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 640px) { .pros-cons { grid-template-columns: 1fr; } }
+.pros-box { background: var(--success-subtle); border: 1px solid var(--success); border-radius: var(--radius-sm); padding: 20px; }
+.cons-box { background: var(--warning-subtle); border: 1px solid var(--warning); border-radius: var(--radius-sm); padding: 20px; }
+.pros-box h3, .cons-box h3 { font-size: 14px; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+.pros-box h3 { color: var(--success); }
+.cons-box h3 { color: var(--warning); }
+.check-list, .warn-list { list-style: none; padding: 0; }
+.check-list li, .warn-list li { padding: 4px 0; font-size: 13px; line-height: 1.5; display: flex; gap: 8px; align-items: flex-start; }
+.check-list li svg { color: var(--success); flex-shrink: 0; margin-top: 2px; }
+.warn-list li svg { color: var(--warning); flex-shrink: 0; margin-top: 2px; }
+
+/* ── Stepper ────────────────────── */
+.stepper { margin-left: 12px; border-left: 2px solid var(--border); padding-left: 24px; }
+.stepper .step { position: relative; padding-bottom: 20px; }
+.stepper .step:last-child { padding-bottom: 0; }
+.stepper .step-num { position: absolute; left: -37px; top: 0; width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--accent); background: var(--bg); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: var(--accent); }
+.stepper .step p { font-size: 14px; margin: 0; padding-top: 2px; color: var(--text); }
+
+/* ── Diagram Card ───────────────── */
+.diagram-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); margin-bottom: 16px; }
+.diagram-card-header { padding: 12px 20px; border-bottom: 1px solid var(--border-muted); display: flex; align-items: center; justify-content: space-between; }
+.diagram-card-header h3 { font-size: 14px; font-weight: 600; }
+.diagram-type-badge { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 3px 10px; border-radius: 4px; }
+.type-context { background: var(--accent-subtle); color: var(--accent); }
+.type-container { background: var(--success-subtle); color: var(--success); }
+.diagram-card-body { padding: 20px; background: var(--bg); text-align: center; min-height: 200px; }
+.diagram-card-body img { border-radius: 8px; max-height: 600px; cursor: pointer; }
+
+/* ── Constraint list ────────────── */
+.constraint-list { list-style: none; padding: 0; }
+.constraint-list li { padding: 8px 0; font-size: 14px; color: var(--text); display: flex; gap: 10px; align-items: flex-start; border-bottom: 1px solid var(--border-muted); }
+.constraint-list li:last-child { border-bottom: none; }
+.constraint-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-tertiary); flex-shrink: 0; margin-top: 8px; }
+
+/* ── Hero section for index ─────── */
+.patterns-hero { padding: 60px 0 40px; text-align: center; position: relative; overflow: hidden; }
+.patterns-hero::before { content: ''; position: absolute; top: -200px; left: 50%; transform: translateX(-50%); width: 800px; height: 600px; background: radial-gradient(ellipse, var(--accent-subtle) 0%, transparent 70%); pointer-events: none; }
+.patterns-hero h1 { font-size: 36px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; margin-bottom: 12px; }
+.patterns-hero h1 span { color: var(--accent); }
+.patterns-hero p { font-size: 16px; color: var(--text-secondary); max-width: 600px; margin: 0 auto; line-height: 1.5; }
+
+/* ── Stats ──────────────────────── */
+.stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 32px 0 48px; }
+@media (max-width: 640px) { .stats-row { grid-template-columns: 1fr; } }
+.stat-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; text-align: center; box-shadow: var(--shadow); }
+.stat-value { font-size: 32px; font-weight: 800; letter-spacing: -0.02em; color: var(--accent); }
+.stat-label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-top: 4px; }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="container nav-inner">
+    <a href="../index.html" class="nav-brand">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+      Architecture as Code
+    </a>
+    <div class="nav-links">
+      <a href="../index.html" class="nav-link ">Overview</a>
+      <a href="../index.html#systems" class="nav-link">Systems</a>
+      <a href="../patterns/index.html" class="nav-link active">Patterns</a>
+      <a href="../standards/index.html" class="nav-link ">Standards</a>
+      <a href="../waivers/index.html" class="nav-link ">Waivers</a>
+      <a href="../index.html#pipeline" class="nav-link">Pipeline</a>
+      <a href="https://github.com/muthub-ai/aac" class="nav-link" target="_blank" rel="noopener">GitHub &nearr;</a>
+    </div>
+  </div>
+</nav>
+
+<section class="detail-hero">
+  <div class="container">
+    <div class="breadcrumb">
+      <a href="../index.html">Home</a>
+      <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg></span>
+      <a href="index.html">Patterns</a>
+      <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg></span>
+      <span>Internal Web Application</span>
+    </div>
+    <h1>Internal Web Application</h1>
+    <p class="desc">Secure internal-facing web application hosted on Cloud Run behind Identity-Aware Proxy (IAP) for zero-trust employee access with corporate SSO, private VPC networking, and managed backing services.</p>
+    <div class="detail-meta">
+      <span class="badge" style="background:#dafbe1;color:#1a7f37;border-color:#1a7f37">Production Ready</span>
+      <span class="badge" style="background:var(--accent-subtle);color:var(--accent);border-color:var(--accent)">internal</span>
+      <span class="badge" style="background:var(--card);color:var(--text-secondary);border-color:var(--border)">v1.3.0</span>
+      <span class="badge" style="background:var(--purple-subtle);color:var(--purple);border-color:transparent">Compute</span>
+    </div>
+    <div style="margin-top:16px;display:flex;flex-wrap:wrap;gap:6px"><span class="tag">Cloud Run</span> <span class="tag">IAP</span> <span class="tag">Web Application</span> <span class="tag">Private Cloud</span> <span class="tag">SSO</span></div>
+  </div>
+</section>
+
+<div class="container detail-content">
+
+  <div class="detail-section">
+    <h2><span class="section-icon" style="background:var(--accent-subtle);color:var(--accent)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></span> Architecture Overview</h2>
+    <p style="font-size:15px;line-height:1.7;color:var(--text);margin-bottom:12px">This pattern provides a production-ready architecture for internal web applications accessible only to authenticated employees via Google Cloud Identity-Aware Proxy (IAP). It follows a zero-trust security model where every request is verified regardless of network location.</p>
+<p style="font-size:15px;line-height:1.7;color:var(--text);margin-bottom:12px">The web application is deployed as a serverless container on Cloud Run, which auto-scales from zero to 50 instances based on request load. IAP sits in front of Cloud Run and enforces context-aware access policies — verifying user identity (via corporate SSO/SAML 2.0), device posture, and IP allowlists before forwarding any request.</p>
+<p style="font-size:15px;line-height:1.7;color:var(--text);margin-bottom:12px">The application follows a standard 3-tier architecture: a React single-page application served as static assets, a Node.js/Express backend API handling business logic, and managed data services (Cloud SQL PostgreSQL for persistence, Memorystore Redis for sessions and caching). All backing services are accessed through a Serverless VPC Access connector, ensuring traffic never leaves the private network.</p>
+<p style="font-size:15px;line-height:1.7;color:var(--text);margin-bottom:12px">Cloud Monitoring provides application performance metrics, uptime checks, and custom SLO dashboards. All access events are logged for security audit compliance.</p>
+  </div>
+
+  <div class="detail-section">
+    <h2><span class="section-icon" style="background:var(--accent-subtle);color:var(--accent)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></span> Architecture Diagrams</h2>
+    
+    <div class="diagram-card">
+      <div class="diagram-card-header">
+        <h3>System Context</h3>
+        <span class="diagram-type-badge type-context">Context</span>
+      </div>
+      <div class="diagram-card-body">
+        <img src="https://www.plantuml.com/plantuml/svg/XPJ1Zk9648RlF4M5GmGIZADeJpcj1qYM27QiCPjLJgXfrzYbQNSxrMKOzfI7o1FcIQ9kcu5PsCqDjwdl_xlgBx_tebZQsWn-8AjDMo1K8et_9KbO7UvAaghTjHvPEojevKwxEccCig5cwgKmj4jcxwPPEFgqNYMryeASpDvjPw7YHUwQG1-iqZyVFcssdvUR3zlLuhV5n_beF1W8YK78ZrwmXhu0_ltx7rXQGRRAm6VSGTeqXhGISdOmo92zioEi6-EEY1COBlgVmmaCN-k2Pr1Qe_TaIv0AGPqni2S5sd7ZM0b2dZyCnoToOvGyEQwtQCi93BF-4HQs98l8GIPZjoTFpdfGje1QMLMY1x9FhBnmgwLbZAzcosGsXuOQD6JHdsKy1-_vum8sgEe0NJjBujY3sYioQaU6v3W1emIjFauYZgoc0gq0es-SzJWS3mPT_qRKttrxm9rgcijkVDN5e9QZ3XvFHN30NUWGLCuB5k0ip8nh2tXiBUom8bl0CYYJ7AVfGJ52nkxb2ADbcetXG5A5DaPUoLsJW-66QHzQR54EZf_9bcV7syMBZ7HGsPAAVcy81AzzCgOg7dz1TbFXrai_O0ZXP6UYO321zicnnXgj3CUtnEe0ZTTRfkkWyEWCJdVAOt6BwP7tf36ySgsLVjxVmjVT72d6frDPlnu5iOj9G8t2fFq4saQeHj0LwcVV3LiPPEawTYLYN5bUAgowvzWjjCBAq9TmcGkfYEmkPrpftr8zQaRPTZVZBX-C0klku6lRtT_z1ERte1dZt9JfVQVP4fxn61G6ZsWkTlLos6ahLIZJIj37XGnhE87XXyqcoo61F5sluEUxduRZIBcelKvwY0gX1tK1BO3nhnQz-3CrvdIPPb2XAf1zptwxyzVuEOORTCkkdNsYicMCsAxxzosP0XBO8BCAe9uRb_n6AbvNFLyjVPAl7Y9hhdorSueB3pz26eP_ydVbw3B8VoX3HMnYWroJZz-b-35Crv0vG_e8zsGBikN_yDvuNBmqZiMV4Xg03mtQ3HeCHyVleyxvp8LHrNtckkVk-rZ0x_d3nrCMRxAkKlahYgxGd_8tl0fg25_8tNkqHLkR_m00" alt="System Context diagram for Internal Web Application" loading="lazy" />
+      </div>
+    </div>
+
+    <div class="diagram-card">
+      <div class="diagram-card-header">
+        <h3>Container</h3>
+        <span class="diagram-type-badge type-container">Container</span>
+      </div>
+      <div class="diagram-card-body">
+        <img src="https://www.plantuml.com/plantuml/svg/TLNDRXj73BxhATWz15OXMNOGeq1FaMt5KI756qkEqLu4QfPQJJCxC-5m9Gj1WRn3-uHvac9c5NajjpSDb_puyUUZtWP1bheodP-qLQOk2DOYFlmw631kJqijwtfP1sBbh92LK-MgWJTeOqm_I67qSd3rffz7q_rqCgWm2F7WwitYobb1RObFVSJlJ8Q_tzxF5m_Z-Vl5P7Gp-d1zqkrqH8iXEFZ2jSQIiOBlt_w1iHLYYmOUQ0b3xurMADhPJYSd3iwUKEMDsn7r81ljVsOzo8QrhCbAzAO2z0-KM4RMxNHcko1KBIvTRGlatScMbkZzmXkKbUEg1zd_9OPyxvDruMkd0q-yJpJwXMVtk8lXHSmkk_vmYqoGHtFaTUDS6OirhYvWFCoZxGzYrnUkWm0gHI50YK9Rt07PbMEbRGcpsMqF2jfeHU1Ta9gf1sWB6EU0nhYjqK52BAtDICKq2wvj3x8cvLrjOKOSSRAsCJwYdTX40kem36s3e5KK06jn_Q3GH3vdtx_zVN7MWn2nR0co9jZI4h3LgQsMDLoSluRf9GpW73PN-Jtu5kOntHMd3IjwaCMklzi_8xSxGYKmouU9gBQbeRx7afubZ6Ie00mG14Khm1180cmq9e9FBGXD2ngAocYoqW-w861NYxRbCRCbgizaYmLwtOFiidd1C1z7EXzSGQT_1XZ0wD4pXP08ZsRpw006TyImHbkanYthe6riiN6bLh618KJk5LeigI8hpLmBjxL1cB0wa7MirXI4Kx573A-N-s67B-Omrzd7IQIIko0bq-pZ1Culae5rXRm39fEmq421WaiC-uwiTRdkumQrmQKsMg9hsJYkK1kt8KuauqfKIM45QhE3sARQlrX3faA7XKArZZATKkLu5yGnDPCjT81VJi-Q5MowaRusALhpJGWDmtEukGI57bLa5nr3lUnN0GmAMRKxfh3nQg6SjQJ4SG-oJ_bL_DgyZvO_VXic8IQ9D5wXjJtYmBFUe53oPGgkvYYHaqFVUz0givjrEtyTZixeKVQpqbWTPZKUJjFTQWv0r1yxatNRGPMpMXnhMnwYfWTJbZehh5M0Lu26k3a7TsHQDx9zejxFv_aCcBxK54z7AfMzurZMR7OB0xYDLnHUdvvbtOJJYcvVbdUEjyX5kX2jeokCgvLM4NWypE6tXpci2GlYi8ThORIKdmPnfE1iJnTkHlENmS_5UUTgeP2afz2O53j0hmS_WqTP_qZ-BEXuEmuptsZS2oPDUvpleuy2sjAx8op2OCiwieYoEfAWPoTEfTd-1z9pgVoGmwlzwZiVdYHp1FIieFP-VKAZ2uniniCfYFjCDhJ-YjAC9th9oBkNlNssSwD7xrW2LCsUHP1RJtPEXg8fYUujsQAkpBy0" alt="Container diagram for Internal Web Application" loading="lazy" />
+      </div>
+    </div>
+  </div>
+
+  <div class="detail-section">
+    <h2><span class="section-icon" style="background:var(--purple-subtle);color:var(--purple)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></span> Design Considerations</h2>
+    
+    <div class="card-grid">
+      
+      <div class="info-card">
+        <h3>Zero-Trust Access Model</h3>
+        <p>IAP verifies every request with cryptographic JWT tokens containing user identity and device context. There is no implicit trust based on network location — even requests originating from the corporate network must pass IAP authentication. This eliminates the need for traditional VPN-based access.</p>
+      </div>
+
+      <div class="info-card">
+        <h3>Serverless VPC Connectivity</h3>
+        <p>Cloud Run connects to Cloud SQL and Memorystore via a Serverless VPC Access connector using /28 subnet allocation. The connector supports up to 1 Gbps throughput per instance. For high-throughput workloads, consider Direct VPC Egress as an alternative.</p>
+      </div>
+
+      <div class="info-card">
+        <h3>Session Management</h3>
+        <p>User sessions are stored in Memorystore (Redis) rather than in-memory, enabling zero-downtime Cloud Run instance cycling. Session TTL aligns with the IAP session timeout (default 1 hour) to prevent session desync.</p>
+      </div>
+
+      <div class="info-card">
+        <h3>Database Connection Pooling</h3>
+        <p>Cloud Run instances use the Cloud SQL Auth Proxy sidecar for IAM-based database authentication. Connection pooling is configured with a max of 5 connections per instance to prevent exhausting the Cloud SQL connection limit during autoscale spikes.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="detail-section">
+    <h2><span class="section-icon" style="background:var(--success-subtle);color:var(--success)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></span> Products Used</h2>
+    
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Product</th><th>Role</th></tr></thead>
+        <tbody>
+          
+          <tr>
+            <td style="font-weight:500">Cloud Run</td>
+            <td>Serverless container hosting with auto-scaling 0–50 instances</td>
+          </tr>
+
+          <tr>
+            <td style="font-weight:500">Identity-Aware Proxy (IAP)</td>
+            <td>Zero-trust access gateway with SSO and device posture verification</td>
+          </tr>
+
+          <tr>
+            <td style="font-weight:500">Cloud SQL (PostgreSQL)</td>
+            <td>Managed relational database with HA regional failover</td>
+          </tr>
+
+          <tr>
+            <td style="font-weight:500">Memorystore (Redis)</td>
+            <td>Session store and application cache</td>
+          </tr>
+
+          <tr>
+            <td style="font-weight:500">Serverless VPC Access</td>
+            <td>Private network connectivity from Cloud Run to VPC resources</td>
+          </tr>
+
+          <tr>
+            <td style="font-weight:500">Secret Manager</td>
+            <td>Application secrets, DB credentials, and API keys</td>
+          </tr>
+
+          <tr>
+            <td style="font-weight:500">Cloud Monitoring</td>
+            <td>Application metrics, uptime checks, and SLO dashboards</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="detail-section">
+    <h2><span class="section-icon" style="background:var(--orange-subtle);color:var(--orange)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg></span> Non-Functional Requirements</h2>
+    
+    <div class="nfr-grid">
+      
+      <div class="nfr-card">
+        <div class="label">Availability</div>
+        <div class="value">99.95% (Cloud Run SLA + IAP SLA)</div>
+      </div>
+
+      <div class="nfr-card">
+        <div class="label">Latency (p95)</div>
+        <div class="value">&lt; 200 ms for page loads</div>
+      </div>
+
+      <div class="nfr-card">
+        <div class="label">Autoscale Range</div>
+        <div class="value">0–50 instances (scale-to-zero enabled)</div>
+      </div>
+
+      <div class="nfr-card">
+        <div class="label">Cold Start</div>
+        <div class="value">&lt; 3 seconds (container startup)</div>
+      </div>
+
+      <div class="nfr-card">
+        <div class="label">Concurrent Users</div>
+        <div class="value">500+ simultaneous authenticated users</div>
+      </div>
+
+      <div class="nfr-card">
+        <div class="label">Encryption</div>
+        <div class="value">TLS 1.3 in transit, CMEK at rest for Cloud SQL</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="detail-section">
+    <h2><span class="section-icon" style="background:var(--success-subtle);color:var(--success)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span> Advantages &amp; Considerations</h2>
+    
+    <div class="pros-cons">
+      <div class="pros-box">
+        <h3><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Advantages</h3>
+        <ul class="check-list">
+          <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Zero-trust access via IAP eliminates VPN dependency</li>
+<li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Serverless auto-scaling from zero to handle burst traffic</li>
+<li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Fully managed backing services (Cloud SQL, Memorystore) reduce ops burden</li>
+<li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Corporate SSO integration with SAML 2.0 and OIDC</li>
+        </ul>
+      </div>
+      <div class="cons-box">
+        <h3><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Considerations</h3>
+        <ul class="warn-list">
+          <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Cold start latency for Cloud Run instances after scale-to-zero</li>
+<li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> VPC connector throughput limits for high-volume database workloads</li>
+<li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> IAP session timeout configuration must align with SSO provider</li>
+<li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Cloud SQL connection pooling required for concurrent request spikes</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="detail-section">
+    <h2><span class="section-icon" style="background:var(--danger-subtle);color:var(--danger)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span> Constraints &amp; Limitations</h2>
+    
+    <ul class="constraint-list">
+      <li><span class="constraint-dot"></span>Requires corporate identity provider integration (Google Workspace, Okta, Azure AD) for IAP SSO</li>
+<li><span class="constraint-dot"></span>Cloud Run container images must be stored in Artifact Registry within the same project or a shared registry</li>
+<li><span class="constraint-dot"></span>VPC connector subnet must be a dedicated /28 CIDR not used by other resources</li>
+<li><span class="constraint-dot"></span>Cloud SQL instance must be in the same region as the Cloud Run service for low-latency access</li>
+<li><span class="constraint-dot"></span>Maximum request timeout is 60 minutes (Cloud Run limit) — long-running jobs should use Cloud Tasks</li>
+    </ul>
+  </div>
+
+  <div class="detail-section">
+    <h2><span class="section-icon" style="background:var(--warning-subtle);color:var(--warning)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span> Cost Profile</h2>
+    <div class="info-card">
+      <p>Low-Medium. Cloud Run charges only for active request processing time (scale-to-zero eliminates idle costs). Cloud SQL is the largest fixed cost component (~$50–200/month for a db-f1-micro to db-custom-2-8192 instance). Memorystore basic tier starts at ~$30/month. Estimated monthly cost: $150–$600 for moderate internal workloads.</p>
+    </div>
+  </div>
+
+  <div class="detail-section">
+    <h2><span class="section-icon" style="background:var(--accent-subtle);color:var(--accent)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/></svg></span> Getting Started</h2>
+    
+    <div class="stepper">
+      
+      <div class="step">
+        <div class="step-num">1</div>
+        <p>Create a VPC network with private subnets and configure a Serverless VPC Access connector.</p>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <p>Provision Cloud SQL (PostgreSQL) and Memorystore (Redis) instances within the VPC.</p>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <p>Containerize the web application and deploy to Cloud Run with the VPC connector attached.</p>
+      </div>
+
+      <div class="step">
+        <div class="step-num">4</div>
+        <p>Enable Identity-Aware Proxy on the Cloud Run service and configure SSO with your identity provider.</p>
+      </div>
+
+      <div class="step">
+        <div class="step-num">5</div>
+        <p>Set up Cloud Monitoring dashboards, uptime checks, and alerting policies.</p>
+      </div>
+    </div>
+  </div>
+
+  <div style="padding:16px 0;font-size:13px;color:var(--text-secondary);border-top:1px solid var(--border-muted)">
+    Maintained by <strong>Platform Engineering</strong> &middot; Version 1.3.0 &middot; <a href="https://muthub-ai.github.io/aac/patterns/internal-web-application.html">Full Documentation &nearr;</a>
+  </div>
+
+</div>
+
+
+<footer>
+  <div class="container">
+    <p>Architecture as Code &mdash; auto-generated from <a href="https://github.com/muthub-ai/aac">YAML models</a> via CI/CD pipeline</p>
+    <p style="font-size:11px;color:var(--text-tertiary)">Built with C4 Model &bull; PlantUML &bull; Asciidoctor &bull; GitHub Actions</p>
+  </div>
+</footer>
+</body>
+</html>

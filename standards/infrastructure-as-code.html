@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Automated Infrastructure as Code Deployment Standard — Architecture Standard</title>
+  <meta name="description" content="Automated Infrastructure as Code Deployment Standard — DevOps standard v1.0">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232563eb' stroke-width='2'><path d='M12 2L2 7l10 5 10-5-10-5z'/><path d='M2 17l10 5 10-5'/><path d='M2 12l10 5 10-5'/></svg>">
+  <style>
+:root {
+  --bg: #f6f8fa; --bg-alt: #ffffff; --card: #ffffff; --card-hover: #f8fafc;
+  --text: #1f2328; --text-secondary: #656d76; --text-tertiary: #8c959f;
+  --border: #d0d7de; --border-muted: #e8ebef;
+  --accent: #2563eb; --accent-hover: #1d4ed8; --accent-subtle: rgba(37,99,235,0.08);
+  --success: #1a7f37; --success-subtle: rgba(26,127,55,0.08);
+  --warning: #bf8700; --warning-subtle: rgba(191,135,0,0.08);
+  --danger: #cf222e; --danger-subtle: rgba(207,34,46,0.08);
+  --purple: #8250df; --purple-subtle: rgba(130,80,223,0.08);
+  --orange: #f78166; --orange-subtle: rgba(247,129,102,0.08);
+  --code-bg: #f0f3f6; --shadow: 0 1px 3px rgba(31,35,40,0.04), 0 1px 2px rgba(31,35,40,0.06);
+  --shadow-md: 0 4px 12px rgba(31,35,40,0.08); --radius: 12px; --radius-sm: 8px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0d1117; --bg-alt: #161b22; --card: #161b22; --card-hover: #1c2128;
+    --text: #e6edf3; --text-secondary: #8b949e; --text-tertiary: #6e7681;
+    --border: #30363d; --border-muted: #21262d;
+    --accent: #58a6ff; --accent-hover: #79c0ff; --accent-subtle: rgba(88,166,255,0.1);
+    --success: #3fb950; --success-subtle: rgba(63,185,80,0.1);
+    --warning: #d29922; --warning-subtle: rgba(210,153,34,0.1);
+    --danger: #f85149; --danger-subtle: rgba(248,81,73,0.1);
+    --purple: #bc8cff; --purple-subtle: rgba(188,140,255,0.1);
+    --orange: #f78166; --orange-subtle: rgba(247,129,102,0.1);
+    --code-bg: #1c2128; --shadow: 0 1px 3px rgba(0,0,0,0.2); --shadow-md: 0 4px 12px rgba(0,0,0,0.3);
+  }
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Noto Sans, Helvetica, Arial, sans-serif;
+  background: var(--bg); color: var(--text); line-height: 1.6; -webkit-font-smoothing: antialiased;
+}
+a { color: var(--accent); text-decoration: none; transition: color 0.15s; }
+a:hover { color: var(--accent-hover); }
+img { max-width: 100%; height: auto; }
+
+/* ── Layout ─────────────────────── */
+.container { max-width: 1152px; margin: 0 auto; padding: 0 24px; }
+@media (min-width: 640px) { .container { padding: 0 40px; } }
+
+/* ── Nav (same as main site) ────── */
+.nav { position: sticky; top: 0; z-index: 50; background: var(--bg-alt); border-bottom: 1px solid var(--border); backdrop-filter: blur(12px); }
+.nav-inner { display: flex; align-items: center; height: 56px; gap: 16px; }
+.nav-brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 15px; color: var(--text); text-decoration: none; }
+.nav-brand svg { width: 28px; height: 28px; color: var(--accent); }
+.nav-links { display: flex; gap: 4px; margin-left: auto; }
+.nav-link { padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 500; color: var(--text-secondary); transition: all 0.15s; }
+.nav-link:hover { color: var(--text); background: var(--accent-subtle); }
+.nav-link.active { color: var(--accent); background: var(--accent-subtle); }
+
+/* ── Footer ─────────────────────── */
+footer { margin-top: 40px; padding: 24px 0; border-top: 1px solid var(--border); }
+footer p { font-size: 13px; color: var(--text-tertiary); text-align: center; }
+footer p + p { margin-top: 4px; }
+
+/* ── Breadcrumb ─────────────────── */
+.breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-tertiary); margin-bottom: 16px; }
+.breadcrumb a { color: var(--text-secondary); }
+.breadcrumb a:hover { color: var(--accent); }
+.breadcrumb svg { width: 12px; height: 12px; color: var(--text-tertiary); }
+
+/* ── Detail Hero ────────────────── */
+.detail-hero { padding: 48px 0 32px; border-bottom: 1px solid var(--border); }
+.detail-hero h1 { font-size: 36px; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 12px; }
+.detail-hero .desc { font-size: 16px; color: var(--text-secondary); line-height: 1.6; max-width: 720px; }
+.detail-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; border: 1px solid; }
+.tag { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 500; background: var(--accent-subtle); color: var(--accent); }
+
+/* ── Content Sections ───────────── */
+.detail-content { padding: 40px 0 20px; }
+.detail-section { margin-bottom: 48px; }
+.detail-section h2 { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 8px; padding-bottom: 12px; border-bottom: 2px solid var(--border); display: flex; align-items: center; gap: 8px; }
+.detail-section h2 .section-icon { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 6px; }
+.detail-section > p.section-desc { color: var(--text-secondary); font-size: 14px; margin-bottom: 20px; }
+
+/* ── Cards ──────────────────────── */
+.card-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+@media (min-width: 640px) { .card-grid { grid-template-columns: repeat(2, 1fr); } }
+.info-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px 20px; box-shadow: var(--shadow); }
+.info-card h3 { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+.info-card p { font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin: 0; }
+
+/* ── Standard Catalog Cards ─────── */
+.standard-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px; }
+.standard-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow); transition: all 0.2s ease; display: flex; flex-direction: column; text-decoration: none; color: inherit; }
+.standard-card:hover { border-color: var(--accent); box-shadow: var(--shadow-md); transform: translateY(-2px); color: inherit; }
+.standard-card-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 12px; }
+.standard-card h3 { font-size: 17px; font-weight: 700; letter-spacing: -0.01em; }
+.standard-card:hover h3 { color: var(--accent); }
+.standard-card-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 16px; flex: 1; }
+.standard-card-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+.standard-card-footer { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding-top: 14px; border-top: 1px solid var(--border-muted); }
+.standard-card-stat { text-align: center; }
+.standard-card-stat .val { font-size: 16px; font-weight: 700; color: var(--text); }
+.standard-card-stat .lbl { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-tertiary); }
+.group-badge { background: var(--purple-subtle); color: var(--purple); border-color: transparent; font-size: 10px; padding: 1px 8px; border-radius: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; }
+
+/* ── Table ──────────────────────── */
+.table-wrap { overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--border); background: var(--card); box-shadow: var(--shadow); }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead { background: var(--bg); }
+th { padding: 10px 16px; text-align: left; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-secondary); border-bottom: 1px solid var(--border); white-space: nowrap; }
+td { padding: 12px 16px; border-bottom: 1px solid var(--border-muted); vertical-align: top; }
+tr:last-child td { border-bottom: none; }
+tr:hover { background: var(--card-hover); }
+
+/* ── Requirement card ───────────── */
+.req-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px 20px; margin-bottom: 12px; box-shadow: var(--shadow); }
+.req-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.req-id { font-family: "SFMono-Regular", Consolas, monospace; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px; background: var(--code-bg); color: var(--text-secondary); }
+.req-severity { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 4px; border: 1px solid; }
+.req-statement { font-size: 14px; line-height: 1.6; color: var(--text); }
+.req-rationale { font-size: 13px; color: var(--text-secondary); font-style: italic; margin-top: 6px; }
+.req-details { font-size: 12px; color: var(--text-tertiary); margin-top: 8px; }
+
+/* ── Scope grid ─────────────────── */
+.scope-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 640px) { .scope-grid { grid-template-columns: 1fr; } }
+.scope-box { border-radius: var(--radius-sm); padding: 20px; }
+.scope-in { background: var(--success-subtle); border: 1px solid var(--success); }
+.scope-out { background: var(--code-bg); border: 1px solid var(--border); }
+.scope-box h3 { font-size: 14px; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+.scope-in h3 { color: var(--success); }
+.scope-out h3 { color: var(--text-secondary); }
+.scope-list { list-style: none; padding: 0; }
+.scope-list li { padding: 4px 0; font-size: 13px; line-height: 1.5; display: flex; gap: 8px; align-items: flex-start; }
+.scope-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; margin-top: 7px; }
+.scope-in .scope-dot { background: var(--success); }
+.scope-out .scope-dot { background: var(--text-tertiary); }
+
+/* ── FAQ ─────────────────────────── */
+.faq-item { border: 1px solid var(--border); border-radius: var(--radius-sm); margin-bottom: 12px; overflow: hidden; }
+.faq-q { padding: 14px 20px; font-size: 14px; font-weight: 600; color: var(--text); background: var(--card); }
+.faq-a { padding: 14px 20px; font-size: 13px; color: var(--text-secondary); line-height: 1.6; border-top: 1px solid var(--border-muted); background: var(--bg); }
+
+/* ── Hero section for index ─────── */
+.standards-hero { padding: 60px 0 40px; text-align: center; position: relative; overflow: hidden; }
+.standards-hero::before { content: ''; position: absolute; top: -200px; left: 50%; transform: translateX(-50%); width: 800px; height: 600px; background: radial-gradient(ellipse, var(--success-subtle) 0%, transparent 70%); pointer-events: none; }
+.standards-hero h1 { font-size: 36px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; margin-bottom: 12px; }
+.standards-hero h1 span { color: var(--success); }
+.standards-hero p { font-size: 16px; color: var(--text-secondary); max-width: 640px; margin: 0 auto; line-height: 1.5; }
+
+/* ── Stats ──────────────────────── */
+.stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin: 32px 0 48px; }
+@media (max-width: 640px) { .stats-row { grid-template-columns: repeat(2, 1fr); } }
+.stat-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; text-align: center; box-shadow: var(--shadow); }
+.stat-value { font-size: 32px; font-weight: 800; letter-spacing: -0.02em; color: var(--accent); }
+.stat-label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-top: 4px; }
+
+/* ── Revision history ───────────── */
+.timeline { margin-left: 12px; border-left: 2px solid var(--border); padding-left: 24px; }
+.timeline-item { position: relative; padding-bottom: 20px; }
+.timeline-item:last-child { padding-bottom: 0; }
+.timeline-dot { position: absolute; left: -31px; top: 4px; width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--accent); background: var(--bg); }
+.timeline-version { font-size: 13px; font-weight: 700; color: var(--text); }
+.timeline-date { font-size: 12px; color: var(--text-tertiary); margin-left: 8px; }
+.timeline-summary { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
+.timeline-by { font-size: 11px; color: var(--text-tertiary); margin-top: 2px; }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="container nav-inner">
+    <a href="../index.html" class="nav-brand">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+      Architecture as Code
+    </a>
+    <div class="nav-links">
+      <a href="../index.html" class="nav-link ">Overview</a>
+      <a href="../index.html#systems" class="nav-link">Systems</a>
+      <a href="../patterns/index.html" class="nav-link ">Patterns</a>
+      <a href="../standards/index.html" class="nav-link active">Standards</a>
+      <a href="../waivers/index.html" class="nav-link ">Waivers</a>
+      <a href="../index.html#pipeline" class="nav-link">Pipeline</a>
+      <a href="https://github.com/muthub-ai/aac" class="nav-link" target="_blank" rel="noopener">GitHub &nearr;</a>
+    </div>
+  </div>
+</nav>
+
+<section class="detail-hero">
+  <div class="container">
+    <div class="breadcrumb">
+      <a href="../index.html">Home</a>
+      <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg></span>
+      <a href="index.html">Standards</a>
+      <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg></span>
+      <span>Automated Infrastructure as Code Deployment Standard</span>
+    </div>
+    <h1>Automated Infrastructure as Code Deployment Standard</h1>
+    <p class="desc">STD-DEVOPS-001 &mdash; DevOps &bull; Version 1.0 &bull; Approved Dec 1, 2024</p>
+    <div class="detail-meta">
+      <span class="badge" style="background:#dafbe1;color:#1a7f37;border-color:#1a7f37">APPROVED</span>
+      <span class="badge" style="background:var(--orange-subtle);color:var(--orange);border-color:var(--orange)">Provisional</span>
+      <span class="badge" style="background:var(--card);color:var(--text-secondary);border-color:var(--border)">v1.0</span>
+      <span class="group-badge">DevOps</span>
+    </div>
+    <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:6px"><span class="badge" style="background:var(--purple-subtle);color:var(--purple);border-color:transparent">Governance with Minimized Friction</span> <span class="badge" style="background:var(--purple-subtle);color:var(--purple);border-color:transparent">Modular and Composable Architecture</span></div>
+    <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:6px"><span class="tag">infrastructure-as-code</span> <span class="tag">terraform</span> <span class="tag">gitops</span> <span class="tag">ci-cd</span> <span class="tag">policy-as-code</span> <span class="tag">drift-detection</span></div>
+  </div>
+</section>
+
+<div class="container detail-content">
+
+  <div class="detail-section">
+    <div style="display:flex;flex-wrap:wrap;gap:16px;font-size:13px;color:var(--text-secondary)">
+      <span><strong>Owner:</strong> VP of Platform Engineering</span><span><strong>Architect:</strong> Platform Engineering Lead</span><span><strong>Metric:</strong> Percentage of infrastructure changes deployed through IaC pipelines</span>
+    </div>
+  </div>
+
+  <div class="detail-section">
+    <h2><span class="section-icon" style="background:var(--success-subtle);color:var(--success)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span> Scope</h2>
+    
+    <div class="scope-grid">
+      <div class="scope-box scope-in">
+        <h3><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> In Scope</h3>
+        <ul class="scope-list">
+          <li><span class="scope-dot"></span>Terraform and OpenTofu module standards</li>
+<li><span class="scope-dot"></span>GitOps workflows for infrastructure changes</li>
+<li><span class="scope-dot"></span>Policy-as-code enforcement with OPA/Sentinel</li>
+<li><span class="scope-dot"></span>Infrastructure drift detection and remediation</li>
+<li><span class="scope-dot"></span>Module registry and shared module governance</li>
+        </ul>
+      </div>
+      <div class="scope-box scope-out">
+        <h3>Out of Scope</h3>
+        <ul class="scope-list">
+          <li><span class="scope-dot"></span>Application deployment pipelines (covered by CI/CD standard)</li>
+<li><span class="scope-dot"></span>Container orchestration and Kubernetes configuration</li>
+<li><span class="scope-dot"></span>Network infrastructure managed by network operations</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="detail-section">
+    <h2><span class="section-icon" style="background:var(--danger-subtle);color:var(--danger)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></span> Requirements (6)</h2>
+    <p class="section-desc">Requirements use <a href="https://datatracker.ietf.org/doc/html/rfc2119" target="_blank" rel="noopener">RFC 2119</a> severity levels.</p>
+    
+    <div class="req-card">
+      <div class="req-header">
+        <span class="req-id">REQ-001</span>
+        <span class="req-severity" style="background:var(--danger-subtle);color:var(--danger);border-color:var(--danger)">MUST</span>
+      </div>
+      <p class="req-statement">All infrastructure changes MUST be deployed through version-controlled IaC pipelines.</p>
+      <p class="req-rationale">Version-controlled IaC pipelines ensure auditability, reproducibility, and peer review of all infrastructure modifications, reducing the risk of configuration errors and unauthorized changes.</p>
+      <div class="req-details">
+        <strong>Verification:</strong> Audit CI/CD pipeline logs to confirm all production infrastructure changes originate from IaC pipeline runs; cross-reference with cloud provider activity logs.<br>
+        <strong>Platforms:</strong> AWS, Azure, GCP<br>
+        <strong>Tiers:</strong> Tier 1, Tier 2, Tier 3, Tier 4
+      </div>
+    </div>
+
+    <div class="req-card">
+      <div class="req-header">
+        <span class="req-id">REQ-002</span>
+        <span class="req-severity" style="background:var(--danger-subtle);color:var(--danger);border-color:var(--danger)">MUST</span>
+      </div>
+      <p class="req-statement">Infrastructure modules MUST pass policy-as-code validation before apply.</p>
+      <p class="req-rationale">Policy-as-code validation enforces security, compliance, and cost guardrails automatically before any infrastructure change is applied, shifting governance left in the deployment process.</p>
+      <div class="req-details">
+        <strong>Verification:</strong> Review pipeline configurations to confirm policy-as-code gates (OPA/Sentinel) are integrated and enforced prior to terraform apply stages.<br>
+        <strong>Platforms:</strong> AWS, Azure, GCP<br>
+        <strong>Tiers:</strong> Tier 1, Tier 2, Tier 3, Tier 4
+      </div>
+    </div>
+
+    <div class="req-card">
+      <div class="req-header">
+        <span class="req-id">REQ-003</span>
+        <span class="req-severity" style="background:var(--danger-subtle);color:var(--danger);border-color:var(--danger)">MUST NOT</span>
+      </div>
+      <p class="req-statement">Manual infrastructure changes MUST NOT be made to production environments.</p>
+      <p class="req-rationale">Manual changes introduce configuration drift, bypass peer review and policy checks, and create undocumented state that cannot be reliably reproduced or rolled back.</p>
+      <div class="req-details">
+        <strong>Verification:</strong> Enable cloud provider guardrails (e.g., AWS SCPs, Azure Policy) to restrict console-based modifications; run weekly drift detection scans to identify unauthorized changes.<br>
+        <strong>Platforms:</strong> AWS, Azure, GCP<br>
+        <strong>Tiers:</strong> Tier 1, Tier 2, Tier 3, Tier 4
+      </div>
+    </div>
+
+    <div class="req-card">
+      <div class="req-header">
+        <span class="req-id">REQ-004</span>
+        <span class="req-severity" style="background:var(--warning-subtle);color:var(--warning);border-color:var(--warning)">SHOULD</span>
+      </div>
+      <p class="req-statement">Shared Terraform modules SHOULD be published to the internal module registry with semantic versioning.</p>
+      <p class="req-rationale">A centralized module registry with semantic versioning promotes reuse, consistency, and controlled upgrades across teams while avoiding duplicated infrastructure logic.</p>
+      <div class="req-details">
+        <strong>Verification:</strong> Review module registry catalog for published modules; verify that each module uses semantic versioning and includes documentation and examples.<br>
+        <strong>Platforms:</strong> AWS, Azure, GCP<br>
+        <strong>Tiers:</strong> Tier 1, Tier 2, Tier 3, Tier 4
+      </div>
+    </div>
+
+    <div class="req-card">
+      <div class="req-header">
+        <span class="req-id">REQ-005</span>
+        <span class="req-severity" style="background:var(--warning-subtle);color:var(--warning);border-color:var(--warning)">SHOULD</span>
+      </div>
+      <p class="req-statement">Infrastructure drift detection SHOULD run daily with automated alerting.</p>
+      <p class="req-rationale">Daily drift detection identifies unauthorized or accidental changes promptly, enabling rapid remediation before drift compounds and causes operational issues.</p>
+      <div class="req-details">
+        <strong>Verification:</strong> Confirm drift detection jobs are scheduled daily in the CI/CD platform; validate that alerts are routed to the responsible platform team's notification channel.<br>
+        <strong>Platforms:</strong> AWS, Azure, GCP<br>
+        <strong>Tiers:</strong> Tier 1, Tier 2, Tier 3, Tier 4
+      </div>
+    </div>
+
+    <div class="req-card">
+      <div class="req-header">
+        <span class="req-id">REQ-006</span>
+        <span class="req-severity" style="background:var(--danger-subtle);color:var(--danger);border-color:var(--danger)">MUST</span>
+      </div>
+      <p class="req-statement">State files MUST be stored in encrypted remote backends with state locking enabled.</p>
+      <p class="req-rationale">Remote state with encryption protects sensitive infrastructure metadata at rest and in transit, while state locking prevents concurrent modifications that could corrupt infrastructure state.</p>
+      <div class="req-details">
+        <strong>Verification:</strong> Audit Terraform backend configurations to confirm remote storage (e.g., S3, GCS, Azure Blob) with encryption enabled and DynamoDB/equivalent locking mechanisms in place.<br>
+        <strong>Platforms:</strong> AWS, Azure, GCP<br>
+        <strong>Tiers:</strong> Tier 1, Tier 2, Tier 3, Tier 4
+      </div>
+    </div>
+  </div>
+
+  
+    <div class="detail-section">
+      <h2><span class="section-icon" style="background:var(--purple-subtle);color:var(--purple)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/></svg></span> Guidelines</h2>
+      
+      <div class="info-card" style="margin-bottom:8px">
+        <h3 style="font-family:monospace;color:var(--text-secondary)">GUIDE-001</h3>
+        <p>Module Structure: Organize Terraform modules using a consistent directory layout with separate directories for environments, modules, and configuration. Each module should have a README, input variables with descriptions, output definitions, and example usage. Pin provider versions and use dependency lock files.</p>
+      </div>
+
+      <div class="info-card" style="margin-bottom:8px">
+        <h3 style="font-family:monospace;color:var(--text-secondary)">GUIDE-002</h3>
+        <p>State Management: Use separate state files per environment and per service boundary to limit blast radius. Enable versioning on state storage backends to allow rollback. Never store secrets in state files; use data sources or secret manager references instead. Implement state file access controls using IAM policies.</p>
+      </div>
+
+      <div class="info-card" style="margin-bottom:8px">
+        <h3 style="font-family:monospace;color:var(--text-secondary)">GUIDE-003</h3>
+        <p>Secret Handling in IaC: Never hardcode secrets in Terraform code or variable files. Use dynamic secret retrieval from a secrets manager (e.g., HashiCorp Vault, AWS Secrets Manager) via data sources. Mark sensitive variables with the sensitive flag to prevent accidental exposure in logs and plan output.</p>
+      </div>
+    </div>
+  
+    <div class="detail-section">
+      <h2><span class="section-icon" style="background:var(--success-subtle);color:var(--success)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></span> Approved Solutions</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Solution</th><th>Description</th></tr></thead>
+          <tbody>
+            
+            <tr>
+              <td style="font-weight:600">Terraform Cloud</td>
+              <td>HashiCorp's managed platform for Terraform providing remote state management, policy-as-code with Sentinel, VCS-driven workflows, private module registry, and cost estimation for infrastructure changes.</td>
+            </tr>
+
+            <tr>
+              <td style="font-weight:600">Spacelift</td>
+              <td>Infrastructure-as-code management platform supporting Terraform, OpenTofu, Pulumi, and CloudFormation with policy-as-code, drift detection, approval workflows, and stack dependencies.</td>
+            </tr>
+
+            <tr>
+              <td style="font-weight:600">Open Policy Agent</td>
+              <td>General-purpose policy engine that enables policy-as-code enforcement for Terraform plans, Kubernetes admission control, and API authorization using the Rego policy language.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  
+    <div class="detail-section">
+      <h2><span class="section-icon" style="background:var(--accent-subtle);color:var(--accent)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span> Authoritative Sources</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Source</th><th>Issuing Agency</th><th>Control</th></tr></thead>
+          <tbody>
+            
+            <tr>
+              <td style="font-weight:500">CIS Benchmarks for Cloud Providers</td>
+              <td>Center for Internet Security (CIS)</td>
+              <td style="color:var(--text-secondary)">—</td>
+            </tr>
+
+            <tr>
+              <td style="font-weight:500">HashiCorp Infrastructure as Code Best Practices</td>
+              <td>HashiCorp</td>
+              <td style="color:var(--text-secondary)">—</td>
+            </tr>
+
+            <tr>
+              <td style="font-weight:500">NIST SP 800-128 Guide for Security-Focused Configuration Management</td>
+              <td>National Institute of Standards and Technology (NIST)</td>
+              <td style="color:var(--text-secondary)">—</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  
+    <div class="detail-section">
+      <h2><span class="section-icon" style="background:var(--code-bg);color:var(--text-secondary)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span> Definitions</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Term</th><th>Definition</th></tr></thead>
+          <tbody>
+            
+            <tr>
+              <td style="font-weight:600">GitOps</td>
+              <td>An operational framework that applies DevOps best practices for infrastructure automation by using Git repositories as the single source of truth for declarative infrastructure and application configurations, with automated reconciliation ensuring the live environment matches the desired state.</td>
+            </tr>
+
+            <tr>
+              <td style="font-weight:600">Policy-as-Code</td>
+              <td>The practice of expressing organizational policies, security rules, and compliance requirements as machine-readable code that can be version-controlled, tested, and automatically enforced within CI/CD pipelines and runtime environments.</td>
+            </tr>
+
+            <tr>
+              <td style="font-weight:600">Infrastructure Drift</td>
+              <td>The divergence between the actual state of deployed infrastructure and the desired state defined in infrastructure-as-code configurations, typically caused by manual changes, failed deployments, or external modifications outside the IaC workflow.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  
+    <div class="detail-section">
+      <h2><span class="section-icon" style="background:var(--warning-subtle);color:var(--warning)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span> Frequently Asked Questions</h2>
+      
+      <div class="faq-item">
+        <div class="faq-q">What should teams do when an emergency hotfix requires an immediate infrastructure change that cannot wait for the standard IaC pipeline?</div>
+        <div class="faq-a">Emergency changes should follow the documented break-glass procedure which allows temporary manual access with enhanced logging. All emergency changes must be retroactively codified in IaC within 24 hours, and a post-incident review must document the change and update runbooks to prevent recurrence.</div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q">How do we handle infrastructure that was provisioned before this standard was enacted?</div>
+        <div class="faq-a">Existing infrastructure should be imported into Terraform state using terraform import or equivalent tooling. Teams should prioritize importing Tier 1 and Tier 2 workloads within six months and complete all tiers within twelve months. The Platform Engineering team provides import tooling and migration guides.</div>
+      </div>
+    </div>
+  
+    <div class="detail-section">
+      <h2><span class="section-icon" style="background:var(--accent-subtle);color:var(--accent)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span> Revision History</h2>
+      <div class="timeline">
+        
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <span class="timeline-version">v1.0</span>
+          <span class="timeline-date">Dec 1, 2024</span>
+          <span class="badge" style="background:var(--accent-subtle);color:var(--accent);border-color:transparent;margin-left:6px;font-size:10px">Initial Release</span>
+          <p class="timeline-summary">Initial release of the Automated Infrastructure as Code Deployment Standard</p>
+          <p class="timeline-by">By Platform Engineering Lead · Approved by VP of Platform Engineering</p>
+        </div>
+      </div>
+    </div>
+  
+    <div class="detail-section">
+      <h2><span class="section-icon" style="background:var(--accent-subtle);color:var(--accent)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></span> References</h2>
+      <ul style="list-style:none;padding:0">
+        
+        <li style="padding:6px 0;font-size:13px;border-bottom:1px solid var(--border-muted)">
+          <strong style="font-family:monospace;font-size:11px;color:var(--text-secondary)">REF-001</strong>
+           — Terraform Documentation and Module Registry
+           <a href="https://registry.terraform.io" target="_blank" rel="noopener">&nearr;</a>
+        </li>
+
+        <li style="padding:6px 0;font-size:13px;border-bottom:1px solid var(--border-muted)">
+          <strong style="font-family:monospace;font-size:11px;color:var(--text-secondary)">REF-002</strong>
+           — GitOps Working Group Principles
+           <a href="https://opengitops.dev" target="_blank" rel="noopener">&nearr;</a>
+        </li>
+      </ul>
+    </div>
+
+</div>
+
+
+<footer>
+  <div class="container">
+    <p>Architecture as Code &mdash; auto-generated from <a href="https://github.com/muthub-ai/aac">YAML models</a> via CI/CD pipeline</p>
+    <p style="font-size:11px;color:var(--text-tertiary)">Built with C4 Model &bull; PlantUML &bull; Asciidoctor &bull; GitHub Actions</p>
+  </div>
+</footer>
+</body>
+</html>
