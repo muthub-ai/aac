@@ -4,8 +4,11 @@
 # ///
 """
 Architecture as Code (AAC) Platform — System Architecture Diagram
-Hand-crafted, pixel-perfect CTO-grade architecture diagram using
-general architecture icons and a muted professional color palette.
+Hand-crafted, pixel-perfect CTO-grade architecture diagram.
+
+Design: light cluster backgrounds with colored header bars so that
+dark-themed icons (most diagrams-library icons are black/dark) remain
+clearly visible.  Inspired by AWS / Azure reference-architecture style.
 """
 from __future__ import annotations
 import os, math
@@ -25,29 +28,32 @@ def icon(provider: str, category: str, name: str) -> str:
     return os.path.join(ICON_BASE, provider, category, name)
 
 # ── Canvas ────────────────────────────────────────────────────────────
-W, H = 2800, 1200
+W, H = 2800, 1250
 DPI = 200
-BG_COLOR = (255, 255, 255)
+BG = (248, 249, 252)  # very light cool gray canvas
 
-# ── Muted Professional Palette ────────────────────────────────────────
-DARK       = (42, 50, 60)       # charcoal
-GITHUB_BG  = (36, 41, 47)      # github dark
-NAVY       = (55, 71, 100)     # muted navy
-PURPLE     = (85, 60, 108)     # muted purple
-RED        = (140, 55, 55)     # muted brick red
-ORANGE_BG  = (158, 95, 45)    # muted amber/brown
-TEAL       = (55, 100, 95)     # muted teal
-DEPLOY_BL  = (60, 85, 120)    # muted steel blue
-WHITE      = (255, 255, 255)
-LGRAY      = (245, 245, 245)
+# ── Professional Palette ──────────────────────────────────────────────
+# Each cluster gets: header_color (solid bar) + body_tint (very light)
+DARK      = (40, 48, 58)       # charcoal for text
+WHITE     = (255, 255, 255)
 
-# Arrow / flow colors (also muted)
-C_AMBER  = (180, 120, 40)     # amber for CI/CD
-C_BLUE   = (70, 110, 160)     # steel blue for data
-C_PURPLE = (100, 70, 130)     # muted purple for tooling
-C_RED    = (160, 65, 65)      # muted red for governance
-C_TEAL   = (60, 120, 110)     # muted teal for user
-C_NAVY   = (65, 90, 130)      # muted navy for deployment
+# Cluster themes: (header bar, body tint, border)
+TH_PERSONA  = ((70,  85, 105), (235, 238, 245), (170, 180, 200))   # slate
+TH_GITHUB   = ((36,  41,  47), (232, 234, 238), (160, 165, 175))   # github charcoal
+TH_DATA     = ((45,  90, 150), (228, 238, 252), (150, 185, 225))   # blue
+TH_TOOLING  = ((95,  60, 130), (240, 232, 250), (180, 160, 210))   # purple
+TH_GOV      = ((165, 55,  55), (252, 235, 235), (215, 165, 165))   # red
+TH_CI       = ((175, 110, 30), (252, 243, 228), (215, 185, 140))   # amber
+TH_WEB      = ((30, 120, 110), (225, 245, 242), (145, 200, 195))   # teal
+TH_DEPLOY   = ((55,  85, 130), (230, 237, 248), (160, 180, 210))   # steel
+
+# Arrow / flow colors (medium saturation, legible on light canvas)
+C_AMBER  = (185, 120, 30)     # CI/CD
+C_BLUE   = (50, 100, 170)     # data flow
+C_PURPLE = (110, 60, 150)     # tooling
+C_RED    = (180, 55, 55)      # governance
+C_TEAL   = (30, 130, 115)     # user interaction
+C_STEEL  = (55, 85, 135)      # deployment
 
 # ── Fonts ─────────────────────────────────────────────────────────────
 def _font(size, bold=False):
@@ -58,7 +64,8 @@ def _font(size, bold=False):
             return ImageFont.truetype(name, size)
         except OSError:
             pass
-    for p in ["/System/Library/Fonts/Helvetica.ttc", "/System/Library/Fonts/Supplemental/Arial.ttf"]:
+    for p in ["/System/Library/Fonts/Helvetica.ttc",
+              "/System/Library/Fonts/Supplemental/Arial.ttf"]:
         if os.path.exists(p):
             try:
                 return ImageFont.truetype(p, size)
@@ -66,9 +73,9 @@ def _font(size, bold=False):
                 pass
     return ImageFont.load_default()
 
-FT  = _font(40, True)   # title
+FT  = _font(42, True)   # title
 FS  = _font(22)          # subtitle
-FC  = _font(18, True)    # cluster header
+FC  = _font(16, True)    # cluster header
 FN  = _font(15)          # node label
 FNS = _font(13)          # node label small
 FE  = _font(13)          # edge label
@@ -76,19 +83,40 @@ FL  = _font(14)          # legend
 FLT = _font(15, True)    # legend title
 
 # ── Canvas ────────────────────────────────────────────────────────────
-img = Image.new("RGB", (W, H), BG_COLOR)
+img = Image.new("RGB", (W, H), BG)
 draw = ImageDraw.Draw(img)
 
 # ── Helpers ───────────────────────────────────────────────────────────
-def rrect(x1, y1, x2, y2, fill, r=14, outline=None, ow=2):
-    draw.rounded_rectangle([x1, y1, x2, y2], radius=r, fill=fill, outline=outline or fill, width=ow)
+def cluster(x1, y1, x2, y2, theme, title, r=12):
+    """Draw a cluster box: colored header bar + light body + thin border."""
+    hdr_color, body_tint, border = theme
+    hdr_h = 34
+    # body (rounded)
+    draw.rounded_rectangle([x1, y1, x2, y2], radius=r, fill=body_tint,
+                           outline=border, width=2)
+    # header bar (top portion, clipped by re-drawing rounded top)
+    draw.rounded_rectangle([x1, y1, x2, y1+hdr_h+r], radius=r, fill=hdr_color)
+    draw.rectangle([x1+1, y1+hdr_h, x2-1, y1+hdr_h+r], fill=body_tint)
+    # re-draw side borders that the header might have covered
+    draw.line([x1, y1+hdr_h, x1, y1+hdr_h+r], fill=border, width=2)
+    draw.line([x2, y1+hdr_h, x2, y1+hdr_h+r], fill=border, width=2)
+    # title centered in header
+    bb = draw.textbbox((0, 0), title, font=FC)
+    tw = bb[2] - bb[0]
+    draw.text(((x1+x2)//2 - tw//2, y1 + 8), title, fill=WHITE, font=FC)
+    return body_tint  # return body color for icon bg
 
 def put_icon(path, cx, cy, sz, bg):
+    """Place an icon with a white circle badge behind it for pop."""
+    # white circle badge
+    pad = 6
+    draw.ellipse([cx-sz//2-pad, cy-sz//2-pad, cx+sz//2+pad, cy+sz//2+pad],
+                 fill=WHITE, outline=(220,220,225), width=1)
     if not os.path.exists(path):
-        draw.ellipse([cx-sz//2, cy-sz//2, cx+sz//2, cy+sz//2], fill=(180,180,180))
+        draw.ellipse([cx-sz//2, cy-sz//2, cx+sz//2, cy+sz//2], fill=(200,200,205))
         return
     ic = Image.open(path).convert("RGBA").resize((sz, sz), Image.LANCZOS)
-    patch = Image.new("RGB", (sz, sz), bg)
+    patch = Image.new("RGB", (sz, sz), WHITE)
     patch.paste(ic, (0, 0), ic)
     img.paste(patch, (cx - sz // 2, cy - sz // 2))
 
@@ -97,7 +125,7 @@ def tcenter(text, cx, cy, font, color=DARK):
     draw.text((cx - (bb[2]-bb[0])//2, cy - (bb[3]-bb[1])//2), text, fill=color, font=font)
 
 def tmulti(lines, cx, cy, font, color=DARK, sp=3):
-    mets = [(draw.textbbox((0,0),l,font=font)) for l in lines]
+    mets = [draw.textbbox((0,0), l, font=font) for l in lines]
     sizes = [(b[2]-b[0], b[3]-b[1]) for b in mets]
     th = sum(s[1]+sp for s in sizes) - sp
     y = cy - th // 2
@@ -114,7 +142,8 @@ def _dashed(x1, y1, x2, y2, color, w, dl=10, gl=6):
     d = 0
     while d < L:
         e = min(d+dl, L)
-        draw.line([int(x1+ux*d), int(y1+uy*d), int(x1+ux*e), int(y1+uy*e)], fill=color, width=w)
+        draw.line([int(x1+ux*d), int(y1+uy*d), int(x1+ux*e), int(y1+uy*e)],
+                  fill=color, width=w)
         d = e + gl
 
 def arr(x1, y1, x2, y2, color=(120,144,156), w=2, label=None, dash=False):
@@ -125,171 +154,172 @@ def arr(x1, y1, x2, y2, color=(120,144,156), w=2, label=None, dash=False):
     a = math.atan2(y2-y1, x2-x1)
     ah, aw_ = 12, 7
     px, py = x2 - ah*math.cos(a), y2 - ah*math.sin(a)
-    draw.polygon([(x2,y2), (int(px - aw_*math.sin(a)), int(py + aw_*math.cos(a))),
-                  (int(px + aw_*math.sin(a)), int(py - aw_*math.cos(a)))], fill=color)
+    draw.polygon([(x2,y2),
+                  (int(px - aw_*math.sin(a)), int(py + aw_*math.cos(a))),
+                  (int(px + aw_*math.sin(a)), int(py - aw_*math.cos(a)))],
+                 fill=color)
     if label:
         mx, my = (x1+x2)//2, (y1+y2)//2
         bb = draw.textbbox((0,0), label, font=FE)
         tw, th = bb[2]-bb[0], bb[3]-bb[1]
-        p = 3
-        draw.rounded_rectangle([mx-tw//2-p, my-th//2-p-1, mx+tw//2+p, my+th//2+p-1], radius=3, fill=WHITE)
+        p = 4
+        draw.rounded_rectangle([mx-tw//2-p, my-th//2-p-1, mx+tw//2+p, my+th//2+p-1],
+                               radius=4, fill=WHITE, outline=(210,210,215), width=1)
         draw.text((mx-tw//2, my-th//2-1), label, fill=color, font=FE)
 
 
 # ══════════════════════════════════════════════════════════════════════
 # TITLE
 # ══════════════════════════════════════════════════════════════════════
-tcenter("Architecture as Code (AAC) Platform", W//2, 35, FT, DARK)
-tcenter("System Architecture", W//2, 72, FS, (100,100,100))
+tcenter("Architecture as Code (AAC) Platform", W//2, 36, FT, DARK)
+tcenter("System Architecture", W//2, 74, FS, (110, 115, 125))
 
-# Layout constants
-LM = 50       # left margin
-RM = W - 50   # right margin
+LM = 50; RM = W - 50
 
 # ══════════════════════════════════════════════════════════════════════
 # ROW 1 — Personas + GitHub  (y: 110..310)
 # ══════════════════════════════════════════════════════════════════════
-R1 = 110; R1H = 200
+R1 = 115; R1H = 200
 
 # Personas
-rrect(LM, R1, LM+400, R1+R1H, DARK)
-tcenter("Personas", LM+200, R1+22, FC, WHITE)
-put_icon(icon("onprem","client","user.png"), LM+120, R1+90, 56, DARK)
-tmulti(["Enterprise","Architect"], LM+120, R1+150, FNS, WHITE)
-put_icon(icon("onprem","client","user.png"), LM+300, R1+90, 56, DARK)
-tmulti(["Developer"], LM+300, R1+150, FNS, WHITE)
+bg = cluster(LM, R1, LM+400, R1+R1H, TH_PERSONA, "Personas")
+put_icon(icon("azure","general","usericon.png"), LM+120, R1+100, 54, bg)
+tmulti(["Enterprise","Architect"], LM+120, R1+162, FNS, DARK)
+put_icon(icon("azure","general","usericon.png"), LM+300, R1+100, 54, bg)
+tmulti(["Developer"], LM+300, R1+162, FNS, DARK)
 
 # GitHub Platform
 GH_L = LM + 460
-rrect(GH_L, R1, GH_L+840, R1+R1H, GITHUB_BG)
-tcenter("GitHub Platform", GH_L+420, R1+22, FC, WHITE)
-put_icon(icon("onprem","vcs","github.png"), GH_L+140, R1+90, 56, GITHUB_BG)
-tmulti(["muthub-ai/aac","Monorepo"], GH_L+140, R1+155, FNS, WHITE)
-put_icon(icon("onprem","ci","github-actions.png"), GH_L+420, R1+90, 56, GITHUB_BG)
-tmulti(["GitHub Actions","9-Stage Pipeline"], GH_L+420, R1+155, FNS, WHITE)
-put_icon(icon("onprem","network","internet.png"), GH_L+700, R1+90, 56, GITHUB_BG)
-tmulti(["Copilot Spaces","RAG Context"], GH_L+700, R1+155, FNS, WHITE)
+bg = cluster(GH_L, R1, GH_L+840, R1+R1H, TH_GITHUB, "GitHub Platform")
+put_icon(icon("onprem","vcs","github.png"), GH_L+140, R1+100, 54, bg)
+tmulti(["muthub-ai/aac","Monorepo"], GH_L+140, R1+165, FNS, DARK)
+put_icon(icon("onprem","ci","github-actions.png"), GH_L+420, R1+100, 54, bg)
+tmulti(["GitHub Actions","9-Stage Pipeline"], GH_L+420, R1+165, FNS, DARK)
+put_icon(icon("onprem","network","internet.png"), GH_L+700, R1+100, 54, bg)
+tmulti(["Copilot Spaces","RAG Context"], GH_L+700, R1+165, FNS, DARK)
 
 # repo -> actions
-arr(GH_L+195, R1+90, GH_L+360, R1+90, C_AMBER, 2, "trigger")
+arr(GH_L+200, R1+100, GH_L+358, R1+100, C_AMBER, 2, "trigger")
 
 # ══════════════════════════════════════════════════════════════════════
-# ROW 2 — Architecture Data Layer  (y: 350..540)
+# ROW 2 — Architecture Data Layer  (y: 360..545)
 # ══════════════════════════════════════════════════════════════════════
-R2 = 350; R2H = 190
+R2 = 360; R2H = 185
 
-rrect(LM, R2, LM+1250, R2+R2H, NAVY)
-tcenter("Architecture Data Layer  (YAML + JSON Schema Draft 2020-12)", LM+625, R2+22, FC, WHITE)
+bg = cluster(LM, R2, LM+1250, R2+R2H, TH_DATA,
+             "Architecture Data Layer  (YAML + JSON Schema Draft 2020-12)")
 
 d_items = [
-    (icon("generic","storage","storage.png"), "4 System Models", "(YAML)"),
-    (icon("programming","flowchart","document.png"), "JSON Schemas", "(5 schemas)"),
-    (icon("generic","database","sql.png"), "Standards", "Catalog"),
-    (icon("generic","database","sql.png"), "Patterns", "Catalog"),
-    (icon("generic","database","sql.png"), "Waivers", "Registry"),
+    (icon("generic","storage","storage.png"),          "4 System Models", "(YAML)"),
+    (icon("programming","flowchart","document.png"),   "JSON Schemas",    "(5 schemas)"),
+    (icon("generic","database","sql.png"),             "Standards",       "Catalog"),
+    (icon("generic","database","sql.png"),             "Patterns",        "Catalog"),
+    (icon("generic","database","sql.png"),             "Waivers",         "Registry"),
 ]
 for i, (ic, l1, l2) in enumerate(d_items):
-    cx = LM + 130 + i * 245
-    put_icon(ic, cx, R2+85, 52, NAVY)
-    tmulti([l1, l2], cx, R2+140, FNS, WHITE)
+    cx = LM + 130 + i * 240
+    put_icon(ic, cx, R2+90, 48, bg)
+    tmulti([l1, l2], cx, R2+145, FNS, DARK)
 
 # ══════════════════════════════════════════════════════════════════════
-# ROW 3 — Dev Tooling + Governance  (y: 580..800)
+# ROW 3 — Dev Tooling + Governance  (y: 590..810)
 # ══════════════════════════════════════════════════════════════════════
-R3 = 580; R3H = 230
+R3 = 590; R3H = 225
 
 # Developer Tooling
-rrect(LM, R3, LM+700, R3+R3H, PURPLE)
-tcenter("Developer Tooling  (npm Packages)", LM+350, R3+22, FC, WHITE)
+bg = cluster(LM, R3, LM+700, R3+R3H, TH_TOOLING,
+             "Developer Tooling  (npm Packages)")
 
 t_items = [
-    (icon("programming","language","bash.png"), "aac CLI", "@muthub-ai/aac", "validate / init / create"),
-    (icon("onprem","compute","server.png"), "MCP Server", "@muthub-ai/", "aac-mcp-server"),
-    (icon("programming","language","typescript.png"), "IDE Integration", "Cursor / VS Code", "Claude Desktop"),
+    (icon("programming","language","bash.png"),       "aac CLI",
+     "@muthub-ai/aac", "validate / init / create"),
+    (icon("onprem","compute","server.png"),            "MCP Server",
+     "@muthub-ai/", "aac-mcp-server"),
+    (icon("programming","language","typescript.png"),   "IDE Integration",
+     "Cursor / VS Code", "Claude Desktop"),
 ]
 for i, (ic, l1, l2, l3) in enumerate(t_items):
     cx = LM + 130 + i * 230
-    put_icon(ic, cx, R3+95, 52, PURPLE)
-    tmulti([l1, l2, l3], cx, R3+165, FNS, WHITE)
+    put_icon(ic, cx, R3+100, 48, bg)
+    tmulti([l1, l2, l3], cx, R3+168, FNS, DARK)
 
 # MCP -> IDE arrow
-arr(LM+130+230+40, R3+95, LM+130+460-40, R3+95, WHITE, 2)
+arr(LM+130+230+40, R3+100, LM+130+460-40, R3+100, C_PURPLE, 2)
 
-# Governance
+# Governance Engine
 GOV_L = LM + 760
-rrect(GOV_L, R3, GOV_L+540, R3+R3H, RED)
-tcenter("Governance Engine  (OPA / Rego)", GOV_L+270, R3+22, FC, WHITE)
+bg = cluster(GOV_L, R3, GOV_L+540, R3+R3H, TH_GOV,
+             "Governance Engine  (OPA / Rego)")
 
 g_items = [
-    (icon("onprem","security","vault.png"), "Policy", "Engine"),
-    (icon("generic","network","firewall.png"), "Security", "(KMS)"),
-    (icon("generic","network","switch.png"), "Integration", "(API GW)"),
-    (icon("generic","compute","rack.png"), "FinOps", "(Rightsizing)"),
+    (icon("onprem","security","vault.png"),     "Policy",      "Engine"),
+    (icon("generic","network","firewall.png"),  "Security",    "(KMS)"),
+    (icon("generic","network","switch.png"),    "Integration", "(API GW)"),
+    (icon("generic","compute","rack.png"),      "FinOps",      "(Rightsizing)"),
 ]
 for i, (ic, l1, l2) in enumerate(g_items):
     cx = GOV_L + 80 + i * 130
-    put_icon(ic, cx, R3+95, 48, RED)
-    tmulti([l1, l2], cx, R3+150, FNS, WHITE)
+    put_icon(ic, cx, R3+100, 44, bg)
+    tmulti([l1, l2], cx, R3+155, FNS, DARK)
 
 # Policy -> sub-policies
-arr(GOV_L+80+45, R3+95, GOV_L+80+130-30, R3+95, WHITE, 2)
+arr(GOV_L+80+40, R3+100, GOV_L+80+130-30, R3+100, C_RED, 2)
 
 # ══════════════════════════════════════════════════════════════════════
-# ROW 4 — CI + Web App + Deployment  (y: 860..1090)
+# ROW 4 — CI + Web App + Deployment  (y: 865..1090)
 # ══════════════════════════════════════════════════════════════════════
-R4 = 860; R4H = 220
+R4 = 865; R4H = 220
 
 # CI Pipeline
-rrect(LM, R4, LM+780, R4+R4H, ORANGE_BG)
-tcenter("CI/CD Pipeline  (GitHub Actions - 9 Stages)", LM+390, R4+22, FC, WHITE)
+bg = cluster(LM, R4, LM+780, R4+R4H, TH_CI,
+             "CI/CD Pipeline  (GitHub Actions - 9 Stages)")
 
 ci = [
-    (icon("onprem","ci","github-actions.png"), "1  Lint & Test", "ESLint + 436 Vitest"),
-    (icon("onprem","ci","github-actions.png"), "2a-d  Validate", "Schema + Compliance"),
-    (icon("onprem","ci","github-actions.png"), "2e  Policy", "OPA Checks"),
-    (icon("onprem","ci","github-actions.png"), "3  Assemble", "Microsite"),
+    (icon("onprem","ci","github-actions.png"), "1  Lint & Test",   "ESLint + 436 Vitest"),
+    (icon("onprem","ci","github-actions.png"), "2a-d  Validate",   "Schema + Compliance"),
+    (icon("onprem","ci","github-actions.png"), "2e  Policy",       "OPA Checks"),
+    (icon("onprem","ci","github-actions.png"), "3  Assemble",      "Microsite"),
 ]
 for i, (ic, l1, l2) in enumerate(ci):
-    cx = LM + 110 + i * 180
-    put_icon(ic, cx, R4+95, 48, ORANGE_BG)
-    tmulti([l1, l2], cx, R4+155, FNS, WHITE)
+    cx = LM + 110 + i * 175
+    put_icon(ic, cx, R4+100, 44, bg)
+    tmulti([l1, l2], cx, R4+158, FNS, DARK)
 
-# Internal CI arrows
-for sx, ex, dy in [(0,1,0), (0,2,8), (1,3,0), (2,3,8)]:
-    x1 = LM+110+sx*180+35; x2 = LM+110+ex*180-35
-    arr(x1, R4+95+dy, x2, R4+95+dy, WHITE, 2)
+# Internal CI flow arrows
+for sx, ex, dy in [(0,1,0), (1,2,0), (2,3,0)]:
+    x1 = LM+110+sx*175+38; x2 = LM+110+ex*175-38
+    arr(x1, R4+100+dy, x2, R4+100+dy, C_AMBER, 2)
 
 # Web Application
 WEB_L = LM + 840
-rrect(WEB_L, R4, WEB_L+660, R4+R4H, TEAL)
-tcenter("Web Application  (Next.js 16 + React 19)", WEB_L+330, R4+22, FC, WHITE)
+bg = cluster(WEB_L, R4, WEB_L+660, R4+R4H, TH_WEB,
+             "Web Application  (Next.js 16 + React 19)")
 
 w_items = [
-    (icon("programming","framework","nextjs.png"), "Dashboard", "App Router"),
-    (icon("programming","framework","react.png"), "React Flow", "C4 Diagrams"),
-    (icon("programming","flowchart","action.png"), "Export Engine", "PlantUML / Draw.io"),
+    (icon("programming","framework","nextjs.png"),  "Dashboard",     "App Router"),
+    (icon("programming","framework","react.png"),   "React Flow",    "C4 Diagrams"),
+    (icon("programming","flowchart","action.png"),  "Export Engine",  "PlantUML / Draw.io"),
 ]
 for i, (ic, l1, l2) in enumerate(w_items):
     cx = WEB_L + 120 + i * 220
-    put_icon(ic, cx, R4+95, 52, TEAL)
-    tmulti([l1, l2], cx, R4+155, FNS, WHITE)
+    put_icon(ic, cx, R4+100, 48, bg)
+    tmulti([l1, l2], cx, R4+160, FNS, DARK)
 
-arr(WEB_L+120+45, R4+95, WEB_L+120+220-45, R4+95, WHITE, 2)
-arr(WEB_L+120+220+45, R4+95, WEB_L+120+440-45, R4+95, WHITE, 2)
+arr(WEB_L+120+45, R4+100, WEB_L+120+220-45, R4+100, C_TEAL, 2)
+arr(WEB_L+120+220+45, R4+100, WEB_L+120+440-45, R4+100, C_TEAL, 2)
 
 # Deployment
 DEP_L = LM + 1560
-rrect(DEP_L, R4, RM, R4+R4H, DEPLOY_BL)
-tcenter("Deployment Targets", DEP_L + (RM-DEP_L)//2, R4+22, FC, WHITE)
+bg = cluster(DEP_L, R4, RM, R4+R4H, TH_DEPLOY, "Deployment Targets")
 
 dep = [
-    (icon("programming","framework","vercel.png"), "Vercel", "Dashboard App"),
-    (icon("generic","place","datacenter.png"), "GitHub Pages", "Doc Microsite"),
+    (icon("programming","framework","vercel.png"),   "Vercel",        "Dashboard App"),
+    (icon("generic","place","datacenter.png"),        "GitHub Pages",  "Doc Microsite"),
 ]
 for i, (ic, l1, l2) in enumerate(dep):
     cx = DEP_L + 140 + i * 360
-    put_icon(ic, cx, R4+95, 52, DEPLOY_BL)
-    tmulti([l1, l2], cx, R4+155, FN, WHITE)
+    put_icon(ic, cx, R4+100, 48, bg)
+    tmulti([l1, l2], cx, R4+160, FN, DARK)
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -297,10 +327,10 @@ for i, (ic, l1, l2) in enumerate(dep):
 # ══════════════════════════════════════════════════════════════════════
 
 # 1. Architect -> Repo
-arr(LM+160, R1+R1H+5, GH_L+110, R2-12, C_AMBER, 3, "author models")
+arr(LM+160, R1+R1H+5, GH_L+110, R2-10, C_AMBER, 3, "author models")
 
 # 2. Developer -> Repo
-arr(LM+330, R1+R1H+5, GH_L+170, R2-12, C_AMBER, 3, "commit code")
+arr(LM+330, R1+R1H+5, GH_L+170, R2-10, C_AMBER, 3, "commit code")
 
 # 3. Repo -> Data Layer
 arr(GH_L+200, R1+R1H+5, LM+625, R2-5, C_BLUE, 3, "store YAML")
@@ -327,21 +357,22 @@ arr(GH_L+420, R1+R1H+5, LM+390, R4-5, C_AMBER, 3, "run pipeline")
 arr(LM+1100, R2+R2H+5, WEB_L+180, R4-5, C_BLUE, 3, "parse & render")
 
 # 11. Web App -> Vercel (dashed)
-arr(WEB_L+660+5, R4+100, DEP_L-5, R4+100, C_NAVY, 2, "deploy", dash=True)
+arr(WEB_L+660+5, R4+105, DEP_L-5, R4+105, C_STEEL, 2, "deploy", dash=True)
 
 # 12. CI Assemble -> GH Pages
-arr(LM+110+3*180, R4+R4H+10, DEP_L+500, R4+R4H+10, C_AMBER, 3, "publish microsite")
+arr(LM+110+3*175, R4+R4H+10, DEP_L+500, R4+R4H+10, C_AMBER, 3, "publish microsite")
 
 # 13. Developer -> CLI (dashed)
 arr(LM+300, R1+R1H+5, LM+130, R3-10, C_PURPLE, 2, "CLI / IDE", dash=True)
 
 
 # ══════════════════════════════════════════════════════════════════════
-# LEGEND
+# LEGEND (top-right)
 # ══════════════════════════════════════════════════════════════════════
 LX = W - 530; LY = R1
 LW_, LH_ = 480, 215
-rrect(LX, LY, LX+LW_, LY+LH_, LGRAY, r=10, outline=(210,210,210))
+draw.rounded_rectangle([LX, LY, LX+LW_, LY+LH_], radius=10,
+                       fill=WHITE, outline=(200,200,210), width=2)
 tcenter("Legend", LX+LW_//2, LY+18, FLT, DARK)
 
 legend = [
@@ -350,7 +381,7 @@ legend = [
     (C_PURPLE, "solid",  "Developer Tooling Flow"),
     (C_RED,    "solid",  "Governance / Policy Enforcement"),
     (C_TEAL,   "dash",   "User Interaction"),
-    (C_NAVY,   "dash",   "Deployment"),
+    (C_STEEL,  "dash",   "Deployment"),
 ]
 for i, (color, style, label) in enumerate(legend):
     y = LY + 44 + i * 27
@@ -366,7 +397,7 @@ for i, (color, style, label) in enumerate(legend):
 # FOOTER
 # ══════════════════════════════════════════════════════════════════════
 footer = "muthub-ai/aac  |  Next.js 16 + React 19 + TypeScript + Zustand  |  OPA Rego  |  GitHub Actions  |  Vercel + GitHub Pages"
-tcenter(footer, W//2, H-30, FNS, (170,170,170))
+tcenter(footer, W//2, H-30, FNS, (160,165,175))
 
 # ── Save ──────────────────────────────────────────────────────────────
 os.makedirs("docs", exist_ok=True)
