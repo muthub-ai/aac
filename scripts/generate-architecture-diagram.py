@@ -5,7 +5,7 @@
 """
 Architecture as Code (AAC) Platform — System Architecture Diagram
 Hand-crafted, pixel-perfect CTO-grade architecture diagram using
-official cloud-provider icons and precise layout control.
+general architecture icons and a muted professional color palette.
 """
 from __future__ import annotations
 import os, math
@@ -29,24 +29,25 @@ W, H = 2800, 1200
 DPI = 200
 BG_COLOR = (255, 255, 255)
 
-# ── Palette ───────────────────────────────────────────────────────────
-DARK       = (35, 47, 62)
-GITHUB_BG  = (22, 27, 34)
-NAVY       = (13, 71, 161)
-PURPLE     = (106, 27, 154)
-RED        = (198, 40, 40)
-ORANGE     = (230, 81, 0)
-TEAL       = (0, 121, 107)
-DEPLOY_BL  = (21, 101, 192)
+# ── Muted Professional Palette ────────────────────────────────────────
+DARK       = (42, 50, 60)       # charcoal
+GITHUB_BG  = (36, 41, 47)      # github dark
+NAVY       = (55, 71, 100)     # muted navy
+PURPLE     = (85, 60, 108)     # muted purple
+RED        = (140, 55, 55)     # muted brick red
+ORANGE_BG  = (158, 95, 45)    # muted amber/brown
+TEAL       = (55, 100, 95)     # muted teal
+DEPLOY_BL  = (60, 85, 120)    # muted steel blue
 WHITE      = (255, 255, 255)
 LGRAY      = (245, 245, 245)
 
-C_ORANGE = (255, 153, 0)
-C_BLUE   = (26, 115, 232)
-C_PURPLE = (106, 27, 154)
-C_RED    = (198, 40, 40)
-C_TEAL   = (0, 150, 136)
-C_NAVY   = (21, 101, 192)
+# Arrow / flow colors (also muted)
+C_AMBER  = (180, 120, 40)     # amber for CI/CD
+C_BLUE   = (70, 110, 160)     # steel blue for data
+C_PURPLE = (100, 70, 130)     # muted purple for tooling
+C_RED    = (160, 65, 65)      # muted red for governance
+C_TEAL   = (60, 120, 110)     # muted teal for user
+C_NAVY   = (65, 90, 130)      # muted navy for deployment
 
 # ── Fonts ─────────────────────────────────────────────────────────────
 def _font(size, bold=False):
@@ -144,7 +145,6 @@ tcenter("System Architecture", W//2, 72, FS, (100,100,100))
 # Layout constants
 LM = 50       # left margin
 RM = W - 50   # right margin
-MW = RM - LM  # available width
 
 # ══════════════════════════════════════════════════════════════════════
 # ROW 1 — Personas + GitHub  (y: 110..310)
@@ -163,18 +163,15 @@ tmulti(["Developer"], LM+300, R1+150, FNS, WHITE)
 GH_L = LM + 460
 rrect(GH_L, R1, GH_L+840, R1+R1H, GITHUB_BG)
 tcenter("GitHub Platform", GH_L+420, R1+22, FC, WHITE)
-# repo
 put_icon(icon("onprem","vcs","github.png"), GH_L+140, R1+90, 56, GITHUB_BG)
 tmulti(["muthub-ai/aac","Monorepo"], GH_L+140, R1+155, FNS, WHITE)
-# actions
 put_icon(icon("onprem","ci","github-actions.png"), GH_L+420, R1+90, 56, GITHUB_BG)
 tmulti(["GitHub Actions","9-Stage Pipeline"], GH_L+420, R1+155, FNS, WHITE)
-# copilot
-put_icon(icon("aws","integration","appsync.png"), GH_L+700, R1+90, 56, GITHUB_BG)
+put_icon(icon("onprem","network","internet.png"), GH_L+700, R1+90, 56, GITHUB_BG)
 tmulti(["Copilot Spaces","RAG Context"], GH_L+700, R1+155, FNS, WHITE)
 
-# repo → actions (inside github cluster)
-arr(GH_L+195, R1+90, GH_L+360, R1+90, C_ORANGE, 2, "trigger")
+# repo -> actions
+arr(GH_L+195, R1+90, GH_L+360, R1+90, C_AMBER, 2, "trigger")
 
 # ══════════════════════════════════════════════════════════════════════
 # ROW 2 — Architecture Data Layer  (y: 350..540)
@@ -185,11 +182,11 @@ rrect(LM, R2, LM+1250, R2+R2H, NAVY)
 tcenter("Architecture Data Layer  (YAML + JSON Schema Draft 2020-12)", LM+625, R2+22, FC, WHITE)
 
 d_items = [
-    (icon("aws","storage","simple-storage-service-s3.png"), "4 System Models", "(YAML)"),
-    (icon("aws","management","config.png"), "JSON Schemas", "(5 schemas)"),
-    (icon("aws","general","generic-database.png"), "Standards", "Catalog"),
-    (icon("aws","general","generic-database.png"), "Patterns", "Catalog"),
-    (icon("aws","general","generic-database.png"), "Waivers", "Registry"),
+    (icon("generic","storage","storage.png"), "4 System Models", "(YAML)"),
+    (icon("programming","flowchart","document.png"), "JSON Schemas", "(5 schemas)"),
+    (icon("generic","database","sql.png"), "Standards", "Catalog"),
+    (icon("generic","database","sql.png"), "Patterns", "Catalog"),
+    (icon("generic","database","sql.png"), "Waivers", "Registry"),
 ]
 for i, (ic, l1, l2) in enumerate(d_items):
     cx = LM + 130 + i * 245
@@ -206,8 +203,8 @@ rrect(LM, R3, LM+700, R3+R3H, PURPLE)
 tcenter("Developer Tooling  (npm Packages)", LM+350, R3+22, FC, WHITE)
 
 t_items = [
-    (icon("aws","devtools","command-line-interface.png"), "aac CLI", "@muthub-ai/aac", "validate / init / create"),
-    (icon("aws","general","traditional-server.png"), "MCP Server", "@muthub-ai/", "aac-mcp-server"),
+    (icon("programming","language","bash.png"), "aac CLI", "@muthub-ai/aac", "validate / init / create"),
+    (icon("onprem","compute","server.png"), "MCP Server", "@muthub-ai/", "aac-mcp-server"),
     (icon("programming","language","typescript.png"), "IDE Integration", "Cursor / VS Code", "Claude Desktop"),
 ]
 for i, (ic, l1, l2, l3) in enumerate(t_items):
@@ -215,7 +212,7 @@ for i, (ic, l1, l2, l3) in enumerate(t_items):
     put_icon(ic, cx, R3+95, 52, PURPLE)
     tmulti([l1, l2, l3], cx, R3+165, FNS, WHITE)
 
-# MCP → IDE arrow
+# MCP -> IDE arrow
 arr(LM+130+230+40, R3+95, LM+130+460-40, R3+95, WHITE, 2)
 
 # Governance
@@ -224,17 +221,17 @@ rrect(GOV_L, R3, GOV_L+540, R3+R3H, RED)
 tcenter("Governance Engine  (OPA / Rego)", GOV_L+270, R3+22, FC, WHITE)
 
 g_items = [
-    (icon("aws","security","shield.png"), "Policy", "Engine"),
-    (icon("aws","compute","lambda.png"), "Security", "(KMS)"),
-    (icon("aws","compute","lambda.png"), "Integration", "(API GW)"),
-    (icon("aws","compute","lambda.png"), "FinOps", "(Rightsizing)"),
+    (icon("onprem","security","vault.png"), "Policy", "Engine"),
+    (icon("generic","network","firewall.png"), "Security", "(KMS)"),
+    (icon("generic","network","switch.png"), "Integration", "(API GW)"),
+    (icon("generic","compute","rack.png"), "FinOps", "(Rightsizing)"),
 ]
 for i, (ic, l1, l2) in enumerate(g_items):
     cx = GOV_L + 80 + i * 130
     put_icon(ic, cx, R3+95, 48, RED)
     tmulti([l1, l2], cx, R3+150, FNS, WHITE)
 
-# Policy → sub-policies
+# Policy -> sub-policies
 arr(GOV_L+80+45, R3+95, GOV_L+80+130-30, R3+95, WHITE, 2)
 
 # ══════════════════════════════════════════════════════════════════════
@@ -243,18 +240,18 @@ arr(GOV_L+80+45, R3+95, GOV_L+80+130-30, R3+95, WHITE, 2)
 R4 = 860; R4H = 220
 
 # CI Pipeline
-rrect(LM, R4, LM+780, R4+R4H, ORANGE)
+rrect(LM, R4, LM+780, R4+R4H, ORANGE_BG)
 tcenter("CI/CD Pipeline  (GitHub Actions - 9 Stages)", LM+390, R4+22, FC, WHITE)
 
 ci = [
-    (icon("aws","devtools","codebuild.png"), "1  Lint & Test", "ESLint + 436 Vitest"),
-    (icon("aws","devtools","codebuild.png"), "2a-d  Validate", "Schema + Compliance"),
-    (icon("aws","devtools","codebuild.png"), "2e  Policy", "OPA Checks"),
-    (icon("aws","devtools","codebuild.png"), "3  Assemble", "Microsite"),
+    (icon("onprem","ci","github-actions.png"), "1  Lint & Test", "ESLint + 436 Vitest"),
+    (icon("onprem","ci","github-actions.png"), "2a-d  Validate", "Schema + Compliance"),
+    (icon("onprem","ci","github-actions.png"), "2e  Policy", "OPA Checks"),
+    (icon("onprem","ci","github-actions.png"), "3  Assemble", "Microsite"),
 ]
 for i, (ic, l1, l2) in enumerate(ci):
     cx = LM + 110 + i * 180
-    put_icon(ic, cx, R4+95, 48, ORANGE)
+    put_icon(ic, cx, R4+95, 48, ORANGE_BG)
     tmulti([l1, l2], cx, R4+155, FNS, WHITE)
 
 # Internal CI arrows
@@ -270,7 +267,7 @@ tcenter("Web Application  (Next.js 16 + React 19)", WEB_L+330, R4+22, FC, WHITE)
 w_items = [
     (icon("programming","framework","nextjs.png"), "Dashboard", "App Router"),
     (icon("programming","framework","react.png"), "React Flow", "C4 Diagrams"),
-    (icon("aws","devtools","codebuild.png"), "Export Engine", "PlantUML / Draw.io"),
+    (icon("programming","flowchart","action.png"), "Export Engine", "PlantUML / Draw.io"),
 ]
 for i, (ic, l1, l2) in enumerate(w_items):
     cx = WEB_L + 120 + i * 220
@@ -286,8 +283,8 @@ rrect(DEP_L, R4, RM, R4+R4H, DEPLOY_BL)
 tcenter("Deployment Targets", DEP_L + (RM-DEP_L)//2, R4+22, FC, WHITE)
 
 dep = [
-    (icon("programming","framework","nextjs.png"), "Vercel", "Dashboard App"),
-    (icon("aws","network","cloudfront.png"), "GitHub Pages", "Doc Microsite"),
+    (icon("programming","framework","vercel.png"), "Vercel", "Dashboard App"),
+    (icon("generic","place","datacenter.png"), "GitHub Pages", "Doc Microsite"),
 ]
 for i, (ic, l1, l2) in enumerate(dep):
     cx = DEP_L + 140 + i * 360
@@ -296,59 +293,59 @@ for i, (ic, l1, l2) in enumerate(dep):
 
 
 # ══════════════════════════════════════════════════════════════════════
-# INTER-TIER ARROWS  (drawn AFTER all clusters to sit on top)
+# INTER-TIER ARROWS
 # ══════════════════════════════════════════════════════════════════════
 
-# 1. Architect → Repo  (orange, solid)
-arr(LM+160, R1+R1H+5, GH_L+110, R2-12, C_ORANGE, 3, "author models")
+# 1. Architect -> Repo
+arr(LM+160, R1+R1H+5, GH_L+110, R2-12, C_AMBER, 3, "author models")
 
-# 2. Developer → Repo  (orange, solid) — offset right to avoid overlap
-arr(LM+330, R1+R1H+5, GH_L+170, R2-12, C_ORANGE, 3, "commit code")
+# 2. Developer -> Repo
+arr(LM+330, R1+R1H+5, GH_L+170, R2-12, C_AMBER, 3, "commit code")
 
-# 3. Repo → Data Layer  (blue, solid)
+# 3. Repo -> Data Layer
 arr(GH_L+200, R1+R1H+5, LM+625, R2-5, C_BLUE, 3, "store YAML")
 
-# 4. Models → CLI  (purple)
+# 4. Models -> CLI
 arr(LM+130, R2+R2H+5, LM+130, R3-5, C_PURPLE, 2, "validate")
 
-# 5. Models → MCP  (purple, no label)
+# 5. Models -> MCP
 arr(LM+250, R2+R2H+5, LM+360, R3-5, C_PURPLE, 2)
 
-# 6. Models → Policy Engine  (red)
+# 6. Models -> Policy Engine
 arr(LM+900, R2+R2H+5, GOV_L+80, R3-5, C_RED, 3, "enforce")
 
-# 7. CLI → Schemas (dashed back-link)
+# 7. CLI -> Schemas (dashed)
 arr(LM+200, R3-5, LM+310, R2+R2H+5, C_PURPLE, 2, "schema check", dash=True)
 
-# 8. Copilot → IDE (dashed purple RAG)
+# 8. Copilot -> IDE (dashed)
 arr(GH_L+700, R1+R1H+5, LM+590, R3-5, C_PURPLE, 2, "RAG context", dash=True)
 
-# 9. Actions → CI Pipeline  (orange)
-arr(GH_L+420, R1+R1H+5, LM+390, R4-5, C_ORANGE, 3, "run pipeline")
+# 9. Actions -> CI Pipeline
+arr(GH_L+420, R1+R1H+5, LM+390, R4-5, C_AMBER, 3, "run pipeline")
 
-# 10. Models → Web App  (blue, parse)
+# 10. Models -> Web App
 arr(LM+1100, R2+R2H+5, WEB_L+180, R4-5, C_BLUE, 3, "parse & render")
 
-# 11. Web App → Vercel  (dashed navy)
+# 11. Web App -> Vercel (dashed)
 arr(WEB_L+660+5, R4+100, DEP_L-5, R4+100, C_NAVY, 2, "deploy", dash=True)
 
-# 12. CI Assemble → GH Pages  (orange, publish)
-arr(LM+110+3*180, R4+R4H+10, DEP_L+500, R4+R4H+10, C_ORANGE, 3, "publish microsite")
+# 12. CI Assemble -> GH Pages
+arr(LM+110+3*180, R4+R4H+10, DEP_L+500, R4+R4H+10, C_AMBER, 3, "publish microsite")
 
-# 13. Developer → CLI  (dashed purple)
+# 13. Developer -> CLI (dashed)
 arr(LM+300, R1+R1H+5, LM+130, R3-10, C_PURPLE, 2, "CLI / IDE", dash=True)
 
 
 # ══════════════════════════════════════════════════════════════════════
-# LEGEND (top-right)
+# LEGEND
 # ══════════════════════════════════════════════════════════════════════
 LX = W - 530; LY = R1
 LW_, LH_ = 480, 215
-rrect(LX, LY, LX+LW_, LY+LH_, LGRAY, r=10, outline=(200,200,200))
+rrect(LX, LY, LX+LW_, LY+LH_, LGRAY, r=10, outline=(210,210,210))
 tcenter("Legend", LX+LW_//2, LY+18, FLT, DARK)
 
 legend = [
-    (C_ORANGE, "solid",  "CI/CD & Pipeline Flow"),
+    (C_AMBER,  "solid",  "CI/CD & Pipeline Flow"),
     (C_BLUE,   "solid",  "Data Flow (YAML / Parse)"),
     (C_PURPLE, "solid",  "Developer Tooling Flow"),
     (C_RED,    "solid",  "Governance / Policy Enforcement"),
@@ -366,7 +363,7 @@ for i, (color, style, label) in enumerate(legend):
 
 
 # ══════════════════════════════════════════════════════════════════════
-# TECH FOOTER
+# FOOTER
 # ══════════════════════════════════════════════════════════════════════
 footer = "muthub-ai/aac  |  Next.js 16 + React 19 + TypeScript + Zustand  |  OPA Rego  |  GitHub Actions  |  Vercel + GitHub Pages"
 tcenter(footer, W//2, H-30, FNS, (170,170,170))
